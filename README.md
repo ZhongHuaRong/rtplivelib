@@ -23,12 +23,12 @@
 
 ## 其他要求
 如果要使用硬件加速，则需要安装一系列的SDK。目前只使用了qsv，这里简单说一下Media SDK的安装
-* Windows
-1.更新到最新的显卡驱动
-2.去Intel官网下载[Intel Media SDK](https://software.intel.com/en-us/media-sdk/choose-download/client),需要intel账号才能下载
-3.安装Intel Media SDK。如果安装失败则需要考虑是不是显卡驱动问题
-* Linux
-这个我没有安装成功，先不写
+* Windows<br>
+1.更新到最新的显卡驱动<br>
+2.去Intel官网下载[Intel Media SDK](https://software.intel.com/en-us/media-sdk/choose-download/client),需要intel账号才能下载<br>
+3.安装Intel Media SDK。如果安装失败则需要考虑是不是显卡驱动问题<br>
+* Linux<br>
+这个我没有安装成功，先不写<br>
 
 # 使用
 配合一个GUI应用和一个服务器应用，可以简单跑一下流程<br>
