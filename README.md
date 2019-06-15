@@ -9,7 +9,7 @@
 ## 安装要求
 1.GCC<br>
 2.qmake<br>
-3.各种依赖库(ffmpeg,SDL2,jrtplib,x264,x265,libfdk-aac,libmfx,openfec),下载的时候已经自带，如果需要自己编译则可以看安装步骤。
+3.各种依赖库(ffmpeg,SDL2,jrtplib,x264,x265,libfdk-aac,libmfx,openfec),下载的时候已经自带，如果需要自己编译则可以看依赖库构建的步骤。
 好像Linux的.so库的链接不能拷贝过来，所以到时候需要自己创建链接<br>
 
 
@@ -170,7 +170,11 @@ PKG_CONFIG_PATH="$HOME/Desktop/build-linux/lib/pkgconfig" \\<br>
 可能大家在编译ffmpeg的时候出现各种问题，我简单罗列一下我遇到过的问题，大部分是在Windows下编译出现的，Linux是一步就完成了<br>
 * 在我没有设置disable-bsfs的时候，编译是会在avcodec的时候出现链接错误，需要自己调用gcc生成，去掉这个之后就可以直接编译成功了
 * 还有一个qsv的问题，更新集显驱动就可以了
-* 在Linux系统编译时，可能会出现下面这种情况
+* 在Linux系统编译时，可能会出现下面这种情况<br>
+![](https://github.com/ZhongHuaRong/rtplivelib/blob/master/img/not_found_x265.png)<br>
+在x265.pc文件里的Libs.private一行添加-lpthread，如下图所示:<br>
+![](https://github.com/ZhongHuaRong/rtplivelib/blob/master/img/x265_pkg_config.png)<br>
+* 还有一些问题我没有记录下来，如果遇到一些包not found的话，可能是pkg-config的问题，也可能是包编译错误的问题。遇到问题多谷歌多百度就很容易解决了。
 
 
 
