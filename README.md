@@ -18,7 +18,20 @@
   编译的时候,Windows系统推荐Mingw 64bit,Linux系统使用GCC 64bit,不要使用32bit<br>
 2.打开QtCreator，打开rtplivelib项目，构建即可生成lib库
 
-
 ## 依赖库的构建
 优先使用自带的lib库，已经经过测试没有问题！如果出现问题，可以参考[这里](https://github.com/ZhongHuaRong/rtplivelib/blob/master/build.md)自己手动编译lib库。
 
+## 其他要求
+如果要使用硬件加速，则需要安装一系列的SDK。目前只使用了qsv，这里简单说一下Media SDK的安装
+* Windows
+1.更新到最新的显卡驱动
+2.去Intel官网下载[Intel Media SDK](https://software.intel.com/en-us/media-sdk/choose-download/client),需要intel账号才能下载
+3.安装Intel Media SDK。如果安装失败则需要考虑是不是显卡驱动问题
+* Linux
+这个我没有安装成功，先不写
+
+# 使用
+配合一个GUI应用和一个服务器应用，可以简单跑一下流程<br>
+GUI应用:https://github.com/ZhongHuaRong/RTPDemo<br>
+Server:https://github.com/ZhongHuaRong/RTPServer<br>
+搭建好之后，就可以参考GUI的README的步骤来跑一下流程<br>
