@@ -14,7 +14,7 @@
 
 
 ## 开发环境的搭建
-1.安装IDE（QtCreator），推荐把整个Qt SDK下载下来，链接：https://download.qt.io/official_releases/qt/
+1.安装IDE（QtCreator），推荐把整个Qt SDK下载下来，链接：https://download.qt.io/official_releases/qt/<br>
   编译的时候,Windows系统推荐Mingw 64bit,Linux系统使用GCC 64bit,不要使用32bit<br>
 2.打开QtCreator，打开rtplivelib项目，构建即可生成lib库
 
@@ -49,6 +49,7 @@
 Linux系统编译的话就比较方便，直接进入到根目录，然后输入: 
 * cmake ./
 * make -j8 <br>
+<br>
 Windows下则需要一点点的修改,如果环境变量没有设置好，则需要在根目录下的CMakeLists.txt添加下面三行<br>
 路径需要修改成自己的msys安装路径<br>
 set(CMAKE_C_FLAGS "-g -Wall  -I /d/msys64/mingw64/include -L /d/msys64/mingw64/lib")<br>
