@@ -1,6 +1,6 @@
-## 依赖库的构建
+# 依赖库的构建
 优先使用自带的lib库，已经经过测试没有问题！如果出现问题，可以参考以下步骤自己手动编译lib库。
-### 编译环境的搭建
+## 编译环境的搭建
 * Linux<br>
 1.gcc,make<br>
 2.cmake<br>
@@ -15,15 +15,15 @@
 4.yasm<br>
 5.pkg-config
 
-### jrtplib,jthread
+## jrtplib,jthread
 [jrtplib下载地址](http://research.edm.uhasselt.be/jori/page/CS/Jrtplib.html)<br>
 [jthread下载地址](http://research.edm.uhasselt.be/jori/page/CS/Jthread.html)<br>
 里面自带编译教程，就不说了
 
-### SDL2
+## SDL2
 直接去官网下载,我自己试过编译，不过没成功，官网地址:https://www.libsdl.org/
 
-### openfec
+## openfec
 [下载地址](http://www.openfec.org/)<br>
 Linux系统编译的话就比较方便，直接进入到根目录，然后输入: 
 * cmake ./
@@ -39,7 +39,7 @@ set(CMAKE_CXX_COMPILER "g++")<br>
 * cmake -G "MinGW Makefiles" -DDEBUG:STRING=OFF<br>
 生成makefile后就是三部曲了
 
-### ffmpeg
+## ffmpeg
 编译这个就有点复杂了，我们需要定制一个ffmpeg动态链接库，需要x264,x265,libfdk-aac,libmfx(qsv需要)<br>
 x264,x265,libfdk-aac的编译方法，给一个帖子大家参考一下:https://www.cnblogs.com/yaoz/p/6944942.html<br>
 libmfx的编译很简单，三部曲完事
