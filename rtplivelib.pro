@@ -102,7 +102,8 @@ HEADERS += \
     src/core/except.h \
     src/rtp_network/fec/fecdecodecache.h \
     src/rtp_network/fec/fecdecoder.h \
-    src/rtp_network/fec/fecencoder.h
+    src/rtp_network/fec/fecencoder.h \
+    src/device_manager/microphonecapture.h
 
 SOURCES += \
     src/core/abstractthread.cpp \
@@ -133,4 +134,5 @@ SOURCES += \
     src/core/except.cpp \
     src/rtp_network/fec/fecdecodecache.cpp \
     src/rtp_network/fec/fecdecoder.cpp \
-    src/rtp_network/fec/fecencoder.cpp
+    src/rtp_network/fec/fecencoder.cpp \
+    src/device_manager/microphonecapture.cpp

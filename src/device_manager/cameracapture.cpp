@@ -16,7 +16,7 @@ class CameraCapturePrivateData{
 public:
 	AVInputFormat *ifmt{nullptr};
 	AVFormatContext *fmtContxt{nullptr};
-	std::mutex _fmt_ctx_mutex;
+	std::mutex fmt_ctx_mutex;
 	AVPacket *packet{nullptr};
 };
 
@@ -137,7 +137,7 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 		}
 	}
 	av_packet_unref(d_ptr->packet);
-	std::lock_guard<std::mutex> lk(d_ptr->_fmt_ctx_mutex);
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	
 	auto ret = av_read_frame(d_ptr->fmtContxt, d_ptr->packet);
 	if( ret < 0){
@@ -184,7 +184,7 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 void CameraCapture::on_stop()  noexcept{
 	if(d_ptr->fmtContxt == nullptr)
 		return;
-	std::lock_guard<std::mutex> lk(d_ptr->_fmt_ctx_mutex);
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	avformat_close_input(&d_ptr->fmtContxt);
 	core::Logger::Print_APP_Info(core::MessageNum::InputFormat_context_close,
 								 "device_manager::CameraCapture::on_stop",
@@ -199,7 +199,7 @@ bool CameraCapture::open_device() noexcept
 	av_dict_set(&options,"framerate",fps_char,0);
 	av_dict_set(&options,"video_size","640x480",0); 
 	
-	std::lock_guard<std::mutex> lk(d_ptr->_fmt_ctx_mutex);
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	if(d_ptr->fmtContxt != nullptr){
 		avformat_close_input(&d_ptr->fmtContxt);
 	}
