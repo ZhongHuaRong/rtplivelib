@@ -6,7 +6,6 @@ extern "C" {
 	#include <libavutil/dict.h>
 }
 
-
 namespace rtplivelib {
 
 namespace device_manager {

@@ -22,8 +22,6 @@ class MicrophoneCapturePrivateData;
  * 如果需要用该类自己处理数据，则可以考虑继承该类，然后重写on_frame_data接口来前处理数据
  * 然后返回false，也可以用wait_resource_push()和get_next()来获取队列的数据
  * 也可以通过实例化DeviceCapture类来捕捉，该类已经封装好其他四个类了，然后关闭其他三个的捕捉
- * @author 钟华荣
- * @date 2018-11-28
  */
 class RTPLIVELIBSHARED_EXPORT MicrophoneCapture :public AbstractCapture
 {
