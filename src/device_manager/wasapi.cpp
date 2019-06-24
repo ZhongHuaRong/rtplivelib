@@ -16,6 +16,13 @@ WASAPI::WASAPI()
 WASAPI::~WASAPI()
 {
     SafeRelease()(&pEnumerator);
+    SafeRelease()(&pDevice);
+    SafeRelease()(&pAudioClient);
+    SafeRelease()(&pCaptureClient);
+    if(pwfx != nullptr){
+		CoTaskMemFree(pwfx);
+		pwfx = nullptr;
+	}
 }
 
 std::vector<WASAPI::device_info> WASAPI::get_device_info(WASAPI::FlowType ft) noexcept(false)
