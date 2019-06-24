@@ -7,7 +7,7 @@
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <map>
-#include <list>
+#include <vector>
 
 namespace rtplivelib {
 
@@ -33,9 +33,9 @@ class WASAPI
 {
 public:
     enum FlowType{
-        RENDER,
-        CAPTURE,
-        ALL
+        RENDER = 0,
+        CAPTURE = 1,
+        ALL = 2
     };
     
     //first:设备id
@@ -52,13 +52,14 @@ public:
     /**
      * @brief get_device_info
      * 获取相应设备信息
-     * 目前发现有一些设备名字无法获取
+     * 这个接口在我测试的时候发现有一些设备名字无法获取
+     * 建议直接使用默认的设备
      * @param ft
      * 设备类型
      * @return 
      * 返回
      */
-    std::list<device_info> get_device_info(FlowType ft = ALL) noexcept(false);
+    std::vector<device_info> get_device_info(FlowType ft = ALL) noexcept(false);
     
     /**
      * @brief set_current_device
@@ -69,7 +70,7 @@ public:
      * 设备类型
      * @return 
      */
-    bool set_current_device(int num,FlowType ft = ALL) noexcept;
+    bool set_current_device(uint64_t num,FlowType ft = ALL) noexcept;
     
     /**
      * @brief set_current_device
@@ -92,15 +93,6 @@ public:
     bool set_default_device(FlowType ft = RENDER) noexcept;
     
     /**
-     * @brief set_event_handle
-     * 设置事件句柄,通过等待事件来间隔获取音频
-     * @param handle
-     * 事件句柄
-     * @return 
-     */
-    bool set_event_handle(HANDLE handle) noexcept;
-    
-    /**
      * @brief get_format
      * 获取当前音频格式
      * @return 
@@ -109,10 +101,10 @@ public:
     
     /**
      * @brief start
-     * 开始采集
+     * 开始采集,设置句柄，外部接口可以等待这个句柄来调用get_packet
      * @return 
      */
-    bool start() noexcept;
+    bool start(HANDLE handle) noexcept;
     
     /**
      * @brief stop
@@ -139,7 +131,6 @@ private:
 	IAudioClient        *pAudioClient;
 	IAudioCaptureClient *pCaptureClient;
 	WAVEFORMATEX        *pwfx;
-	HANDLE				eventHandle;
 	uint32_t			nFrameSize;
 	PROPERTYKEY			key;
 };
