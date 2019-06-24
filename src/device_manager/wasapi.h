@@ -141,6 +141,7 @@ private:
 	WAVEFORMATEX        *pwfx;
 	HANDLE				eventHandle;
 	uint32_t			nFrameSize;
+	PROPERTYKEY			key;
 };
 
 }//namespace device_manager
