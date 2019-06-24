@@ -103,8 +103,12 @@ bool WASAPI::set_current_device(const std::wstring &id, WASAPI::FlowType ft) noe
     }
     
     //成功了再释放以前的设备
+    bool start_flag = pCaptureClient == nullptr? false:true;
+    stop();
     SafeRelease()(&this->pDevice);
     this->pDevice = pDevice;
+    if(start_flag)
+        start(event_handle);
     return true;
 }
 
@@ -182,6 +186,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 		0,
 		pwfx,
 		NULL);
+	
 	if (FAILED(hr)) {
 		SafeRelease()(&pAudioClient);
 		CoTaskMemFree(pwfx);
@@ -191,6 +196,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 	
 	if( handle != nullptr){
 		pAudioClient->SetEventHandle(handle);
+		event_handle = handle;
 	}
 
 	hr = pAudioClient->GetService(IID_IAudioCaptureClient, (void**)&pCaptureClient);
@@ -211,18 +217,86 @@ bool WASAPI::start(HANDLE handle) noexcept
 
 bool WASAPI::stop() noexcept
 {
-    
+	if(pAudioClient == nullptr)
+		return true;
+	pAudioClient->Stop();
+	
+	/*释放掉剩余没有提取的音频数据*/
+	uint32_t packetLength;
+	unsigned char * pData;
+	uint32_t numFramesAvailable;
+	DWORD  flags;
+	
+	pCaptureClient->GetNextPacketSize(&packetLength);
+
+	//循环读取所有包,然后release
+	while (packetLength) {
+		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
+		
+		pCaptureClient->ReleaseBuffer(numFramesAvailable);
+
+		pCaptureClient->GetNextPacketSize(&packetLength);
+	}
+	
+	SafeRelease()(&pCaptureClient);
+	SafeRelease()(&pAudioClient);
+	if(pwfx != nullptr){
+		CoTaskMemFree(pwfx);
+		pwfx = nullptr;
+	}
+	return true;
 }
 
 core::FramePacket *WASAPI::get_packet() noexcept
 {
 	if(pAudioClient == nullptr)
-		return false;
-	auto hr = pAudioClient->SetEventHandle(handle);
-	if (FAILED(hr)){
-		return false;
+		return nullptr;
+	
+	uint32_t packetLength;
+	pCaptureClient->GetNextPacketSize(&packetLength);
+
+	if (packetLength) {
+		unsigned char * pData;
+		uint32_t numFramesAvailable;
+		DWORD  flags;
+		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
+		
+		if (numFramesAvailable != 0)
+		{
+			//先计算大小，然后后面统一合成
+			auto size = numFramesAvailable * nFrameSize;
+			
+			auto packet = core::FramePacket::Make_Packet();
+			if(packet == nullptr){
+				pCaptureClient->ReleaseBuffer(numFramesAvailable);
+				return nullptr;
+			}
+			packet->data[0] = static_cast<uint8_t*>(malloc(size));
+			if(packet->data[0]){
+				pCaptureClient->ReleaseBuffer(numFramesAvailable);
+				core::FramePacket::Destroy_Packet(&packet);
+				return nullptr;
+			}
+			
+			if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+			{
+				//
+				//  Fill 0s from the capture buffer to the output buffer.
+				//
+				memset(packet->data[0],0,size);
+			}
+			else
+			{
+				//
+				//  Copy data from the audio engine buffer to the output buffer.
+				//
+				memcpy(packet->data[0],pData,size);
+			}
+			pCaptureClient->ReleaseBuffer(numFramesAvailable);
+			return packet;
+		}
 	}
-	return true;
+	return nullptr;
 }
 
 bool WASAPI::_init_enumerator() noexcept

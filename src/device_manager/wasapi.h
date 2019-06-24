@@ -126,11 +126,12 @@ private:
 	const IID   IID_IAudioClient = __uuidof(IAudioClient);
 	const IID   IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 
-	IMMDeviceEnumerator *pEnumerator;
-	IMMDevice           *pDevice;
-	IAudioClient        *pAudioClient;
-	IAudioCaptureClient *pCaptureClient;
-	WAVEFORMATEX        *pwfx;
+	IMMDeviceEnumerator *pEnumerator{nullptr};
+	IMMDevice           *pDevice{nullptr};
+	IAudioClient        *pAudioClient{nullptr};
+	IAudioCaptureClient *pCaptureClient{nullptr};
+	WAVEFORMATEX        *pwfx{nullptr};
+	HANDLE				event_handle{nullptr};
 	uint32_t			nFrameSize;
 	PROPERTYKEY			key;
 };
