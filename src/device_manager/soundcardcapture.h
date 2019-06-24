@@ -1,11 +1,10 @@
 #pragma once
 
 #include "abstractcapture.h"
-#ifdef WIN32
+
 #define WIN32_LEAN_AND_MEAN
-#include <MMDeviceAPI.h>
-#include <AudioClient.h>
-#endif
+#include <mmdeviceapi.h>
+#include <audioclient.h>
 
 namespace rtplivelib {
 
