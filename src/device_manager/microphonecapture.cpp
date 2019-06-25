@@ -1,5 +1,6 @@
 #include "microphonecapture.h"
 #include "wasapi.h"
+#include "../core/stringformat.h"
 
 namespace rtplivelib {
 
@@ -10,6 +11,7 @@ public:
 #if defined (WIN64)
 	WASAPI audio_api;
 	static constexpr WASAPI::FlowType FT{WASAPI::CAPTURE};
+	HANDLE event{nullptr};
 #endif
 	std::mutex fmt_ctx_mutex;
 	std::string fmt_name;
@@ -21,10 +23,16 @@ MicrophoneCapture::MicrophoneCapture() :
 	AbstractCapture(AbstractCapture::CaptureType::Microphone),
 	d_ptr(new MicrophoneCapturePrivateData)
 {
+#if _WIN32_WINNT >= 0x0600
+	d_ptr->event = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+#else
+	d_ptr->event = CreateEvent(nullptr, false, false, nullptr);
+#endif
+	
 	d_ptr->audio_api.set_default_device(MicrophoneCapturePrivateData::FT);
 	
 	auto pair = d_ptr->audio_api.get_current_device_info();
-	current_device_name = pair.second;
+	current_device_name = core::StringFormat::WString2String(pair.second);
 	
 	/*在子类初始化里开启线程*/
 	start_thread();
@@ -39,24 +47,11 @@ MicrophoneCapture::~MicrophoneCapture()
 std::map<std::string,std::string> MicrophoneCapture::get_all_device_info() noexcept(false)
 {
 	std::map<std::string,std::string> info_map;
-	
-	if(d_ptr->ifmt == nullptr){
-		std::cout << "not found input format" << std::endl;
-		return info_map;
+
+	auto list_info = d_ptr->audio_api.get_all_device_info(MicrophoneCapturePrivateData::FT);
+	for(auto i = list_info.begin(); i != list_info.end(); ++i){
+		info_map[core::StringFormat::WString2String(i->second)] = core::StringFormat::WString2String(i->first);
 	}
-	
-	AVDeviceInfoList *info_list = nullptr;
-	auto n = avdevice_list_input_sources(d_ptr->ifmt,nullptr,nullptr,&info_list);
-//	PrintErrorMsg(n);
-	if(info_list){
-		for(auto index = 0;index < info_list->nb_devices;++index){
-			std::pair<std::string,std::string> pair;
-			pair.first = info_list->devices[index]->device_description;
-			pair.second = info_list->devices[index]->device_name;
-			info_map.insert(pair);
-		}
-	}
-	return d_ptr->audio_api.get_all_device_info(MicrophoneCapturePrivateData::FT);
 	return info_map;
 }
 
@@ -68,9 +63,10 @@ bool MicrophoneCapture::set_current_device_name(std::string name) noexcept
 {
 	if(name.compare(current_device_name) == 0)
 		return true;
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	auto temp = current_device_name;
 	current_device_name = name;
-	auto result = open_device();
+	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(name),MicrophoneCapturePrivateData::FT);
 	if(!result){
 		current_device_name = temp;
 	}
@@ -83,28 +79,13 @@ bool MicrophoneCapture::set_current_device_name(std::string name) noexcept
  */
 AbstractCapture::SharedPacket MicrophoneCapture::on_start() noexcept
 {
-	if(d_ptr->fmtContxt == nullptr){
-		if(!open_device()){
-			stop_capture();
-			return nullptr;
-		}
-	}
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
+	WaitForSingleObject(d_ptr->event, 5);
 	
-	d_ptr->fmt_ctx_mutex.lock();
-	AVPacket *packet = av_packet_alloc();
-	av_read_frame(d_ptr->fmtContxt, packet);
-		
-	auto ptr = FramePacket::Make_Shared();
-	ptr->packet = packet;
-	ptr->data[0] = packet->data;
-	ptr->size = packet->size;
-	auto codec = d_ptr->fmtContxt->streams[packet->stream_index]->codecpar;
-	ptr->format.channels = codec->channels;
-	ptr->format.sample_rate = codec->sample_rate;
-	ptr->format.pixel_format = codec->format;
-	
-	d_ptr->fmt_ctx_mutex.unlock();
-	return ptr;
+	auto packet = d_ptr->audio_api.get_packet();
+
+	AbstractCapture::SharedPacket p(packet);
+	return p;
 }
 
 /**
@@ -113,31 +94,14 @@ AbstractCapture::SharedPacket MicrophoneCapture::on_start() noexcept
  */
 void MicrophoneCapture::on_stop() noexcept 
 {
-	if(d_ptr->fmtContxt == nullptr)
-		return;
-	d_ptr->fmt_ctx_mutex.lock();
-	avformat_close_input(&d_ptr->fmtContxt);
-	d_ptr->fmt_ctx_mutex.unlock();
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
+	d_ptr->audio_api.stop();
 }
 
 bool MicrophoneCapture::open_device() noexcept
 {
-	AVDictionary *options = nullptr;
-	av_dict_set(&options,"sample_rate","48000",0);
-	av_dict_set(&options,"channels","2",0); 
-	
 	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
-	if(d_ptr->fmtContxt != nullptr){
-		avformat_close_input(&d_ptr->fmtContxt);
-	}
-#if defined (WIN32)
-	auto n = avformat_open_input(&d_ptr->fmtContxt,"audio=麦克风(HD Pro Webcam C920)",d_ptr->ifmt,&options);
-#elif defined (unix)
-	auto name = get_all_device_info()[current_device_name];
-	auto n = avformat_open_input(&d_ptr->fmtContxt, name.c_str(),d_ptr->ifmt,&options);
-#endif
-//	PrintErrorMsg(n);
-	return n == 0;
+	return d_ptr->audio_api.start(d_ptr->event);
 }
 
 }//namespace device_manager

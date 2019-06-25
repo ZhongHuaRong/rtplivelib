@@ -1,5 +1,6 @@
 #include "wasapi.h"
 #include "../core/except.h"
+#include "../core/time.h"
 #include <stdint.h>
 
 namespace rtplivelib {
@@ -199,7 +200,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 		5 * 10000, // 100纳秒为基本单位
 		0,
 		pwfx,
-		NULL);
+		nullptr);
 	
 	if (FAILED(hr)) {
 		SafeRelease()(&pAudioClient);
@@ -302,6 +303,12 @@ core::FramePacket *WASAPI::get_packet() noexcept
 				memcpy(packet->data[0],pData,size);
 			}
 			pCaptureClient->ReleaseBuffer(numFramesAvailable);
+			
+			packet->size = size;
+			packet->format = get_format();
+			//获取时间戳
+			packet->dts = core::Time::Now().to_timestamp();
+			packet->pts = packet->dts;
 			return packet;
 		}
 	}
