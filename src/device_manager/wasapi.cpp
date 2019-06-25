@@ -43,7 +43,7 @@ WASAPI::~WASAPI()
     TaskMemFree()(&pwfx);
 }
 
-std::vector<WASAPI::device_info> WASAPI::get_device_info(WASAPI::FlowType ft) noexcept(false)
+std::vector<WASAPI::device_info> WASAPI::get_all_device_info(WASAPI::FlowType ft) noexcept(false)
 {
     if( _init_enumerator() == false){
         throw core::uninitialized_error("IMMDeviceEnumerator");
@@ -61,10 +61,7 @@ std::vector<WASAPI::device_info> WASAPI::get_device_info(WASAPI::FlowType ft) no
 		SafeRelease()(&collenction);
 		return std::vector<WASAPI::device_info>();
 	}
-	wchar_t * str{nullptr};
-	PROPVARIANT varName;
-	PropVariantInit(&varName);
-	IPropertyStore * props{nullptr};
+	
 	IMMDevice *pDevice{nullptr};
 	std::vector<WASAPI::device_info> info_list;
 	info_list.resize(count);
@@ -76,23 +73,9 @@ std::vector<WASAPI::device_info> WASAPI::get_device_info(WASAPI::FlowType ft) no
 			throw core::uninitialized_error("IMMDeviceEnumerator");
 		}
 		
-		hr = pDevice->GetId(&str);
-		if (FAILED(hr)) {
-			SafeRelease()(&collenction);
-			throw core::uninitialized_error("IMMDeviceEnumerator");
-		}
-		
-		hr = pDevice->OpenPropertyStore(STGM_READ,&props);
-		if (FAILED(hr)) {
-			SafeRelease()(&collenction);
-			throw core::uninitialized_error("IMMDeviceEnumerator");
-		}
-		info_list.push_back(device_info(str,varName.pwszVal));
-		TaskMemFree()(&str);
+		info_list.push_back( get_device_info(pDevice) );
 		SafeRelease()(&pDevice);
-		SafeRelease()(&props);
 	}
-	PropVariantClear(&varName);
 	SafeRelease()(&collenction);
 	return info_list;
 }
@@ -105,7 +88,7 @@ WASAPI::device_info WASAPI::get_current_device_info() noexcept
 		}
 	}
 	
-	return get_current_device_info();
+	return get_device_info(pDevice);
 }
 
 bool WASAPI::set_current_device(uint64_t num, WASAPI::FlowType ft) noexcept
@@ -114,7 +97,7 @@ bool WASAPI::set_current_device(uint64_t num, WASAPI::FlowType ft) noexcept
         return false;
     }
     try {
-        auto list = get_device_info(ft);
+        auto list = get_all_device_info(ft);
         if( list.size() <= num )
             return false;
         

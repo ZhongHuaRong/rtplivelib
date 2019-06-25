@@ -48,7 +48,7 @@ public:
      * @return 
      * 返回
      */
-    std::vector<device_info> get_device_info(FlowType ft = ALL) noexcept(false);
+    std::vector<device_info> get_all_device_info(FlowType ft = ALL) noexcept(false);
     
     /**
      * @brief get_current_device_info

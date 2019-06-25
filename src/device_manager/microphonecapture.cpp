@@ -8,7 +8,7 @@ namespace device_manager {
 class MicrophoneCapturePrivateData{
 public:
 #if defined (WIN64)
-	WASAPI was;
+	WASAPI audio_api;
 	static constexpr WASAPI::FlowType FT{WASAPI::CAPTURE};
 #endif
 	std::mutex fmt_ctx_mutex;
@@ -21,31 +21,11 @@ MicrophoneCapture::MicrophoneCapture() :
 	AbstractCapture(AbstractCapture::CaptureType::Microphone),
 	d_ptr(new MicrophoneCapturePrivateData)
 {
-	d_ptr->was.set_default_device(MicrophoneCapturePrivateData::FT);
+	d_ptr->audio_api.set_default_device(MicrophoneCapturePrivateData::FT);
 	
-	try {
-		auto && list = d_ptr->was.get_device_info(MicrophoneCapturePrivateData::FT);
-		
-		list.
-	} catch (...) {
-		
-	}
+	auto pair = d_ptr->audio_api.get_current_device_info();
+	current_device_name = pair.second;
 	
-#if defined (WIN32)
-	d_ptr->ifmt = av_find_input_format("dshow");
-#elif defined (unix)
-	d_ptr->ifmt = av_find_input_format("alsa");
-	
-	//这里只是为了设置当前名字
-	AVDeviceInfoList *info_list = nullptr;
-	avdevice_list_input_sources(d_ptr->ifmt,nullptr,nullptr,&info_list);
-	if(info_list != nullptr && info_list->nb_devices != 0){
-		if(info_list->default_device == -1)
-			current_device_name = info_list->devices[0]->device_description;
-		else
-			current_device_name = info_list->devices[info_list->default_device]->device_description;
-	}
-#endif
 	/*在子类初始化里开启线程*/
 	start_thread();
 }
@@ -56,7 +36,7 @@ MicrophoneCapture::~MicrophoneCapture()
 	delete d_ptr;
 }
 
-std::map<std::string,std::string> MicrophoneCapture::get_all_device_info() noexcept
+std::map<std::string,std::string> MicrophoneCapture::get_all_device_info() noexcept(false)
 {
 	std::map<std::string,std::string> info_map;
 	
@@ -76,6 +56,7 @@ std::map<std::string,std::string> MicrophoneCapture::get_all_device_info() noexc
 			info_map.insert(pair);
 		}
 	}
+	return d_ptr->audio_api.get_all_device_info(MicrophoneCapturePrivateData::FT);
 	return info_map;
 }
 

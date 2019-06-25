@@ -30,7 +30,7 @@ public:
 
     ~MicrophoneCapture() override;
 	
-	virtual std::map<std::string,std::string> get_all_device_info() noexcept override;
+	virtual std::map<std::string,std::string> get_all_device_info() noexcept(false) override;
 	
 	virtual bool set_current_device_name(std::string name) noexcept override;
 
