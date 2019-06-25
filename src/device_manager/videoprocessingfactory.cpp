@@ -318,6 +318,10 @@ void VideoProcessingFactory::on_thread_run() noexcept
 			//回调合成图像
 			if(GlobalCallBack::Get_CallBack() != nullptr)
 				GlobalCallBack::Get_CallBack()->on_video_frame_merge(merge_packet.get());
+			std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
+			if(d_ptr->player != nullptr)
+				d_ptr->player->show(merge_packet.get());
+			push_one(merge_packet);
 		}
 	}
 	else if( cc_ptr != nullptr&& cc_ptr->is_running() ){
@@ -330,10 +334,10 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		if(GlobalCallBack::Get_CallBack() != nullptr){
 			GlobalCallBack::Get_CallBack()->on_camera_frame(packet.get());
 		}
-		push_one(packet);
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
 			d_ptr->player->show(packet.get());
+		push_one(packet);
 		return;
 	}
 	else if(dc_ptr != nullptr && dc_ptr->is_running()){
@@ -363,11 +367,10 @@ void VideoProcessingFactory::on_thread_run() noexcept
 			GlobalCallBack::Get_CallBack()->on_desktop_frame(packet.get());
 		}
 		
-		push_one(packet);
-		
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
 			d_ptr->player->show(packet.get());
+		push_one(packet);
 		return;
 	}
 	else{

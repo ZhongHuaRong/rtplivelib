@@ -105,7 +105,6 @@ HEADERS += \
     src/rtp_network/fec/fecencoder.h \
     src/device_manager/microphonecapture.h \
     src/device_manager/soundcardcapture.h \
-    src/wasapi.h \
     src/device_manager/wasapi.h \
     src/core/stringformat.h
 
@@ -141,6 +140,5 @@ SOURCES += \
     src/rtp_network/fec/fecencoder.cpp \
     src/device_manager/microphonecapture.cpp \
     src/device_manager/soundcardcapture.cpp \
-    src/wasapi.cpp \
     src/device_manager/wasapi.cpp \
     src/core/stringformat.cpp

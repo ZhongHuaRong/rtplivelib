@@ -15,6 +15,8 @@ DeviceManager::DeviceManager() :
 {
 	video_factory.set_camera_capture_object(&camera_capture);
 	video_factory.set_desktop_capture_object(&desktop_capture);
+	audio_factory.set_microphone_capture_object(&mic_capture);
+	audio_factory.set_soundcard_capture_object(&soundcard_capture);
 	set_fps(15);
 }
 
@@ -23,6 +25,9 @@ DeviceManager::~DeviceManager() {
 	video_factory.set_capture(false,false);
 	video_factory.set_camera_capture_object(nullptr);
 	video_factory.set_desktop_capture_object(nullptr);
+	audio_factory.set_capture(false,false);
+	audio_factory.set_microphone_capture_object(nullptr);
+	audio_factory.set_soundcard_capture_object(nullptr);
 }
 
 /**
@@ -76,6 +81,7 @@ void DeviceManager::set_microphone_enable(bool enable) {
 		mic_capture.start_capture(is_capture_audio());
 	else
 		mic_capture.stop_capture();
+	audio_factory.notify_capture();
 }
 
 /**
@@ -93,6 +99,7 @@ void DeviceManager::set_sound_card_enable(bool enable) {
 		soundcard_capture.start_capture(is_capture_audio());
 	else
 		soundcard_capture.stop_capture();
+	audio_factory.notify_capture();
 }
 
 /**
@@ -133,13 +140,8 @@ void DeviceManager::set_fps(int fps)
  * 相当于全局音频设置
  */
 void DeviceManager::start_audio_capture() {
-	if (audio_open_flag)
-		return;
 	audio_open_flag = true;
-	if (mic_open_flag)
-		mic_capture.start_capture();
-	if (sc_open_flag)
-		soundcard_capture.start_capture();
+	audio_factory.set_capture(mic_open_flag,sc_open_flag);
 }
 
 /**
@@ -150,10 +152,7 @@ void DeviceManager::start_audio_capture() {
  */
 void DeviceManager::stop_audio_capture() {
 	audio_open_flag = false;
-	if (mic_open_flag)
-		mic_capture.stop_capture();
-	if (sc_open_flag)
-		soundcard_capture.stop_capture();
+	audio_factory.set_capture(false,false);
 	
 }
 
