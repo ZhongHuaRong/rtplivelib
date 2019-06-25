@@ -1,10 +1,5 @@
 #include "microphonecapture.h"
-extern "C" {
-    #include <libavcodec/avcodec.h>
-    #include <libavformat/avformat.h>
-    #include <libavdevice/avdevice.h>
-	#include <libavutil/dict.h>
-}
+#include "wasapi.h"
 
 namespace rtplivelib {
 
@@ -12,8 +7,10 @@ namespace device_manager {
 
 class MicrophoneCapturePrivateData{
 public:
-	AVInputFormat *ifmt{nullptr};
-	AVFormatContext *fmtContxt{nullptr};
+#if defined (WIN64)
+	WASAPI was;
+	static constexpr WASAPI::FlowType FT{WASAPI::CAPTURE};
+#endif
 	std::mutex fmt_ctx_mutex;
 	std::string fmt_name;
 };
@@ -24,7 +21,15 @@ MicrophoneCapture::MicrophoneCapture() :
 	AbstractCapture(AbstractCapture::CaptureType::Microphone),
 	d_ptr(new MicrophoneCapturePrivateData)
 {
-	avdevice_register_all();
+	d_ptr->was.set_default_device(MicrophoneCapturePrivateData::FT);
+	
+	try {
+		auto && list = d_ptr->was.get_device_info(MicrophoneCapturePrivateData::FT);
+		
+		list.
+	} catch (...) {
+		
+	}
 	
 #if defined (WIN32)
 	d_ptr->ifmt = av_find_input_format("dshow");

@@ -16,7 +16,7 @@ class MicrophoneCapturePrivateData;
  * 如果打开设备失败则说明该系统不支持
  * 备注:
  * Windows系统
- * 
+ * 使用WASAPI
  * Linux系统
  * 
  * 如果需要用该类自己处理数据，则可以考虑继承该类，然后重写on_frame_data接口来前处理数据

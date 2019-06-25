@@ -6,6 +6,27 @@ namespace rtplivelib {
 
 namespace device_manager {
 
+/*用于资源释放*/
+struct SafeRelease {
+	template<typename T>
+	void operator () (T ** p) {
+		if (*p != nullptr) {
+			(*p)->Release();
+			*p = nullptr;
+		}
+	}
+};
+
+struct TaskMemFree {
+	template<typename T>
+	void operator () (T ** p) {
+		if (*p != nullptr) {
+			CoTaskMemFree(*p);
+			*p = nullptr;
+		}
+	}
+};
+
 WASAPI::WASAPI()
 {
 	GUID IDevice_FriendlyName = { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } };
@@ -19,10 +40,7 @@ WASAPI::~WASAPI()
     SafeRelease()(&pDevice);
     SafeRelease()(&pAudioClient);
     SafeRelease()(&pCaptureClient);
-    if(pwfx != nullptr){
-		CoTaskMemFree(pwfx);
-		pwfx = nullptr;
-	}
+    TaskMemFree()(&pwfx);
 }
 
 std::vector<WASAPI::device_info> WASAPI::get_device_info(WASAPI::FlowType ft) noexcept(false)
@@ -70,14 +88,24 @@ std::vector<WASAPI::device_info> WASAPI::get_device_info(WASAPI::FlowType ft) no
 			throw core::uninitialized_error("IMMDeviceEnumerator");
 		}
 		info_list.push_back(device_info(str,varName.pwszVal));
-		CoTaskMemFree(str);
-		str = nullptr;
+		TaskMemFree()(&str);
 		SafeRelease()(&pDevice);
 		SafeRelease()(&props);
 	}
 	PropVariantClear(&varName);
 	SafeRelease()(&collenction);
 	return info_list;
+}
+
+WASAPI::device_info WASAPI::get_current_device_info() noexcept
+{
+	if(pDevice == nullptr){
+		if(set_default_device(WASAPI::FlowType::RENDER) == false){
+			return device_info(L"",L"");
+		}
+	}
+	
+	return get_current_device_info();
 }
 
 bool WASAPI::set_current_device(uint64_t num, WASAPI::FlowType ft) noexcept
@@ -151,8 +179,7 @@ const core::Format WASAPI::get_format() noexcept
 		format.bits = pwfx->wBitsPerSample;
 		format.channels = pwfx->nChannels;
 		format.sample_rate = pwfx->nSamplesPerSec;
-		CoTaskMemFree(pwfx);
-		pwfx = nullptr;
+		TaskMemFree()(&pwfx);
 		return format;
 	}
 }
@@ -174,10 +201,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 	}
 	
 	//获取格式
-	if(pwfx != nullptr){
-		CoTaskMemFree(pwfx);
-		pwfx = nullptr;
-	}
+	TaskMemFree()(&pwfx);
 	hr = pAudioClient->GetMixFormat(&pwfx);
 	if (FAILED(hr)) {
 		SafeRelease()(&pAudioClient);
@@ -196,8 +220,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 	
 	if (FAILED(hr)) {
 		SafeRelease()(&pAudioClient);
-		CoTaskMemFree(pwfx);
-		pwfx = nullptr;
+		TaskMemFree()(&pwfx);
 		return false;
 	}
 	
@@ -209,8 +232,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 	hr = pAudioClient->GetService(IID_IAudioCaptureClient, (void**)&pCaptureClient);
 	if (FAILED(hr)) {
 		SafeRelease()(&pAudioClient);
-		CoTaskMemFree(pwfx);
-		pwfx = nullptr;
+		TaskMemFree()(&pwfx);
 		return false;
 	}
 	
@@ -247,10 +269,7 @@ bool WASAPI::stop() noexcept
 	
 	SafeRelease()(&pCaptureClient);
 	SafeRelease()(&pAudioClient);
-	if(pwfx != nullptr){
-		CoTaskMemFree(pwfx);
-		pwfx = nullptr;
-	}
+	TaskMemFree()(&pwfx);
 	return true;
 }
 
@@ -304,6 +323,33 @@ core::FramePacket *WASAPI::get_packet() noexcept
 		}
 	}
 	return nullptr;
+}
+
+WASAPI::device_info WASAPI::get_device_info(IMMDevice *device) noexcept
+{
+	wchar_t * str{nullptr};
+	PROPVARIANT varName;
+	PropVariantInit(&varName);
+	IPropertyStore * props{nullptr};
+	
+	device_info info;
+	auto hr = device->GetId(&str);
+	if (FAILED(hr)) {
+		return info;
+	}
+	
+	info.first = str;
+	TaskMemFree()(&str);
+	
+	hr = device->OpenPropertyStore(STGM_READ,&props);
+	if (FAILED(hr)) {
+		return info;
+	}
+	
+	info.second = varName.pwszVal;
+	SafeRelease()(&props);
+	PropVariantClear(&varName);
+	return info;
 }
 
 bool WASAPI::_init_enumerator() noexcept

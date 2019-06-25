@@ -13,17 +13,6 @@ namespace rtplivelib {
 
 namespace device_manager {
 
-/*用于资源释放*/
-struct SafeRelease {
-	template<typename T>
-	void operator () (T ** p) {
-		if (*p != nullptr) {
-			(*p)->Release();
-			*p = nullptr;
-		}
-	}
-};
-
 /**
  * @brief The SoundCardCapture class
  * Windows系统下的声音采集，分capture和render
@@ -62,6 +51,14 @@ public:
     std::vector<device_info> get_device_info(FlowType ft = ALL) noexcept(false);
     
     /**
+     * @brief get_current_device_info
+     * 获取当前设备id和名字
+     * 如果没有设置，则返回默认声卡信息
+     * @return 
+     */
+    device_info get_current_device_info() noexcept;
+    
+    /**
      * @brief set_current_device
      * 通过索引更改当前使用的设备
      * @param num
@@ -95,6 +92,7 @@ public:
     /**
      * @brief get_format
      * 获取当前音频格式
+     * 需要开始采集才能获取
      * @return 
      */
     const core::Format get_format() noexcept;
@@ -118,6 +116,8 @@ public:
      * 获取音频包
      */
     core::FramePacket * get_packet() noexcept;
+protected:
+    device_info get_device_info(IMMDevice * device) noexcept;
 private:
     bool _init_enumerator() noexcept;
 private:
