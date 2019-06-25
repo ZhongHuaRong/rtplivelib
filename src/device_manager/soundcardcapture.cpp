@@ -1,131 +1,78 @@
 #include "soundcardcapture.h"
+#include "wasapi.h"
+#include "../core/stringformat.h"
 
 namespace rtplivelib {
 
 namespace device_manager {
 
+struct SoundCardCapturePrivateData{
+public:
+#if defined (WIN64)
+	WASAPI audio_api;
+	static constexpr WASAPI::FlowType FT{WASAPI::RENDER};
+	HANDLE event{nullptr};
+#endif
+	std::mutex fmt_ctx_mutex;
+	std::string fmt_name;
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SoundCardCapture::SoundCardCapture() :
-	AbstractCapture(CaptureType::Soundcard)
+	AbstractCapture(CaptureType::Soundcard),
+	d_ptr(new SoundCardCapturePrivateData)
 {
-    /*初始化步骤放到_init执行*/
-	_initResult = _init();
+#if defined (WIN64)
+#if _WIN32_WINNT >= 0x0600
+	d_ptr->event = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+#else
+	d_ptr->event = CreateEvent(nullptr, false, false, nullptr);
+#endif
+#endif
+	
+	d_ptr->audio_api.set_default_device(SoundCardCapturePrivateData::FT);
+	
+	auto pair = d_ptr->audio_api.get_current_device_info();
+	current_device_name = core::StringFormat::WString2String(pair.second);
 	
 	/*在子类初始化里开启线程*/
-//	start_thread();
+	start_thread();
 }
 
 SoundCardCapture::~SoundCardCapture() 
 {
-	if (is_running()) {
-		//析构的时候注意要先暂停，否则线程不会退出
-		on_stop();
-	}
-#ifdef WIN32
-	SafeRelease()(&pCaptureClient);
-	SafeRelease()(&pAudioClient);
-	SafeRelease()(&pDevice);
-	SafeRelease()(&pEnumerator);
-
-	if (eventHandle)
-		CloseHandle(eventHandle);
+	exit_thread();
+#if defined (WIN64)
+	if (d_ptr->event)
+		CloseHandle(d_ptr->event);
 #endif
+	delete d_ptr;
 }
 
 std::map<std::string, std::string> SoundCardCapture::get_all_device_info() noexcept
 {
-	return std::map<std::string, std::string>();
+	std::map<std::string,std::string> info_map;
+
+	auto list_info = d_ptr->audio_api.get_all_device_info(SoundCardCapturePrivateData::FT);
+	for(auto i = list_info.begin(); i != list_info.end(); ++i){
+		info_map[core::StringFormat::WString2String(i->second)] = core::StringFormat::WString2String(i->first);
+	}
+	return info_map;
 }
 
 bool SoundCardCapture::set_current_device_name(std::string name) noexcept
 {
-	UNUSED(name)
-	return false;
-}
-
-/**
- * @brief _init
- * 用于初始化工作
- * @return
- * 初始化成功则返回true
- */
-bool SoundCardCapture::_init() 
-{
-#ifdef WIN32
-    /*这里的声卡采集，采用Windows的WASAPI*/
-	pEnumerator = nullptr;
-	pDevice = nullptr;
-	pAudioClient = nullptr;
-	pCaptureClient = nullptr;
-	pwfx = nullptr;
-	// 枚举设备
-	auto hr = CoCreateInstance(CLSID_MMDeviceEnumerator,
-		NULL,
-		CLSCTX_ALL,
-		IID_IMMDeviceEnumerator,
-		(void**)&pEnumerator);
-	if (FAILED(hr)) {
-		std::cout << "Unable to CoCreateInstance" << std::endl;
-		return false;
+	if(name.compare(current_device_name) == 0)
+		return true;
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
+	auto temp = current_device_name;
+	current_device_name = name;
+	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(name),SoundCardCapturePrivateData::FT);
+	if(!result){
+		current_device_name = temp;
 	}
-	// 采集声卡
-	hr = pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pDevice);
-	if (FAILED(hr)) {
-		std::cout << "Unable to GetDefaultAudioEndpoint" << std::endl;
-		return false;
-	}
-
-	//创建一个管理对象，通过它可以获取到你需要的一切数据
-	hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
-	if (FAILED(hr)) {
-		std::cout << "Unable to Activate" << std::endl;
-		return false;
-	}
-
-	//获取格式
-	hr = pAudioClient->GetMixFormat(&pwfx);
-	if (FAILED(hr)) {
-		std::cout << "Unable to GetMixFormat" << std::endl;
-		return false;
-	}
-
-	nFrameSize = (pwfx->wBitsPerSample / 8) * pwfx->nChannels;
-
-	hr = pAudioClient->Initialize(
-		AUDCLNT_SHAREMODE_SHARED,
-		AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK,
-		10 * 10000, // 100纳秒为基本单位
-		0,
-		pwfx,
-		NULL);
-	if (FAILED(hr)) {
-		std::cout << "Unable to GetDefaultAudioEndpoint" << std::endl;
-		return false;
-	}
-	
-#if _WIN32_WINNT >= 0x0600
-	eventHandle = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
-#else
-	eventHandle = CreateEvent(NULL, false, false, nullptr);
-#endif
-	
-	hr = pAudioClient->SetEventHandle(eventHandle);
-	if (FAILED(hr))
-	{
-		printf("Unable to SetEventHandle");
-		return false;
-	}
-
-	hr = pAudioClient->GetService(IID_IAudioCaptureClient, (void**)&pCaptureClient);
-	if (FAILED(hr)) {
-		std::cout << "Unable to GetService" << std::endl;
-		return false;
-	}
-	return true;
-#else
-	return false;
-#endif
+	return result;
 }
 
 /**
@@ -134,74 +81,13 @@ bool SoundCardCapture::_init()
  */
 AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
 {
-#if defined (WIN32)
-//	if (!_initResult) {
-//		_initResult = _init();
-//		if(!_initResult){
-//			std::cout << "Unable to Initialize" << std::endl;
-//			stop_capture();
-//			return nullptr;
-//		}
-//	}
-//	auto hr = pAudioClient->Start();
-//	if (FAILED(hr)) {
-//		std::cout << "Unable to Start" << std::endl;
-//		stop_capture();
-//		return nullptr;
-//	}
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
+	WaitForSingleObject(d_ptr->event, 5);
+	
+	auto packet = d_ptr->audio_api.get_packet();
 
-//	uint32_t packetLength;
-//	unsigned char * pData;
-//	uint32_t numFramesAvailable;
-//	DWORD  flags;
-	
-//	//等待事件回调
-//	WaitForSingleObject(eventHandle, 5);
-	
-//	pCaptureClient->GetNextPacketSize(&packetLength);
-
-//	if (packetLength) {
-//		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
-		
-//		FramePacket * packet = new FramePacket();
-//		packet->packet = nullptr;
-//		packet->format.channels = pwfx->nChannels;
-//		packet->format.bits = pwfx->cbSize;
-//		packet->format.sample_rate = pwfx->nSamplesPerSec;
-//		packet->format.format = pwfx->wFormatTag;
-//		if (numFramesAvailable != 0)
-//		{
-//			//先计算大小，然后后面统一合成
-//			auto size = numFramesAvailable * nFrameSize;
-//			packet->data[0] = new uint8_t[size];
-			
-//			if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-//			{
-//				//
-//				//  Fill 0s from the capture buffer to the output buffer.
-//				//
-//				memset(packet->data[0],0,size);
-//			}
-//			else
-//			{
-//				//
-//				//  Copy data from the audio engine buffer to the output buffer.
-//				//
-//				memcpy(packet->data[0],pData,size);
-//			}
-//		}
-//		hr = pCaptureClient->ReleaseBuffer(numFramesAvailable);
-//		return packet;
-//	}
-//	else
-//		return nullptr;
-	
-	stop_capture();
-	return nullptr;
-#elif defined (unix)
-	stop_capture();
-	return nullptr;
-#endif
+	AbstractCapture::SharedPacket p(packet);
+	return p;
 }
 
 /**
@@ -211,26 +97,8 @@ AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
 void SoundCardCapture::on_stop() noexcept
 {
     /*并没有任何操作，将标志位isrunning设为false就可以暂停了*/
-#if defined (WIN32)
-	pAudioClient->Stop();
-	
-	/*释放掉剩余没有提取的音频数据*/
-	uint32_t packetLength;
-	unsigned char * pData;
-	uint32_t numFramesAvailable;
-	DWORD  flags;
-	
-	pCaptureClient->GetNextPacketSize(&packetLength);
-
-	//循环读取所有包,然后release
-	while (packetLength) {
-		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
-		
-		pCaptureClient->ReleaseBuffer(numFramesAvailable);
-
-		pCaptureClient->GetNextPacketSize(&packetLength);
-	}
-#endif
+    std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
+	d_ptr->audio_api.stop();
 }
 
 }//namespace device_manager

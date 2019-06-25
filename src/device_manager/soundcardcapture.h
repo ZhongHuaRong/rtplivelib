@@ -2,24 +2,11 @@
 
 #include "abstractcapture.h"
 
-#define WIN32_LEAN_AND_MEAN
-#include <mmdeviceapi.h>
-#include <audioclient.h>
-
 namespace rtplivelib {
 
 namespace device_manager {
 
-/*用于资源释放*/
-struct SafeRelease {
-	template<typename T>
-	void operator () (T ** p) {
-		if (*p != nullptr) {
-			(*p)->Release();
-			*p = nullptr;
-		}
-	}
-};
+struct SoundCardCapturePrivateData;
 
 /**
  * @brief The SoundCardCapture class
@@ -60,24 +47,8 @@ protected:
      * 结束捕捉音频后的回调
      */
 	virtual void on_stop() noexcept override;
-
 private:
-	bool _initResult;
-
-#ifdef WIN32
-	const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
-	const IID   IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
-	const IID   IID_IAudioClient = __uuidof(IAudioClient);
-	const IID   IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
-
-	IMMDeviceEnumerator *pEnumerator;
-	IMMDevice           *pDevice;
-	IAudioClient        *pAudioClient;
-	IAudioCaptureClient *pCaptureClient;
-	WAVEFORMATEX        *pwfx;
-	HANDLE				eventHandle;
-	uint32_t			nFrameSize;
-#endif
+	SoundCardCapturePrivateData * const d_ptr;
 };
 
 }//namespace device_manager

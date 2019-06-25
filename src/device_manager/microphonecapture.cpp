@@ -23,10 +23,12 @@ MicrophoneCapture::MicrophoneCapture() :
 	AbstractCapture(AbstractCapture::CaptureType::Microphone),
 	d_ptr(new MicrophoneCapturePrivateData)
 {
+#if defined (WIN64)
 #if _WIN32_WINNT >= 0x0600
 	d_ptr->event = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 #else
 	d_ptr->event = CreateEvent(nullptr, false, false, nullptr);
+#endif
 #endif
 	
 	d_ptr->audio_api.set_default_device(MicrophoneCapturePrivateData::FT);
@@ -41,6 +43,10 @@ MicrophoneCapture::MicrophoneCapture() :
 MicrophoneCapture::~MicrophoneCapture() 
 {
 	exit_thread();
+#if defined (WIN64)
+	if (d_ptr->event)
+		CloseHandle(d_ptr->event);
+#endif
 	delete d_ptr;
 }
 
