@@ -1,5 +1,6 @@
 #include "liveengine.h"
 #include "codec/videoencoder.h"
+#include "codec/audioencoder.h"
 #include "rtp_network/rtpsession.h"
 #include "rtp_network/rtpsendthread.h"
 #include "rtp_network/rtprecvthread.h"
@@ -17,6 +18,7 @@ namespace rtplivelib {
 class LiveEnginePrivateData {
 public:
 	codec::VideoEncoder * const video_encoder;
+	codec::AudioEncoder * const audio_encoder;
 	rtp_network::RTPSession * const video_session;
 	rtp_network::RTPSession * const audio_session;
 	rtp_network::RTPSendThread * const rtp_send;
@@ -29,6 +31,7 @@ public:
 	 */
 	LiveEnginePrivateData():
 		video_encoder(new codec::VideoEncoder(AV_CODEC_ID_HEVC,true)),
+		audio_encoder(new codec::AudioEncoder()),
 		video_session(new rtp_network::RTPSession),
 		audio_session(new rtp_network::RTPSession),
 		rtp_send(new rtp_network::RTPSendThread),
@@ -42,6 +45,7 @@ public:
 		delete rtp_send;
 		delete rtp_recv;
 		delete video_encoder;
+		delete audio_encoder;
 		delete video_session;
 		delete audio_session;
 		
@@ -70,6 +74,10 @@ LiveEngine::LiveEngine():
 	//设置视频输入队列，输入队列为device的video_factory
 	d_ptr->video_encoder->set_input_queue(device->get_video_factory());
 	d_ptr->video_encoder->set_max_size(30);
+	
+	//设置音频输入队列，输入队列为device的audio_factory
+	d_ptr->audio_encoder->set_input_queue(device->get_audio_factory());
+	d_ptr->audio_encoder->set_max_size(30);
 	
 	//设置接口,只需要一个发送线程即可
 	//因为RTPSession不是线程安全的，所以设置到发送线程RTPSendThread后

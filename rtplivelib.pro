@@ -106,7 +106,8 @@ HEADERS += \
     src/device_manager/microphonecapture.h \
     src/device_manager/soundcardcapture.h \
     src/device_manager/wasapi.h \
-    src/core/stringformat.h
+    src/core/stringformat.h \
+    src/codec/audioencoder.h
 
 SOURCES += \
     src/core/abstractthread.cpp \
@@ -141,4 +142,5 @@ SOURCES += \
     src/device_manager/microphonecapture.cpp \
     src/device_manager/soundcardcapture.cpp \
     src/device_manager/wasapi.cpp \
-    src/core/stringformat.cpp
+    src/core/stringformat.cpp \
+    src/codec/audioencoder.cpp
