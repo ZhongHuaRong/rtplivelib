@@ -80,7 +80,41 @@ void AudioProcessingFactory::set_capture(bool microphone,bool soundcard) noexcep
 
 void AudioProcessingFactory::on_thread_run() noexcept
 {
+	using namespace core;
 	
+	if(mc_ptr != nullptr&& mc_ptr->is_running() &&
+			sc_ptr != nullptr && sc_ptr->is_running()){
+		//先不处理双开
+	}
+	else if( mc_ptr != nullptr&& mc_ptr->is_running() ){
+		//只开麦克风
+		auto packet = mc_ptr->get_latest();
+		if(packet == nullptr)
+			return;
+		//第一时间回调
+		if(GlobalCallBack::Get_CallBack() != nullptr){
+			GlobalCallBack::Get_CallBack()->on_microphone_packet(packet.get());
+		}
+		push_one(packet);
+		return;
+	}
+	else if(sc_ptr != nullptr && sc_ptr->is_running()){
+		//只开声卡
+		auto packet =sc_ptr->get_latest();
+		if(packet == nullptr)
+			return;
+		
+		//裁剪后回调
+		if(GlobalCallBack::Get_CallBack() != nullptr){
+			GlobalCallBack::Get_CallBack()->on_soundcard_packet(packet.get());
+		}
+		push_one(packet);
+		return;
+	}
+	else{
+		//都不开，直接返回暂停
+		return;
+	}
 }
 
 void AudioProcessingFactory::on_thread_pause() noexcept

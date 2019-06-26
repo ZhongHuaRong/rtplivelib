@@ -43,6 +43,20 @@ public:
 	 */
 	virtual void on_video_frame_merge(FramePacket * frame);
 	
+	/**
+	 * @brief on_microphone_packet
+	 * 麦克风的音频包回调
+	 * @param packet
+	 */
+	virtual void on_microphone_packet(FramePacket * packet);
+	
+	/**
+	 * @brief on_soundcard_packet
+	 * 声卡采集的音频包回调
+	 * @param packet
+	 */
+	virtual void on_soundcard_packet(FramePacket * packet);
+	
 	/*以下回调继承的时候业务不要写的太复杂，会干扰rtp包或者rtcp包的接收和处理*/
 	
 	/**
@@ -114,17 +128,19 @@ private:
 	static GlobalCallBack * cb_ptr;
 };
 
-inline void GlobalCallBack::on_camera_frame(FramePacket * )										{}
+inline void GlobalCallBack::on_camera_frame(FramePacket * )											{}
 inline void GlobalCallBack::on_desktop_frame(FramePacket * )										{}
 inline void GlobalCallBack::on_video_frame_merge(FramePacket * )									{}
-inline void GlobalCallBack::on_new_user_join(const std::string& )								{}
+inline void GlobalCallBack::on_microphone_packet(FramePacket * )									{}
+inline void GlobalCallBack::on_soundcard_packet(FramePacket * )										{}
+inline void GlobalCallBack::on_new_user_join(const std::string& )									{}
 inline void GlobalCallBack::on_user_exit(const std::string& ,
 											const void *, const uint64_t& )							{}
-inline void GlobalCallBack::on_upload_bandwidth(uint64_t ,uint64_t)								{}
+inline void GlobalCallBack::on_upload_bandwidth(uint64_t ,uint64_t)									{}
 inline void GlobalCallBack::on_download_bandwidth(uint64_t,uint64_t)								{}
 inline void GlobalCallBack::on_local_network_information(uint32_t ,float,uint32_t  )				{}
 
-inline void GlobalCallBack::on_capture_to_send_time(const long &)								{}
+inline void GlobalCallBack::on_capture_to_send_time(const long &)									{}
 
 inline void GlobalCallBack::Register_CallBack(GlobalCallBack * ptr) noexcept				{
 	cb_ptr = ptr;
