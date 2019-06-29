@@ -2,7 +2,7 @@
 #pragma once
 
 #include "../core/config.h"
-#include "../core/mediadatacallback.h"
+#include "../core/globalcallback.h"
 #include <string>
 
 namespace rtplivelib {

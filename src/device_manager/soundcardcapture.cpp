@@ -1,6 +1,7 @@
 #include "soundcardcapture.h"
 #include "wasapi.h"
 #include "../core/stringformat.h"
+#include "../core/logger.h"
 
 namespace rtplivelib {
 
@@ -71,6 +72,10 @@ bool SoundCardCapture::set_current_device_name(std::string name) noexcept
 	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(name),SoundCardCapturePrivateData::FT);
 	if(!result){
 		current_device_name = temp;
+		core::Logger::Print_APP_Info(core::MessageNum::Device_change_success,
+									 "device_manager::SoundCardCapture::set_current_device_name",
+									 LogLevel::ERROR_LEVEL,
+									 current_device_name.c_str());
 	}
 	return result;
 }
@@ -82,7 +87,13 @@ bool SoundCardCapture::set_current_device_name(std::string name) noexcept
 AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
 {
 	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
-	WaitForSingleObject(d_ptr->event, 5);
+	if(d_ptr->audio_api.is_start() == false){
+		if( d_ptr->audio_api.start(d_ptr->event) == false){
+			stop_capture();
+			return nullptr;
+		}
+	}
+	WaitForSingleObject(d_ptr->event, 10);
 	
 	auto packet = d_ptr->audio_api.get_packet();
 
@@ -96,9 +107,14 @@ AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
  */
 void SoundCardCapture::on_stop() noexcept
 {
-    /*并没有任何操作，将标志位isrunning设为false就可以暂停了*/
     std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
-	d_ptr->audio_api.stop();
+    d_ptr->audio_api.stop();
+}
+
+bool SoundCardCapture::open_device() noexcept
+{
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
+	return d_ptr->audio_api.start(d_ptr->event);
 }
 
 }//namespace device_manager

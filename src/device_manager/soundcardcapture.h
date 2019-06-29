@@ -26,15 +26,6 @@ public:
 	
 	virtual bool set_current_device_name(std::string name) noexcept override;
 
-private:
-    /**
-     * @brief _init
-     * 用于初始化工作
-     * @return
-     * 初始化成功则返回true
-     */
-	bool _init();
-
 protected:
     /**
      * @brief OnStart
@@ -47,6 +38,14 @@ protected:
      * 结束捕捉音频后的回调
      */
 	virtual void on_stop() noexcept override;
+	
+	
+	/**
+	 * @brief open_device
+	 * 尝试打开设备
+	 * @return 
+	 */
+	bool open_device() noexcept;
 private:
 	SoundCardCapturePrivateData * const d_ptr;
 };

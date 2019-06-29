@@ -71,7 +71,6 @@ HEADERS += \
     src/core/abstractqueue.h \
     src/core/abstractthread.h \
     src/core/config.h \
-    src/core/mediadatacallback.h \
     src/display/abstractplayer.h \
     src/display/player.h \
     src/core/format.h \
@@ -107,7 +106,8 @@ HEADERS += \
     src/device_manager/soundcardcapture.h \
     src/device_manager/wasapi.h \
     src/core/stringformat.h \
-    src/codec/audioencoder.h
+    src/codec/audioencoder.h \
+    src/core/globalcallback.h
 
 SOURCES += \
     src/core/abstractthread.cpp \

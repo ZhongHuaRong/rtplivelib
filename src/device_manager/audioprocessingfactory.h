@@ -4,7 +4,7 @@
 #include "abstractcapture.h"
 #include "microphonecapture.h"
 #include "soundcardcapture.h"
-#include "../core/mediadatacallback.h"
+#include "../core/globalcallback.h"
 
 class AVInputFormat;
 class AVFormatContext;

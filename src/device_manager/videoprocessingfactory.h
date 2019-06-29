@@ -4,7 +4,7 @@
 #include "cameracapture.h"
 #include "desktopcapture.h"
 #include "../image_processing/crop.h"
-#include "../core/mediadatacallback.h"
+#include "../core/globalcallback.h"
 
 namespace rtplivelib {
 

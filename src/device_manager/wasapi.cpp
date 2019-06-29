@@ -200,7 +200,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 	hr = pAudioClient->Initialize(
 		AUDCLNT_SHAREMODE_SHARED,
 		AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK,
-		5 * 10000, // 100纳秒为基本单位
+		10 * 10000, // 100纳秒为基本单位
 		0,
 		pwfx,
 		nullptr);
@@ -258,6 +258,11 @@ bool WASAPI::stop() noexcept
 	SafeRelease()(&pAudioClient);
 	TaskMemFree()(&pwfx);
 	return true;
+}
+
+bool WASAPI::is_start() noexcept
+{
+	return pCaptureClient != nullptr;
 }
 
 core::FramePacket *WASAPI::get_packet() noexcept

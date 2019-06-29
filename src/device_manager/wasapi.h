@@ -112,6 +112,14 @@ public:
     bool stop() noexcept;
     
     /**
+     * @brief is_start
+     * 获取设备是否正在读取数据
+     * 如果正在读取则返回true
+     * @return 
+     */
+    bool is_start() noexcept;
+    
+    /**
      * @brief get_packet
      * 获取音频包
      */

@@ -1,6 +1,7 @@
 #include "microphonecapture.h"
 #include "wasapi.h"
 #include "../core/stringformat.h"
+#include "../core/logger.h"
 
 namespace rtplivelib {
 
@@ -75,6 +76,10 @@ bool MicrophoneCapture::set_current_device_name(std::string name) noexcept
 	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(name),MicrophoneCapturePrivateData::FT);
 	if(!result){
 		current_device_name = temp;
+		core::Logger::Print_APP_Info(core::MessageNum::Device_change_success,
+									 "device_manager::MicrophoneCapture::set_current_device_name",
+									 LogLevel::ERROR_LEVEL,
+									 current_device_name.c_str());
 	}
 	return result;
 }
@@ -86,7 +91,13 @@ bool MicrophoneCapture::set_current_device_name(std::string name) noexcept
 AbstractCapture::SharedPacket MicrophoneCapture::on_start() noexcept
 {
 	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
-	WaitForSingleObject(d_ptr->event, 5);
+	if(d_ptr->audio_api.is_start() == false){
+		if( d_ptr->audio_api.start(d_ptr->event) == false){
+			stop_capture();
+			return nullptr;
+		}
+	}
+	WaitForSingleObject(d_ptr->event, 10);
 	
 	auto packet = d_ptr->audio_api.get_packet();
 
