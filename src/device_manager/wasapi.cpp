@@ -134,6 +134,9 @@ bool WASAPI::set_current_device(const std::wstring &id, WASAPI::FlowType ft) noe
 bool WASAPI::set_default_device(WASAPI::FlowType ft) noexcept
 {
 	IMMDevice *pDevice{nullptr};
+	if( _init_enumerator() == false){
+        return false;
+    }
 	auto hr = pEnumerator->GetDefaultAudioEndpoint((EDataFlow)ft, eConsole, &pDevice);
 	if (FAILED(hr)) {
 		return false;
@@ -179,7 +182,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 	SafeRelease()(&pCaptureClient);
 	SafeRelease()(&pAudioClient);
 	//创建一个管理对象，通过它可以获取到你需要的一切数据
-	auto hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
+	auto hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, nullptr, (void**)&pAudioClient);
 	if (FAILED(hr)) {
 		return false;
 	}
@@ -336,6 +339,7 @@ WASAPI::device_info WASAPI::get_device_info(IMMDevice *device) noexcept
 		return info;
 	}
 	
+	props->GetValue(key,&varName);
 	info.second = varName.pwszVal;
 	SafeRelease()(&props);
 	PropVariantClear(&varName);

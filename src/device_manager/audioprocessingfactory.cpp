@@ -88,7 +88,7 @@ void AudioProcessingFactory::on_thread_run() noexcept
 	}
 	else if( mc_ptr != nullptr&& mc_ptr->is_running() ){
 		//只开麦克风
-		auto packet = mc_ptr->get_latest();
+		auto packet = mc_ptr->get_next();
 		if(packet == nullptr)
 			return;
 		//第一时间回调
@@ -100,7 +100,7 @@ void AudioProcessingFactory::on_thread_run() noexcept
 	}
 	else if(sc_ptr != nullptr && sc_ptr->is_running()){
 		//只开声卡
-		auto packet =sc_ptr->get_latest();
+		auto packet =sc_ptr->get_next();
 		if(packet == nullptr)
 			return;
 		
