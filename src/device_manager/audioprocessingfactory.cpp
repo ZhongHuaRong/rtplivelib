@@ -89,7 +89,9 @@ void AudioProcessingFactory::on_thread_run() noexcept
 	else if( mc_ptr != nullptr&& mc_ptr->is_running() ){
 		//只开麦克风
 		//添加等待，防止循环消耗资源
-		sc_ptr->wait_for_resource_push(100);
+		if(mc_ptr->wait_for_resource_push(100) == false){
+			return;
+		}
 		auto packet = mc_ptr->get_next();
 		if(packet == nullptr)
 			return;
@@ -103,7 +105,9 @@ void AudioProcessingFactory::on_thread_run() noexcept
 	else if(sc_ptr != nullptr && sc_ptr->is_running()){
 		//只开声卡
 		//添加等待，防止循环消耗资源
-		sc_ptr->wait_for_resource_push(100);
+		if(sc_ptr->wait_for_resource_push(100) == false){
+			return;
+		}
 		auto packet =sc_ptr->get_next();
 		if(packet == nullptr)
 			return;

@@ -21,13 +21,6 @@ DeviceManager::DeviceManager() :
 }
 
 DeviceManager::~DeviceManager() {
-	//析构的时候全部东西都要手动释放
-	video_factory.set_capture(false,false);
-	video_factory.set_camera_capture_object(nullptr);
-	video_factory.set_desktop_capture_object(nullptr);
-	audio_factory.set_capture(false,false);
-	audio_factory.set_microphone_capture_object(nullptr);
-	audio_factory.set_soundcard_capture_object(nullptr);
 }
 
 /**

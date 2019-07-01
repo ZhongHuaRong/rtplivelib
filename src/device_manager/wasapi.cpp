@@ -250,22 +250,22 @@ bool WASAPI::stop() noexcept
 		return true;
 	pAudioClient->Stop();
 	
-	/*释放掉剩余没有提取的音频数据*/
-	uint32_t packetLength;
-	unsigned char * pData;
-	uint32_t numFramesAvailable;
-	DWORD  flags;
+//	/*释放掉剩余没有提取的音频数据*/
+//	uint32_t packetLength;
+//	unsigned char * pData;
+//	uint32_t numFramesAvailable;
+//	DWORD  flags;
 	
-	pCaptureClient->GetNextPacketSize(&packetLength);
+//	pCaptureClient->GetNextPacketSize(&packetLength);
 
-	//循环读取所有包,然后release
-	while (packetLength) {
-		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
+//	//循环读取所有包,然后release
+//	while (packetLength) {
+//		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
 		
-		pCaptureClient->ReleaseBuffer(numFramesAvailable);
+//		pCaptureClient->ReleaseBuffer(numFramesAvailable);
 
-		pCaptureClient->GetNextPacketSize(&packetLength);
-	}
+//		pCaptureClient->GetNextPacketSize(&packetLength);
+//	}
 	
 	SafeRelease()(&pCaptureClient);
 	SafeRelease()(&pAudioClient);
@@ -316,12 +316,18 @@ WASAPI::device_info WASAPI::get_device_info(IMMDevice *device) noexcept
 
 void WASAPI::on_thread_run() noexcept
 {
-	if(pAudioClient == nullptr){
+	if(pAudioClient == nullptr || pCaptureClient == nullptr || !_is_running_flag){
 		stop();
 		return ;
 	}
 	
 	WaitForSingleObject(event, 10);
+	
+	//防止等待回来后资源已经释放的情况
+	if(pAudioClient == nullptr || pCaptureClient == nullptr || !_is_running_flag){
+		stop();
+		return ;
+	}
 	
 	uint32_t packetLength;
 	pCaptureClient->GetNextPacketSize(&packetLength);
