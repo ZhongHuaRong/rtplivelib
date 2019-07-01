@@ -317,7 +317,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 			auto merge_packet = _merge_frame(camera_frame,desktop_frame);
 			//回调合成图像
 			if(GlobalCallBack::Get_CallBack() != nullptr)
-				GlobalCallBack::Get_CallBack()->on_video_frame_merge(merge_packet.get());
+				GlobalCallBack::Get_CallBack()->on_video_frame_merge(merge_packet);
 			std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 			if(d_ptr->player != nullptr)
 				d_ptr->player->show(merge_packet.get());
@@ -332,7 +332,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 			return;
 		//第一时间回调
 		if(GlobalCallBack::Get_CallBack() != nullptr){
-			GlobalCallBack::Get_CallBack()->on_camera_frame(packet.get());
+			GlobalCallBack::Get_CallBack()->on_camera_frame(packet);
 		}
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
@@ -364,7 +364,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		}
 		//裁剪后回调
 		if(GlobalCallBack::Get_CallBack() != nullptr){
-			GlobalCallBack::Get_CallBack()->on_desktop_frame(packet.get());
+			GlobalCallBack::Get_CallBack()->on_desktop_frame(packet);
 		}
 		
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);

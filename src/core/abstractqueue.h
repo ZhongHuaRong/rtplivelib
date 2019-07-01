@@ -97,7 +97,7 @@ public:
 	/**
 	 * @brief get_next
 	 * 获取下一帧数据，如果不存在则返回nullptr
-	 * 该函数获取到的数据都需要调用ReleasePacket释放空间
+	 * 该函数获取到的数据都需要调用ReleasePacket释放空间(智能指针的话不需要)
 	 * @return 
 	 */
 	inline virtual Unit get_next() noexcept{

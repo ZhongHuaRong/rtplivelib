@@ -98,6 +98,7 @@ LiveEngine::LiveEngine():
 LiveEngine::~LiveEngine()
 {
 	d_ptr->video_encoder->set_input_queue(nullptr);
+	d_ptr->audio_encoder->set_input_queue(nullptr);
 	delete device;
 	delete d_ptr;
 	

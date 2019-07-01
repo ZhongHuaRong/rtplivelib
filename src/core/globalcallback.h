@@ -3,12 +3,11 @@
 #include <stdint.h>
 #include <string>
 #include <map>
+#include "format.h"
 
 namespace rtplivelib {
 
 namespace core {
-
-struct FramePacket;
 
 /**
  * @brief The MediaDataCallBack class
@@ -27,35 +26,35 @@ public:
 	 * 摄像头画面帧的回调,该帧是没有经过任何处理的
 	 * @param frame
 	 */
-	virtual void on_camera_frame(FramePacket * frame);
+	virtual void on_camera_frame(core::FramePacket::SharedPacket frame);
 	
 	/**
 	 * @brief on_desktop_frame
 	 * 桌面画面帧的回调,该帧是没有经过任何处理的
 	 * @param frame
 	 */
-	virtual void on_desktop_frame(FramePacket * frame);
+	virtual void on_desktop_frame(core::FramePacket::SharedPacket frame);
 
 	/**
 	 * @brief on_video_frame_merge
 	 * 桌面以及摄像头画面合成后的图像帧回调
 	 * @param frame
 	 */
-	virtual void on_video_frame_merge(FramePacket * frame);
+	virtual void on_video_frame_merge(core::FramePacket::SharedPacket frame);
 	
 	/**
 	 * @brief on_microphone_packet
 	 * 麦克风的音频包回调
 	 * @param packet
 	 */
-	virtual void on_microphone_packet(FramePacket * packet);
+	virtual void on_microphone_packet(core::FramePacket::SharedPacket packet);
 	
 	/**
 	 * @brief on_soundcard_packet
 	 * 声卡采集的音频包回调
 	 * @param packet
 	 */
-	virtual void on_soundcard_packet(FramePacket * packet);
+	virtual void on_soundcard_packet(core::FramePacket::SharedPacket packet);
 	
 	/*以下回调继承的时候业务不要写的太复杂，会干扰rtp包或者rtcp包的接收和处理*/
 	
@@ -128,11 +127,11 @@ private:
 	static GlobalCallBack * cb_ptr;
 };
 
-inline void GlobalCallBack::on_camera_frame(FramePacket * )											{}
-inline void GlobalCallBack::on_desktop_frame(FramePacket * )										{}
-inline void GlobalCallBack::on_video_frame_merge(FramePacket * )									{}
-inline void GlobalCallBack::on_microphone_packet(FramePacket * )									{}
-inline void GlobalCallBack::on_soundcard_packet(FramePacket * )										{}
+inline void GlobalCallBack::on_camera_frame(core::FramePacket::SharedPacket )						{}
+inline void GlobalCallBack::on_desktop_frame(core::FramePacket::SharedPacket )						{}
+inline void GlobalCallBack::on_video_frame_merge(core::FramePacket::SharedPacket )					{}
+inline void GlobalCallBack::on_microphone_packet(core::FramePacket::SharedPacket )					{}
+inline void GlobalCallBack::on_soundcard_packet(core::FramePacket::SharedPacket )					{}
 inline void GlobalCallBack::on_new_user_join(const std::string& )									{}
 inline void GlobalCallBack::on_user_exit(const std::string& ,
 											const void *, const uint64_t& )							{}

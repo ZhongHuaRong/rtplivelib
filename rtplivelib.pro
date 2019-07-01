@@ -131,7 +131,6 @@ SOURCES += \
     src/rtp_network/rtppacket.cpp \
     src/rtp_network/rtpusermanager.cpp \
     src/rtp_network/rtpuser.cpp \
-    src/core/mediadatacallback.cpp \
     src/codec/hardwaredevice.cpp \
     src/image_processing/crop.cpp \
     src/image_processing/scale.cpp \
@@ -143,4 +142,5 @@ SOURCES += \
     src/device_manager/soundcardcapture.cpp \
     src/device_manager/wasapi.cpp \
     src/core/stringformat.cpp \
-    src/codec/audioencoder.cpp
+    src/codec/audioencoder.cpp \
+    src/core/globalcallback.cpp

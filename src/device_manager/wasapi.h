@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../core/config.h"
+#include "../core/abstractqueue.h"
 #include "../core/format.h"
 #define WIN32_LEAN_AND_MEAN
 #include <mmdeviceapi.h>
@@ -17,8 +18,10 @@ namespace device_manager {
  * @brief The SoundCardCapture class
  * Windows系统下的声音采集，分capture和render
  * 采用系统的WASAPI，不适用于XP系统，限于win7以上的系统
+ * 该类所有操作都不是线程安全
  */
-class WASAPI
+class WASAPI :
+        protected core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
 {
 public:
     enum FlowType{
@@ -36,7 +39,7 @@ public:
      */
     WASAPI();
     
-    ~WASAPI();
+    ~WASAPI() override;
     
     /**
      * @brief get_device_info
@@ -72,6 +75,7 @@ public:
     /**
      * @brief set_current_device
      * 通过设备id更改当前使用的设备
+     * 切换后需要手动调用start来开启设备
      * @param id
      * 设备id
      * @param ft
@@ -102,7 +106,7 @@ public:
      * 开始采集,设置句柄，外部接口可以等待这个句柄来调用get_packet
      * @return 
      */
-    bool start(HANDLE handle) noexcept;
+    bool start() noexcept;
     
     /**
      * @brief stop
@@ -122,11 +126,33 @@ public:
     /**
      * @brief get_packet
      * 获取音频包
+     * 该函数会阻塞当前线程,直到有包返回
      */
-    core::FramePacket * get_packet() noexcept;
+    core::FramePacket::SharedPacket read_packet() noexcept;
 protected:
     device_info get_device_info(IMMDevice * device) noexcept;
+    
+    /**
+	 * @brief on_thread_run
+	 */
+	virtual void on_thread_run() noexcept override final;
+	
+	/**
+	 * @brief on_thread_pause
+	 */
+	virtual void on_thread_pause() noexcept override final;
+	
+	/**
+	 * @brief get_thread_pause_condition
+	 * @return 
+	 */
+	virtual bool get_thread_pause_condition() noexcept override final;
 private:
+    /**
+     * @brief _init_enumerator
+     * 初始化枚举器
+     * @return 
+     */
     bool _init_enumerator() noexcept;
 private:
 	const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
@@ -140,9 +166,14 @@ private:
 	IAudioCaptureClient *pCaptureClient{nullptr};
 	WAVEFORMATEX        *pwfx{nullptr};
 	HANDLE				event_handle{nullptr};
-	uint32_t			nFrameSize;
+	uint32_t			nFrameSize{0u};
 	PROPERTYKEY			key;
+	HANDLE				event{nullptr};
+	
+	volatile bool _is_running_flag{false};
 };
+
+inline bool WASAPI::get_thread_pause_condition() noexcept												{	return !_is_running_flag;}
 
 }//namespace device_manager
 

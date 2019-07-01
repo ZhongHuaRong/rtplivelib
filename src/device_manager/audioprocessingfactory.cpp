@@ -88,25 +88,29 @@ void AudioProcessingFactory::on_thread_run() noexcept
 	}
 	else if( mc_ptr != nullptr&& mc_ptr->is_running() ){
 		//只开麦克风
+		//添加等待，防止循环消耗资源
+		sc_ptr->wait_for_resource_push(100);
 		auto packet = mc_ptr->get_next();
 		if(packet == nullptr)
 			return;
 		//第一时间回调
 		if(GlobalCallBack::Get_CallBack() != nullptr){
-			GlobalCallBack::Get_CallBack()->on_microphone_packet(packet.get());
+			GlobalCallBack::Get_CallBack()->on_microphone_packet(packet);
 		}
 		push_one(packet);
 		return;
 	}
 	else if(sc_ptr != nullptr && sc_ptr->is_running()){
 		//只开声卡
+		//添加等待，防止循环消耗资源
+		sc_ptr->wait_for_resource_push(100);
 		auto packet =sc_ptr->get_next();
 		if(packet == nullptr)
 			return;
 		
 		//裁剪后回调
 		if(GlobalCallBack::Get_CallBack() != nullptr){
-			GlobalCallBack::Get_CallBack()->on_soundcard_packet(packet.get());
+			GlobalCallBack::Get_CallBack()->on_soundcard_packet(packet);
 		}
 		push_one(packet);
 		return;

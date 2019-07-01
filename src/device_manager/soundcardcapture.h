@@ -39,7 +39,6 @@ protected:
      */
 	virtual void on_stop() noexcept override;
 	
-	
 	/**
 	 * @brief open_device
 	 * 尝试打开设备

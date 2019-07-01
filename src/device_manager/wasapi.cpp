@@ -2,6 +2,9 @@
 #include "../core/except.h"
 #include "../core/time.h"
 #include <stdint.h>
+extern "C"{
+#include "libavutil/mem.h"
+}
 
 namespace rtplivelib {
 
@@ -33,15 +36,28 @@ WASAPI::WASAPI()
 	GUID IDevice_FriendlyName = { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } };
 	key.pid = 14;
 	key.fmtid = IDevice_FriendlyName;
+#if _WIN32_WINNT >= 0x0600
+	event = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+#else
+	event = CreateEvent(nullptr, false, false, nullptr);
+#endif
+	
+	start_thread();
 }
 
 WASAPI::~WASAPI()
 {
+    if(is_start()){
+        stop();
+        exit_thread();
+    }
     SafeRelease()(&pEnumerator);
     SafeRelease()(&pDevice);
     SafeRelease()(&pAudioClient);
     SafeRelease()(&pCaptureClient);
     TaskMemFree()(&pwfx);
+    if (event)
+		CloseHandle(event);
 }
 
 std::vector<WASAPI::device_info> WASAPI::get_all_device_info(WASAPI::FlowType ft) noexcept(false)
@@ -122,27 +138,25 @@ bool WASAPI::set_current_device(const std::wstring &id, WASAPI::FlowType ft) noe
     }
     
     //成功了再释放以前的设备
-    bool start_flag = pCaptureClient == nullptr? false:true;
     stop();
     SafeRelease()(&this->pDevice);
     this->pDevice = pDevice;
-    if(start_flag)
-        start(event_handle);
     return true;
 }
 
 bool WASAPI::set_default_device(WASAPI::FlowType ft) noexcept
 {
-	IMMDevice *pDevice{nullptr};
 	if( _init_enumerator() == false){
         return false;
     }
+    IMMDevice *pDevice{nullptr};
 	auto hr = pEnumerator->GetDefaultAudioEndpoint((EDataFlow)ft, eConsole, &pDevice);
 	if (FAILED(hr)) {
 		return false;
 	}
 	
 	//成功了再释放以前的设备
+	stop();
 	SafeRelease()(&this->pDevice);
     this->pDevice = pDevice;
     return true;
@@ -171,7 +185,7 @@ const core::Format WASAPI::get_format() noexcept
 	}
 }
 
-bool WASAPI::start(HANDLE handle) noexcept
+bool WASAPI::start() noexcept
 {
 	//如果没有设置，则设置默认的声卡采集
 	if(pDevice == nullptr){
@@ -200,7 +214,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 	hr = pAudioClient->Initialize(
 		AUDCLNT_SHAREMODE_SHARED,
 		AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK,
-		10 * 10000, // 100纳秒为基本单位
+		50 * 10000, // 100纳秒为基本单位
 		0,
 		pwfx,
 		nullptr);
@@ -211,10 +225,7 @@ bool WASAPI::start(HANDLE handle) noexcept
 		return false;
 	}
 	
-	if( handle != nullptr){
-		pAudioClient->SetEventHandle(handle);
-		event_handle = handle;
-	}
+	pAudioClient->SetEventHandle(event);
 
 	hr = pAudioClient->GetService(IID_IAudioCaptureClient, (void**)&pCaptureClient);
 	if (FAILED(hr)) {
@@ -228,6 +239,8 @@ bool WASAPI::start(HANDLE handle) noexcept
 		return false;
 	}
 	
+	_is_running_flag = true;
+	notify_thread();
 	return true;
 }
 
@@ -257,70 +270,20 @@ bool WASAPI::stop() noexcept
 	SafeRelease()(&pCaptureClient);
 	SafeRelease()(&pAudioClient);
 	TaskMemFree()(&pwfx);
+	_is_running_flag = false;
 	return true;
 }
 
 bool WASAPI::is_start() noexcept
 {
-	return pCaptureClient != nullptr;
+	return _is_running_flag;
 }
 
-core::FramePacket *WASAPI::get_packet() noexcept
+core::FramePacket::SharedPacket WASAPI::read_packet() noexcept
 {
-	if(pAudioClient == nullptr)
-		return nullptr;
+	wait_resource_push();
 	
-	uint32_t packetLength;
-	pCaptureClient->GetNextPacketSize(&packetLength);
-
-	if (packetLength) {
-		unsigned char * pData;
-		uint32_t numFramesAvailable;
-		DWORD  flags;
-		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
-		
-		if (numFramesAvailable != 0)
-		{
-			//先计算大小，然后后面统一合成
-			auto size = numFramesAvailable * nFrameSize;
-			
-			auto packet = core::FramePacket::Make_Packet();
-			if(packet == nullptr){
-				pCaptureClient->ReleaseBuffer(numFramesAvailable);
-				return nullptr;
-			}
-			packet->data[0] = static_cast<uint8_t*>(malloc(size));
-			if(packet->data[0]){
-				pCaptureClient->ReleaseBuffer(numFramesAvailable);
-				core::FramePacket::Destroy_Packet(&packet);
-				return nullptr;
-			}
-			
-			if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-			{
-				//
-				//  Fill 0s from the capture buffer to the output buffer.
-				//
-				memset(packet->data[0],0,size);
-			}
-			else
-			{
-				//
-				//  Copy data from the audio engine buffer to the output buffer.
-				//
-				memcpy(packet->data[0],pData,size);
-			}
-			pCaptureClient->ReleaseBuffer(numFramesAvailable);
-			
-			packet->size = size;
-			packet->format = get_format();
-			//获取时间戳
-			packet->dts = core::Time::Now().to_timestamp();
-			packet->pts = packet->dts;
-			return packet;
-		}
-	}
-	return nullptr;
+	return get_next();
 }
 
 WASAPI::device_info WASAPI::get_device_info(IMMDevice *device) noexcept
@@ -349,6 +312,71 @@ WASAPI::device_info WASAPI::get_device_info(IMMDevice *device) noexcept
 	SafeRelease()(&props);
 	PropVariantClear(&varName);
 	return info;
+}
+
+void WASAPI::on_thread_run() noexcept
+{
+	if(pAudioClient == nullptr){
+		stop();
+		return ;
+	}
+	
+	WaitForSingleObject(event, 10);
+	
+	uint32_t packetLength;
+	pCaptureClient->GetNextPacketSize(&packetLength);
+
+	if (packetLength) {
+		unsigned char * pData;
+		uint32_t numFramesAvailable;
+		DWORD  flags;
+		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
+		
+		if (numFramesAvailable != 0)
+		{
+			//先计算大小，然后后面统一合成
+			auto size = numFramesAvailable * nFrameSize;
+			
+			auto packet = core::FramePacket::Make_Shared();
+			if(packet == nullptr){
+				pCaptureClient->ReleaseBuffer(numFramesAvailable);
+				return ;
+			}
+			packet->data[0] = static_cast<uint8_t*>(av_malloc(size));
+			if(packet->data[0] == nullptr){
+				pCaptureClient->ReleaseBuffer(numFramesAvailable);
+				return ;
+			}
+			
+			if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+			{
+				//
+				//  Fill 0s from the capture buffer to the output buffer.
+				//
+				memset(packet->data[0],0,size);
+			}
+			else
+			{
+				//
+				//  Copy data from the audio engine buffer to the output buffer.
+				//
+				memcpy(packet->data[0],pData,size);
+			}
+			pCaptureClient->ReleaseBuffer(numFramesAvailable);
+			
+			packet->size = size;
+			packet->format = get_format();
+			//获取时间戳
+			packet->dts = core::Time::Now().to_timestamp();
+			packet->pts = packet->dts;
+			push_one(packet);
+		}
+	}
+}
+
+void WASAPI::on_thread_pause() noexcept
+{
+	stop();
 }
 
 bool WASAPI::_init_enumerator() noexcept

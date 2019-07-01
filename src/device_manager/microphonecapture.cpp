@@ -12,7 +12,6 @@ public:
 #if defined (WIN64)
 	WASAPI audio_api;
 	static constexpr WASAPI::FlowType FT{WASAPI::CAPTURE};
-	HANDLE event{nullptr};
 #endif
 	std::mutex fmt_ctx_mutex;
 	std::string fmt_name;
@@ -24,14 +23,6 @@ MicrophoneCapture::MicrophoneCapture() :
 	AbstractCapture(AbstractCapture::CaptureType::Microphone),
 	d_ptr(new MicrophoneCapturePrivateData)
 {
-#if defined (WIN64)
-#if _WIN32_WINNT >= 0x0600
-	d_ptr->event = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
-#else
-	d_ptr->event = CreateEvent(nullptr, false, false, nullptr);
-#endif
-#endif
-	
 	d_ptr->audio_api.set_default_device(MicrophoneCapturePrivateData::FT);
 	
 	auto pair = d_ptr->audio_api.get_current_device_info();
@@ -44,10 +35,6 @@ MicrophoneCapture::MicrophoneCapture() :
 MicrophoneCapture::~MicrophoneCapture() 
 {
 	exit_thread();
-#if defined (WIN64)
-	if (d_ptr->event)
-		CloseHandle(d_ptr->event);
-#endif
 	delete d_ptr;
 }
 
@@ -92,17 +79,17 @@ AbstractCapture::SharedPacket MicrophoneCapture::on_start() noexcept
 {
 	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	if(d_ptr->audio_api.is_start() == false){
-		if( d_ptr->audio_api.start(d_ptr->event) == false){
+		if( d_ptr->audio_api.start() == false){
 			stop_capture();
 			return nullptr;
 		}
 	}
-	WaitForSingleObject(d_ptr->event, 10);
 	
-	auto packet = d_ptr->audio_api.get_packet();
-
-	AbstractCapture::SharedPacket p(packet);
-	return p;
+	//开始捕捉前，睡眠1ms
+	//防止刚解锁就拿到锁，其他线程饥饿
+	this->sleep(1);
+	
+	return d_ptr->audio_api.read_packet();
 }
 
 /**
@@ -118,7 +105,7 @@ void MicrophoneCapture::on_stop() noexcept
 bool MicrophoneCapture::open_device() noexcept
 {
 	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
-	return d_ptr->audio_api.start(d_ptr->event);
+	return d_ptr->audio_api.start();
 }
 
 }//namespace device_manager
