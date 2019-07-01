@@ -137,6 +137,7 @@ bool WASAPI::set_current_device(const std::wstring &id, WASAPI::FlowType ft) noe
         return false;
     }
     
+    std::lock_guard<decltype(mutex)> lk(mutex);
     //成功了再释放以前的设备
     stop();
     SafeRelease()(&this->pDevice);
@@ -155,6 +156,7 @@ bool WASAPI::set_default_device(WASAPI::FlowType ft) noexcept
 		return false;
 	}
 	
+	std::lock_guard<decltype(mutex)> lk(mutex);
 	//成功了再释放以前的设备
 	stop();
 	SafeRelease()(&this->pDevice);
@@ -167,6 +169,7 @@ const core::Format WASAPI::get_format() noexcept
 	core::Format format;
 	if(pAudioClient == nullptr)
 		return format;
+	std::lock_guard<decltype(mutex)> lk(mutex);
 	if(pwfx != nullptr){
 		format.bits = pwfx->wBitsPerSample;
 		format.channels = pwfx->nChannels;
@@ -193,6 +196,7 @@ bool WASAPI::start() noexcept
 			return false;
 	}
 	
+	std::lock_guard<decltype(mutex)> lk(mutex);
 	SafeRelease()(&pCaptureClient);
 	SafeRelease()(&pAudioClient);
 	//创建一个管理对象，通过它可以获取到你需要的一切数据
@@ -246,6 +250,7 @@ bool WASAPI::start() noexcept
 
 bool WASAPI::stop() noexcept
 {
+	std::lock_guard<decltype(mutex)> lk(mutex);
 	if(pAudioClient == nullptr)
 		return true;
 	pAudioClient->Stop();
@@ -316,18 +321,14 @@ WASAPI::device_info WASAPI::get_device_info(IMMDevice *device) noexcept
 
 void WASAPI::on_thread_run() noexcept
 {
+	sleep(1);
+	std::lock_guard<decltype(mutex)> lk(mutex);
 	if(pAudioClient == nullptr || pCaptureClient == nullptr || !_is_running_flag){
 		stop();
 		return ;
 	}
 	
 	WaitForSingleObject(event, 10);
-	
-	//防止等待回来后资源已经释放的情况
-	if(pAudioClient == nullptr || pCaptureClient == nullptr || !_is_running_flag){
-		stop();
-		return ;
-	}
 	
 	uint32_t packetLength;
 	pCaptureClient->GetNextPacketSize(&packetLength);

@@ -18,7 +18,7 @@ namespace device_manager {
  * @brief The SoundCardCapture class
  * Windows系统下的声音采集，分capture和render
  * 采用系统的WASAPI，不适用于XP系统，限于win7以上的系统
- * 该类所有操作都不是线程安全
+ * 该类操作都是线程安全
  */
 class WASAPI :
         protected core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
@@ -160,15 +160,16 @@ private:
 	const IID   IID_IAudioClient = __uuidof(IAudioClient);
 	const IID   IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 
-	IMMDeviceEnumerator *pEnumerator{nullptr};
-	IMMDevice           *pDevice{nullptr};
-	IAudioClient        *pAudioClient{nullptr};
-	IAudioCaptureClient *pCaptureClient{nullptr};
-	WAVEFORMATEX        *pwfx{nullptr};
-	HANDLE				event_handle{nullptr};
-	uint32_t			nFrameSize{0u};
-	PROPERTYKEY			key;
-	HANDLE				event{nullptr};
+	IMMDeviceEnumerator		*pEnumerator{nullptr};
+	IMMDevice				*pDevice{nullptr};
+	IAudioClient			*pAudioClient{nullptr};
+	IAudioCaptureClient		*pCaptureClient{nullptr};
+	WAVEFORMATEX			*pwfx{nullptr};
+	HANDLE					event_handle{nullptr};
+	uint32_t				nFrameSize{0u};
+	PROPERTYKEY				key;
+	HANDLE					event{nullptr};
+	std::recursive_mutex	mutex;
 	
 	volatile bool _is_running_flag{false};
 };

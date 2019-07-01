@@ -13,7 +13,6 @@ public:
 	WASAPI audio_api;
 	static constexpr WASAPI::FlowType FT{WASAPI::RENDER};
 #endif
-	std::mutex fmt_ctx_mutex;
 	std::string fmt_name;
 };
 
@@ -55,7 +54,6 @@ bool SoundCardCapture::set_current_device_name(std::string name) noexcept
 {
 	if(name.compare(current_device_name) == 0)
 		return true;
-	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	auto temp = current_device_name;
 	current_device_name = name;
 	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(name),SoundCardCapturePrivateData::FT);
@@ -75,11 +73,6 @@ bool SoundCardCapture::set_current_device_name(std::string name) noexcept
  */
 AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
 {
-	//开始捕捉前，睡眠1ms
-	//防止刚解锁就拿到锁，其他线程饥饿
-	this->sleep(1);
-	
-	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	if(d_ptr->audio_api.is_start() == false){
 		if( d_ptr->audio_api.start() == false){
 			stop_capture();
@@ -96,13 +89,11 @@ AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
  */
 void SoundCardCapture::on_stop() noexcept
 {
-    std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
     d_ptr->audio_api.stop();
 }
 
 bool SoundCardCapture::open_device() noexcept
 {
-	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	return d_ptr->audio_api.start();
 }
 
