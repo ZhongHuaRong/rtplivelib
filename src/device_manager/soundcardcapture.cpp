@@ -74,7 +74,7 @@ bool SoundCardCapture::set_current_device_name(std::string name) noexcept
 AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
 {
 	if(d_ptr->audio_api.is_start() == false){
-		if( d_ptr->audio_api.start() == false){
+		if( open_device() == false){
 			stop_capture();
 			return nullptr;
 		}

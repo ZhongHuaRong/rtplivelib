@@ -182,9 +182,9 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 }
 
 void CameraCapture::on_stop()  noexcept{
+	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	if(d_ptr->fmtContxt == nullptr)
 		return;
-	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	avformat_close_input(&d_ptr->fmtContxt);
 	core::Logger::Print_APP_Info(core::MessageNum::InputFormat_context_close,
 								 "device_manager::CameraCapture::on_stop",
