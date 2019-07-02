@@ -1,4 +1,11 @@
 #include "audioencoder.h"
+#include "../rtp_network/rtpsession.h"
+#include "../core/logger.h"
+extern "C"{
+#include "libavutil/opt.h"
+#include "libavcodec/avcodec.h"
+#include "libavutil/imgutils.h"
+}
 
 namespace rtplivelib {
 
@@ -6,17 +13,196 @@ namespace codec {
 
 class AudioEncoderPrivateData{
 public:
+	AVCodec * encoder{nullptr};
+	AVCodecContext * encoder_ctx{nullptr};
+	AudioEncoder *queue{nullptr};
+	core::Format format;
+	rtp_network::RTPSession::PayloadType payload_type{rtp_network::RTPSession::PayloadType::RTP_PT_NONE};
+	
+	AudioEncoderPrivateData(AudioEncoder *p):
+		queue(p){}
+	
+	~AudioEncoderPrivateData(){
+	}
+	
+	/**
+	 * @brief check_sample_fmt
+	 * 检查编码器是否支持该编码格式
+	 * @param codec
+	 * 编码器
+	 * @param sample_fmt
+	 * 格式
+	 */
+	bool check_sample_fmt(const AVCodec *codec, enum AVSampleFormat sample_fmt)
+	{
+		const enum AVSampleFormat *p = codec->sample_fmts;
+	
+		while (*p != AV_SAMPLE_FMT_NONE) {
+			if (*p == sample_fmt)
+				return true;
+			p++;
+		}
+		return false;
+	}
+	
+	/**
+	 * @brief select_sample_rate
+	 * 选择最大采样率
+	 */
+	int select_sample_rate(const AVCodec *codec)
+	{
+		const int *p;
+		int best_samplerate = 0;
+	
+		if (!codec->supported_samplerates)
+			return 44100;
+	
+		p = codec->supported_samplerates;
+		while (*p) {
+			if (!best_samplerate || abs(44100 - *p) < abs(44100 - best_samplerate))
+				best_samplerate = *p;
+			p++;
+		}
+		return best_samplerate;
+	}
+	
+	/**
+	 * @brief select_channel_layout
+	 * 选择通道数最多的布局
+	 */
+	uint64_t select_channel_layout(const AVCodec *codec)
+	{
+		if (!codec->channel_layouts)
+			return AV_CH_LAYOUT_STEREO;
+		
+		const uint64_t *p;
+		uint64_t best_ch_layout = 0;
+		int best_nb_channels   = 0;
+	
+		p = codec->channel_layouts;
+		while (*p) {
+			int nb_channels = av_get_channel_layout_nb_channels(*p);
+	
+			if (nb_channels > best_nb_channels) {
+				best_ch_layout    = *p;
+				best_nb_channels = nb_channels;
+			}
+			p++;
+		}
+		return best_ch_layout;
+	}
+	
+	inline bool open_ctx(const core::FramePacket * packet) noexcept{
+		return true;
+	}
+	
+	inline void close_ctx() noexcept{
+		
+	}
+	
+	/**
+	 * @brief encode
+	 * 编码，然后推进队列
+	 * 参数不使用智能指针的原因是参数需要传入nullptr来终止编码
+	 * @param packet
+	 * 传入空指针，将会终止编码并吧剩余帧数flush
+	 */
+	inline void encode(core::FramePacket * packet) noexcept{
+		int ret;
+		constexpr char api[] = "codec::AEPD::encode";
+		
+		if(packet != nullptr){
+			if(open_ctx(packet) == false){
+				return;
+			}
+		}
+		else if(encoder_ctx == nullptr){
+			//参数传入空一般是用在清空剩余帧
+			//如果上下文也是空，则不处理
+			return;
+		}
+	}
+	
+private:
+	/**
+	 * @brief _init_encoder
+	 * 通过编码器名字初始化编码器,同时初始化编码器上下文
+	 * @param name
+	 * 编码器名字
+	 * @param format
+	 * 用于初始化编码器参数
+	 * @return 
+	 */
+	inline bool _init_encoder(const char * name,const core::Format& format) noexcept {
+		encoder = avcodec_find_encoder_by_name(name);
+		constexpr char api[] = "codec::AEPD::_init_encoder";
+		if(encoder == nullptr){
+			core::Logger::Print_APP_Info(core::MessageNum::Codec_encoder_not_found,
+										 api,
+										 LogLevel::WARNING_LEVEL,
+										 name);
+			return false;
+		}
+		else {
+			if(encoder_ctx != nullptr)
+				avcodec_free_context(&encoder_ctx);
+			encoder_ctx = avcodec_alloc_context3(encoder);
+			if(encoder_ctx == nullptr){
+				core::Logger::Print_APP_Info(core::MessageNum::Codec_codec_context_alloc_failed,
+											 api,
+											 LogLevel::WARNING_LEVEL);
+				return false;
+			}
+			
+			//初始化编码器上下文后，设置编码参数
+			_set_encoder_param(format);
+			core::Logger::Print_APP_Info(core::MessageNum::Codec_encoder_init_success,
+										 api,
+										 LogLevel::INFO_LEVEL,
+										 encoder->long_name);
+			return true;
+		}
+	}
+	
+	/**
+	 * @brief _set_encoder
+	 * 设置编码器上下文
+	 */
+	inline void _set_encoder_param(const core::Format & format) noexcept{
+		/* check that the encoder supports s16 pcm input */
+		switch (format.bits) {
+		case 1:
+			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_U8;
+			break;
+		case 2:
+			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_S16;
+			break;
+		case 4:
+			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_FLT;
+			break;
+		case 8:
+			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_DBL;
+			break;
+		}
+		
+		/* select other audio parameters supported by the encoder */
+		encoder_ctx->sample_rate    = select_sample_rate(encoder);
+		encoder_ctx->channel_layout = select_channel_layout(encoder);
+		encoder_ctx->channels       = av_get_channel_layout_nb_channels(encoder_ctx->channel_layout);
+	}
 };
+
+///////////////////////////////////////////////////////////////////////////////
 
 AudioEncoder::AudioEncoder():
 	_queue(nullptr),
-	d_ptr(new AudioEncoderPrivateData())
+	d_ptr(new AudioEncoderPrivateData(this))
 {
 }
 
 AudioEncoder::AudioEncoder(AudioEncoder::Queue *queue):
 	_queue(queue),
-	d_ptr(new AudioEncoderPrivateData())
+	d_ptr(new AudioEncoderPrivateData(this))
 {
 	start_thread();
 }
@@ -30,10 +216,9 @@ AudioEncoder::~AudioEncoder()
 
 int AudioEncoder::get_encoder_id() noexcept
 {
-//	if(d_ptr->encoder == nullptr)
-//		return 0;
-//	return d_ptr->encoder->id;
-	return 0;
+	if(d_ptr->encoder == nullptr)
+		return 0;
+	return d_ptr->encoder->id;
 }
 
 void AudioEncoder::on_thread_run() noexcept
@@ -45,13 +230,13 @@ void AudioEncoder::on_thread_run() noexcept
 	//循环这里只判断指针
 	while(_queue != nullptr && _queue->has_data()){
 		auto pack = _get_next_packet();
-//		d_ptr->encode(pack.get());
+		d_ptr->encode(pack.get());
 	}
 }
 
 void AudioEncoder::on_thread_pause() noexcept
 {
-//	d_ptr->encode(nullptr);
+	d_ptr->encode(nullptr);
 }
 
 bool AudioEncoder::get_thread_pause_condition() noexcept

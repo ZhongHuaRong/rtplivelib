@@ -13,6 +13,7 @@ class AudioEncoderPrivateData;
 /**
  * @brief The VideoEncode class
  * 编码默认采用的是AAC,也只有AAC
+ * 先不提供更改编码器的接口
  */
 class RTPLIVELIBSHARED_EXPORT AudioEncoder : 
 		public core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>

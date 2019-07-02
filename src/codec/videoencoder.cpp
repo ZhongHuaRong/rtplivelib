@@ -603,7 +603,7 @@ bool VideoEncoder::set_encoder_id(int codec_id) noexcept
 //		return false;
 //	return d_ptr->init_encoder(static_cast<AVCodecID>(codec_id));
 	UNUSED(codec_id)
-			return false;
+	return false;
 }
 
 int VideoEncoder::get_encoder_id() noexcept
