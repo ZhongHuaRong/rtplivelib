@@ -18,11 +18,37 @@ public:
 	AudioEncoder *queue{nullptr};
 	core::Format format;
 	rtp_network::RTPSession::PayloadType payload_type{rtp_network::RTPSession::PayloadType::RTP_PT_NONE};
+	AVFrame * encode_frame{nullptr};
+	//用于判断是否给frame设置参数
+	bool reassignment{false};
 	
 	AudioEncoderPrivateData(AudioEncoder *p):
 		queue(p){}
 	
 	~AudioEncoderPrivateData(){
+		close_ctx();
+		if( encode_frame != nullptr){
+			av_frame_free(&encode_frame);
+		}
+	}
+	
+	/**
+	 * @brief alloc_encode_frame
+	 * 为编码帧分配空间
+	 * @return 
+	 */
+	bool alloc_encode_frame() noexcept {
+		if( encode_frame == nullptr)
+			encode_frame = av_frame_alloc();
+		
+		if( encode_frame != nullptr && reassignment == true){
+			encode_frame->nb_samples     = encoder_ctx->frame_size;
+			encode_frame->format         = encoder_ctx->sample_fmt;
+			encode_frame->channel_layout = encoder_ctx->channel_layout;
+			reassignment = false;
+			return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -33,7 +59,7 @@ public:
 	 * @param sample_fmt
 	 * 格式
 	 */
-	bool check_sample_fmt(const AVCodec *codec, enum AVSampleFormat sample_fmt)
+	bool check_sample_fmt(const AVCodec *codec, enum AVSampleFormat sample_fmt) noexcept 
 	{
 		const enum AVSampleFormat *p = codec->sample_fmts;
 	
@@ -49,7 +75,7 @@ public:
 	 * @brief select_sample_rate
 	 * 选择最大采样率
 	 */
-	int select_sample_rate(const AVCodec *codec)
+	int select_sample_rate(const AVCodec *codec) noexcept 
 	{
 		const int *p;
 		int best_samplerate = 0;
@@ -70,7 +96,7 @@ public:
 	 * @brief select_channel_layout
 	 * 选择通道数最多的布局
 	 */
-	uint64_t select_channel_layout(const AVCodec *codec)
+	uint64_t select_channel_layout(const AVCodec *codec) noexcept 
 	{
 		if (!codec->channel_layouts)
 			return AV_CH_LAYOUT_STEREO;
@@ -92,12 +118,48 @@ public:
 		return best_ch_layout;
 	}
 	
+	/**
+	 * @brief open_ctx
+	 * 打开编码器
+	 * @param packet
+	 * @return 
+	 */
 	inline bool open_ctx(const core::FramePacket * packet) noexcept{
+		if(encoder_ctx != nullptr && format == packet->format){
+			return true;
+		} else {
+			//先关闭之前的编码器(如果存在的话)
+			//可能需要更改格式
+			close_ctx();
+			if( _init_encoder("",packet->format) == false){
+				return false;
+			}
+		}
+		constexpr char api[] = "codec::AEPD::open_ctx";
+		auto ret = avcodec_open2(encoder_ctx,encoder,nullptr);
+		if(ret < 0){
+			core::Logger::Print_APP_Info(core::MessageNum::Codec_codec_open_failed,
+										 api,
+										 LogLevel::WARNING_LEVEL);
+			core::Logger::Print_FFMPEG_Info(ret,
+										 api,
+										 LogLevel::WARNING_LEVEL);
+			return false;
+		}
+		format = packet->format;
+		reassignment = true;
 		return true;
 	}
 	
+	/**
+	 * @brief close_ctx
+	 * 关闭
+	 */
 	inline void close_ctx() noexcept{
-		
+		if(encoder_ctx == nullptr)
+			return;
+		encode(nullptr);
+		avcodec_free_context(&encoder_ctx);
 	}
 	
 	/**
@@ -108,11 +170,9 @@ public:
 	 * 传入空指针，将会终止编码并吧剩余帧数flush
 	 */
 	inline void encode(core::FramePacket * packet) noexcept{
-		int ret;
-		constexpr char api[] = "codec::AEPD::encode";
-		
+		//先初始化编码器上下文
 		if(packet != nullptr){
-			if(open_ctx(packet) == false){
+			if( open_ctx(packet) == false){
 				return;
 			}
 		}
@@ -121,6 +181,14 @@ public:
 			//如果上下文也是空，则不处理
 			return;
 		}
+		
+		if( alloc_encode_frame() == false)
+			return;
+		
+		int ret;
+		constexpr char api[] = "codec::AEPD::encode";
+		
+		
 	}
 	
 private:
@@ -169,7 +237,6 @@ private:
 	 * 设置编码器上下文
 	 */
 	inline void _set_encoder_param(const core::Format & format) noexcept{
-		/* check that the encoder supports s16 pcm input */
 		switch (format.bits) {
 		case 1:
 			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_U8;
@@ -189,6 +256,7 @@ private:
 		encoder_ctx->sample_rate    = select_sample_rate(encoder);
 		encoder_ctx->channel_layout = select_channel_layout(encoder);
 		encoder_ctx->channels       = av_get_channel_layout_nb_channels(encoder_ctx->channel_layout);
+
 	}
 };
 
