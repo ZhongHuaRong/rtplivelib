@@ -131,7 +131,7 @@ public:
 			//先关闭之前的编码器(如果存在的话)
 			//可能需要更改格式
 			close_ctx();
-			if( _init_encoder("",packet->format) == false){
+			if( _init_encoder("aac",packet->format) == false){
 				return false;
 			}
 		}
@@ -238,16 +238,16 @@ private:
 	 */
 	inline void _set_encoder_param(const core::Format & format) noexcept{
 		switch (format.bits) {
-		case 1:
+		case 8:
 			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_U8;
 			break;
-		case 2:
+		case 16:
 			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_S16;
 			break;
-		case 4:
+		case 32:
 			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_FLT;
 			break;
-		case 8:
+		case 64:
 			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_DBL;
 			break;
 		}
