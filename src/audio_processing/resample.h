@@ -62,18 +62,19 @@ public:
     /**
      * @brief scale
      * 重载函数,不局限于core::FramePacket
+     * 该接口不会检查格式是否正确,如果需要检查格式建议使用其他重载函数
      * @param src_data
      * 原数据数组,不允许为nullptr
-     * @param src_linesize
-     * 原行宽
+     * @param src_nb_samples
+     * 输入的样本数
      * @param dst_data
-     * 目标数据数组
-     * @param dst_linesize
-     * 目标行宽
+     * 目标数据数组,
+     * @param dst_nb_samples
+     * 将要输出的样本数，这个参数将会在该接口内赋值
      * @return 
      */
-    bool resample( uint8_t * src_data[],int src_linesize[],
-                   uint8_t * dst_data[],int dst_linesize[]) noexcept;
+    bool resample( uint8_t *** src_data,const int &src_nb_samples,
+                   uint8_t *** dst_data,int & dst_nb_samples) noexcept;
 private:
     ResamplePrivateData * const d_ptr;
 };

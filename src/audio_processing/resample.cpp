@@ -17,8 +17,6 @@ public:
     SwrContext * swr_ctx{nullptr};
     core::Format ifmt;
     core::Format ofmt;
-    uint8_t **src_data{nullptr};
-    uint8_t **dst_data{nullptr};
     std::recursive_mutex mutex;
     
     void release_ctx() noexcept {
@@ -26,16 +24,6 @@ public:
         if(swr_ctx != nullptr){
             swr_free(&swr_ctx);
         }
-        
-        if(src_data != nullptr){
-            av_freep(&(src_data)[0]);
-        }
-        av_freep(&src_data);
-    
-        if(dst_data != nullptr){
-            av_freep(&(dst_data)[0]);
-        }
-        av_freep(&dst_data);
     }
     
     inline long long get_channel_layout( const int &channels) noexcept{
@@ -66,7 +54,22 @@ public:
         }
     }
     
-    inline bool resample() noexcept{
+    /**
+     * @brief resample
+     * 重采样的实际操作
+     * 该接口不检查参数是否没问题
+     * @param src_data
+     * 输入的数据
+     * @param src_nb_samples
+     * 输入的样本数
+     * @param dst_data
+     * 输出数据，这个参数最好是nullptr，即*dst_data == nullptr
+     * @param dst_nb_samples
+     * 输出的样本数，这个将会在内部赋值
+     * @return 
+     */
+    inline bool resample(uint8_t *** src_data,const int &src_nb_samples,
+                         uint8_t *** dst_data,int & dst_nb_samples) noexcept{
         
         constexpr char api[] = "device_manager::ResamplePrivateData::resample";
         
@@ -79,6 +82,10 @@ public:
         
     }
 protected:
+    /**
+     * @brief init_ctx
+     * 初始化重采样上下文
+     */
     bool init_ctx() noexcept{
         constexpr char api[] = "device_manager::ResamplePrivateData::init_ctx";
         release_ctx();
@@ -99,6 +106,7 @@ protected:
         av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt", get_sample_format(ofmt.bits), 0);
     
         int ret;
+        //初始化上下文
         if((ret = swr_init(swr_ctx)) < 0){
             core::Logger::Print_APP_Info(core::MessageNum::SwrContext_init_failed,
                                          api,
@@ -109,7 +117,7 @@ protected:
             return false;
         }
         
-        
+        return true;
     }
 };
 
@@ -177,12 +185,56 @@ void Resample::set_default_input_format(const int &sample_rate, const int &chann
 
 bool Resample::resample(core::FramePacket *dst, core::FramePacket *src) noexcept
 {
+    if( dst == nullptr || src == nullptr)
+        return false;
     
+    std::lock_guard<std::recursive_mutex> lk(d_ptr->mutex);
+    if( src->format != d_ptr->ifmt)
+        return false;
+    
+    auto src_data = static_cast<uint8_t**>(src->data);
+    uint8_t ** data{nullptr};
+    int nb_samples{0};
+    auto block_size = src->format.bits * 4 / src->format.channels;
+    
+    auto ret = resample(&src_data, src->size / block_size ,&data ,nb_samples);
+    
+    if(ret == true){
+        dst->reset_pointer();
+        
+        dst->format = d_ptr->ofmt;
+        //这里赋值需要注意一下
+        //FramePacket的data是数组来的，而data的是指针，需要释放掉data的外层指针
+        for( auto n = 0;n < 4;++n){
+            dst->data[n] = data[n];
+        }
+        av_freep(&data);
+        dst->size = nb_samples * block_size;
+        return true;
+    }
+    
+    return false;
 }
 
 bool Resample::resample(core::FramePacket::SharedPacket dst, core::FramePacket::SharedPacket src) noexcept
 {
+    if( dst == nullptr || src == nullptr)
+        return false;
     
+    return resample(dst.get(),src.get());
+}
+
+bool Resample::resample(uint8_t *** src_data,const int &src_nb_samples,
+                        uint8_t *** dst_data,int & dst_nb_samples) noexcept
+{
+    //不允许输入为空且不允许src数据为空
+    if(src_data == nullptr || *src_data == nullptr || dst_data == nullptr )
+        return false;
+    
+    if( src_nb_samples == 0)
+        return true;
+    
+    return d_ptr->resample(src_data,src_nb_samples,dst_data,dst_nb_samples);
 }
 
 
