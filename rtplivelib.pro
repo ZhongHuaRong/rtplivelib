@@ -107,7 +107,8 @@ HEADERS += \
     src/device_manager/wasapi.h \
     src/core/stringformat.h \
     src/codec/audioencoder.h \
-    src/core/globalcallback.h
+    src/core/globalcallback.h \
+    src/audio_processing/resample.h
 
 SOURCES += \
     src/core/abstractthread.cpp \
@@ -143,4 +144,5 @@ SOURCES += \
     src/device_manager/wasapi.cpp \
     src/core/stringformat.cpp \
     src/codec/audioencoder.cpp \
-    src/core/globalcallback.cpp
+    src/core/globalcallback.cpp \
+    src/audio_processing/resample.cpp

@@ -131,7 +131,7 @@ public:
 			//先关闭之前的编码器(如果存在的话)
 			//可能需要更改格式
 			close_ctx();
-			if( _init_encoder("aac",packet->format) == false){
+			if( _init_encoder("libfdk_aac",packet->format) == false){
 				return false;
 			}
 		}
@@ -237,26 +237,33 @@ private:
 	 * 设置编码器上下文
 	 */
 	inline void _set_encoder_param(const core::Format & format) noexcept{
-		switch (format.bits) {
-		case 8:
-			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_U8;
-			break;
-		case 16:
-			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_S16;
-			break;
-		case 32:
-			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_FLT;
-			break;
-		case 64:
-			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_DBL;
-			break;
-		}
+		//这里好像初始化其他格式会导致open codec失败
+		//所以先设置好默认的格式
+		UNUSED(format)
+//		switch (format.bits) {
+//		case 8:
+//			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_U8;
+//			break;
+//		case 16:
+//			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_S16;
+//			break;
+//		case 32:
+//			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_FLT;
+//			break;
+//		case 64:
+//			encoder_ctx->sample_fmt = AV_SAMPLE_FMT_DBL;
+//			break;
+//		}
+		
+		encoder_ctx->sample_fmt = AV_SAMPLE_FMT_S16;
+		encoder_ctx->bit_rate = 64000;
 		
 		/* select other audio parameters supported by the encoder */
-		encoder_ctx->sample_rate    = select_sample_rate(encoder);
-		encoder_ctx->channel_layout = select_channel_layout(encoder);
-		encoder_ctx->channels       = av_get_channel_layout_nb_channels(encoder_ctx->channel_layout);
-
+		encoder_ctx->sample_rate    = 44100;
+		encoder_ctx->channel_layout = AV_CH_LAYOUT_STEREO;
+		encoder_ctx->channels       = 2;
+//		encoder_ctx->profile = FF_PROFILE_UNKNOWN;
+		
 	}
 };
 
