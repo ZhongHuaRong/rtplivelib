@@ -12,6 +12,7 @@ namespace core {
 constexpr char MessageString[][128] = {
 	"Function not implemented",
 	"SwsContext initialization failed",
+	"SwrContext initialization failed",
 	"frame packet alloc failed or data alloc failed",
 	"data alloc failed(FramePacket)",
 	"frame alloc failed(FramePacket)",
@@ -70,6 +71,7 @@ constexpr char MessageString[][128] = {
 enum struct MessageNum {
 	Function_not_implemented = 0x00,
 	SwsContext_init_failed,
+	SwrContext_init_failed,
 	FramePacket_alloc_failed,
 	FramePacket_data_alloc_failed,
 	FramePacket_frame_alloc_failed,

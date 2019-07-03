@@ -37,6 +37,7 @@ LIBS += -L$$PWD/SDK/UNIX/lib/ -lavdevice \
 	-L$$PWD/SDK/UNIX/lib/ -lavutil \
 	-L$$PWD/SDK/UNIX/lib/ -lswscale \
 	-L$$PWD/SDK/UNIX/lib/ -lavfilter \
+	-L$$PWD/SDK/UNIX/lib/ -lswresample \
 	-L$$PWD/SDK/UNIX/lib/ -lSDL2 \
 	-L$$PWD/SDK/UNIX/lib/ -ljrtp \
 	-L$$PWD/SDK/UNIX/lib/ -ljthread
@@ -52,6 +53,7 @@ LIBS += -L$$PWD/SDK/win32/bin/ -lavdevice-58 \
 	-L$$PWD/SDK/win32/bin/ -lavutil-56 \
 	-L$$PWD/SDK/win32/bin/ -lswscale-5 \
 	-L$$PWD/SDK/win32/bin/ -lavfilter-7 \
+	-L$$PWD/SDK/win32/bin/ -lswresample-3 \
 	-L$$PWD/SDK/win32/bin/ -lSDL2 \
 	-L$$PWD/SDK/win32/bin/ -llibjrtp \
 	-L$$PWD/SDK/win32/bin/ -llibopenfec

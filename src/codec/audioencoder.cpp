@@ -1,6 +1,7 @@
 #include "audioencoder.h"
 #include "../rtp_network/rtpsession.h"
 #include "../core/logger.h"
+#include "../audio_processing/resample.h"
 extern "C"{
 #include "libavutil/opt.h"
 #include "libavcodec/avcodec.h"
@@ -16,11 +17,19 @@ public:
 	AVCodec * encoder{nullptr};
 	AVCodecContext * encoder_ctx{nullptr};
 	AudioEncoder *queue{nullptr};
+	//用于保存上一次输入时的音频格式，通过前后对比来重新设置编码器参数
+	//现在虽然改为格式不一致则进行重采样，但是还是保留该代码(本意是不想通过重采样来处理的,但是好像只有S16是可以成功打开编码器)
 	core::Format format;
+	//用于重采样的默认格式
+	const core::Format default_resample_format{0,0,0,44100,2,16};
+	//编码成功后用于赋值FramePacket参数
 	rtp_network::RTPSession::PayloadType payload_type{rtp_network::RTPSession::PayloadType::RTP_PT_NONE};
-	AVFrame * encode_frame{nullptr};
 	//用于判断是否给frame设置参数
 	bool reassignment{false};
+	//实际用去编码的数据结构
+	AVFrame * encode_frame{nullptr};
+	//当输入格式不符合编码格式时则需要重采样
+	audio_processing::Resample * resample{nullptr};
 	
 	AudioEncoderPrivateData(AudioEncoder *p):
 		queue(p){}
@@ -29,6 +38,10 @@ public:
 		close_ctx();
 		if( encode_frame != nullptr){
 			av_frame_free(&encode_frame);
+		}
+		
+		if(resample != nullptr){
+			delete resample;
 		}
 	}
 	
@@ -148,6 +161,7 @@ public:
 		}
 		format = packet->format;
 		reassignment = true;
+		payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_AAC;
 		return true;
 	}
 	
