@@ -18,8 +18,8 @@ public:
 	AVCodecContext * encoder_ctx{nullptr};
 	AudioEncoder *queue{nullptr};
 	//用于保存上一次输入时的音频格式，通过前后对比来重新设置编码器参数
-	//现在虽然改为格式不一致则进行重采样，但是还是保留该代码(本意是不想通过重采样来处理的,但是好像只有S16是可以成功打开编码器)
-	core::Format format;
+	//现在改为格式不一致则进行重采样(本意是不想通过重采样来处理的,但是好像只有S16是可以成功打开编码器)
+	core::Format ifmt;
 	//用于重采样的默认格式
 	const core::Format default_resample_format{0,0,0,44100,2,16};
 	//编码成功后用于赋值FramePacket参数
@@ -138,7 +138,7 @@ public:
 	 * @return 
 	 */
 	inline bool open_ctx(const core::FramePacket * packet) noexcept{
-		if(encoder_ctx != nullptr && format == packet->format){
+		if(encoder_ctx != nullptr && ifmt == packet->format){
 			return true;
 		} else {
 			//先关闭之前的编码器(如果存在的话)
@@ -159,9 +159,11 @@ public:
 										 LogLevel::WARNING_LEVEL);
 			return false;
 		}
-		format = packet->format;
+		ifmt = packet->format;
 		reassignment = true;
 		payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_AAC;
+		
+		_init_resample();
 		return true;
 	}
 	
@@ -202,7 +204,13 @@ public:
 		int ret;
 		constexpr char api[] = "codec::AEPD::encode";
 		
-		
+		if( ifmt != default_resample_format){
+			//需要重采样
+			
+			//只有在resample重新生成才需要初始化,一般在open_ctx里面就初始化了
+			if( resample == nullptr && _init_resample() == false)
+				return ;
+		}
 	}
 	
 private:
@@ -278,6 +286,23 @@ private:
 		encoder_ctx->channels       = 2;
 //		encoder_ctx->profile = FF_PROFILE_UNKNOWN;
 		
+	}
+	
+	/**
+	 * @brief _init_resample
+	 * 初始化采样器，如果分配失败，则该次编码跳过
+	 * @return 
+	 */
+	inline bool _init_resample() noexcept {
+		if( resample == nullptr){
+			resample = new audio_processing::Resample;
+			if( resample == nullptr)
+				return false;
+		}
+		
+		resample->set_default_output_format(default_resample_format);
+		resample->set_default_input_format(ifmt);
+		return true;
 	}
 };
 

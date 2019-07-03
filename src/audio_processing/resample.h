@@ -68,13 +68,17 @@ public:
      * @param src_nb_samples
      * 输入的样本数
      * @param dst_data
-     * 目标数据数组,
+     * 目标数据数组,采样成功后，原数组的数据将会擦除
+     * 这个参数最好是nullptr，即*dst_data == nullptr
      * @param dst_nb_samples
      * 将要输出的样本数，这个参数将会在该接口内赋值
+     * @param buffer_size
+     * 返回输出音频所占用的空间大小
      * @return 
      */
     bool resample( uint8_t *** src_data,const int &src_nb_samples,
-                   uint8_t *** dst_data,int & dst_nb_samples) noexcept;
+                   uint8_t *** dst_data,int & dst_nb_samples,
+                   int & buffer_size) noexcept;
 private:
     ResamplePrivateData * const d_ptr;
 };

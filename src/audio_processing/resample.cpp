@@ -66,10 +66,13 @@ public:
      * 输出数据，这个参数最好是nullptr，即*dst_data == nullptr
      * @param dst_nb_samples
      * 输出的样本数，这个将会在内部赋值
+     * @param buffer_size
+     * 返回输出音频所占用的空间大小
      * @return 
      */
     inline bool resample(uint8_t *** src_data,const int &src_nb_samples,
-                         uint8_t *** dst_data,int & dst_nb_samples) noexcept{
+                         uint8_t *** dst_data,int & dst_nb_samples,
+                         int & buffer_size) noexcept{
         
         constexpr char api[] = "device_manager::ResamplePrivateData::resample";
         
@@ -79,7 +82,50 @@ public:
                 return false;
         }
         
+        /* 计算输出样本数 */
+        dst_nb_samples =
+                av_rescale_rnd(swr_get_delay(swr_ctx, ifmt.sample_rate) + src_nb_samples,
+                               ofmt.sample_rate,
+                               ifmt.sample_rate,
+                               AV_ROUND_UP);
         
+        int dst_linesize;
+        uint8_t **data{nullptr};
+        int ret = av_samples_alloc_array_and_samples(&data, &dst_linesize, ofmt.channels,
+                                                     dst_nb_samples, get_sample_format(ofmt.bits), 0);
+        if( ret < 0){
+            core::Logger::Print_APP_Info(core::MessageNum::FramePacket_data_alloc_failed,
+                                         api,
+                                         LogLevel::WARNING_LEVEL);
+            core::Logger::Print_FFMPEG_Info(ret,
+                                            api,
+                                            LogLevel::WARNING_LEVEL);
+            return false;
+        }
+
+        ret = swr_convert(swr_ctx, data, dst_nb_samples, (const uint8_t **)(*src_data), src_nb_samples);
+        if (ret < 0) {
+            core::Logger::Print_FFMPEG_Info(ret,
+                                            api,
+                                            LogLevel::WARNING_LEVEL);
+            return false;
+        }
+        
+        buffer_size = av_samples_get_buffer_size(&dst_linesize, ofmt.channels,
+                                                 ret, get_sample_format(ofmt.bits), 1);
+        if (buffer_size < 0) {
+            core::Logger::Print_FFMPEG_Info(ret,
+                                            api,
+                                            LogLevel::WARNING_LEVEL);
+            return false;
+        }
+        
+        //成功后需要释放原来的数据占用
+        if( *dst_data != nullptr){
+            av_free(*dst_data);
+        }
+        *dst_data = data;
+        return true;
     }
 protected:
     /**
@@ -105,8 +151,8 @@ protected:
         av_opt_set_int(swr_ctx, "out_sample_rate",       ofmt.sample_rate, 0);
         av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt", get_sample_format(ofmt.bits), 0);
     
-        int ret;
         //初始化上下文
+        int ret;
         if((ret = swr_init(swr_ctx)) < 0){
             core::Logger::Print_APP_Info(core::MessageNum::SwrContext_init_failed,
                                          api,
@@ -195,9 +241,10 @@ bool Resample::resample(core::FramePacket *dst, core::FramePacket *src) noexcept
     auto src_data = static_cast<uint8_t**>(src->data);
     uint8_t ** data{nullptr};
     int nb_samples{0};
+    int size{0};
     auto block_size = src->format.bits * 4 / src->format.channels;
     
-    auto ret = resample(&src_data, src->size / block_size ,&data ,nb_samples);
+    auto ret = resample(&src_data, src->size / block_size ,&data ,nb_samples,size);
     
     if(ret == true){
         dst->reset_pointer();
@@ -209,7 +256,7 @@ bool Resample::resample(core::FramePacket *dst, core::FramePacket *src) noexcept
             dst->data[n] = data[n];
         }
         av_freep(&data);
-        dst->size = nb_samples * block_size;
+        dst->size = size;
         return true;
     }
     
@@ -225,7 +272,8 @@ bool Resample::resample(core::FramePacket::SharedPacket dst, core::FramePacket::
 }
 
 bool Resample::resample(uint8_t *** src_data,const int &src_nb_samples,
-                        uint8_t *** dst_data,int & dst_nb_samples) noexcept
+                        uint8_t *** dst_data,int & dst_nb_samples,
+                        int & buffer_size) noexcept
 {
     //不允许输入为空且不允许src数据为空
     if(src_data == nullptr || *src_data == nullptr || dst_data == nullptr )
@@ -234,7 +282,7 @@ bool Resample::resample(uint8_t *** src_data,const int &src_nb_samples,
     if( src_nb_samples == 0)
         return true;
     
-    return d_ptr->resample(src_data,src_nb_samples,dst_data,dst_nb_samples);
+    return d_ptr->resample(src_data,src_nb_samples,dst_data,dst_nb_samples,buffer_size);
 }
 
 
