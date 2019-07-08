@@ -235,9 +235,11 @@ public:
 			
 			memcpy(encode_frame->data,dst_data,sizeof(uint8_t**) * 4);
 			free_flag = true;
+			encode_frame->nb_samples = nb;
 		}
 		else {
 			memcpy(encode_frame->data,packet->data,sizeof(uint8_t**) * 4);
+			encode_frame->nb_samples = packet->size / (packet->format.bits * 4 / packet->format.channels);
 		}
 		
 		/* send the frame for encoding */
