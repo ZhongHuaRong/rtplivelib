@@ -51,8 +51,12 @@ public:
 	 * @return 
 	 */
 	bool alloc_encode_frame() noexcept {
-		if( encode_frame == nullptr)
+		if( encode_frame == nullptr){
 			encode_frame = av_frame_alloc();
+			
+			if( encode_frame == nullptr)
+				return false;
+		}
 		
 		if( encode_frame != nullptr && reassignment == true){
 			encode_frame->nb_samples     = encoder_ctx->frame_size;
@@ -61,7 +65,7 @@ public:
 			reassignment = false;
 			return true;
 		}
-		return false;
+		return true;
 	}
 	
 	/**
