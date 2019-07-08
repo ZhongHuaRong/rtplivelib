@@ -450,10 +450,13 @@ public:
 			
 			dst_packet->pts = src_packet->pts;
 			dst_packet->dts = src_packet->dts;
-			core::Logger::Print("size:{}",
+			core::Logger::Print("video size:{}",
 								api,
 								LogLevel::ALLINFO_LEVEL,
 								dst_packet->size);
+			
+			//让退出循环时不要释放掉该packet
+			src_packet = nullptr;
 			queue->push_one(dst_packet);
 		}
 		

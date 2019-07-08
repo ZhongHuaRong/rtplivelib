@@ -198,11 +198,14 @@ public:
 			return;
 		}
 		
+		//这里设置好用于编码的frame
 		if( alloc_encode_frame() == false)
 			return;
 		
 		int ret;
 		constexpr char api[] = "codec::AEPD::encode";
+		bool free_flag{false};
+		uint8_t **dst_data = nullptr;
 		
 		if( ifmt != default_resample_format){
 			//需要重采样
@@ -210,9 +213,109 @@ public:
 			//只有在resample重新生成才需要初始化,一般在open_ctx里面就初始化了
 			if( resample == nullptr && _init_resample() == false)
 				return ;
+			
+			if( packet->format.channels == 0 && packet->format.bits == 0){
+				core::Logger::Print_APP_Info(core::MessageNum::Format_invalid_format,
+											 api,
+											 LogLevel::WARNING_LEVEL);
+				return;
+			}
+			
+			int nb{0},size{0};
+			uint8_t **src_data = static_cast<uint8_t**>(packet->data);
+			if( resample->resample(&src_data,packet->size / (packet->format.bits * 4 / packet->format.channels),
+								   &dst_data,nb,size) == false){
+				//日志在resample里面已经输出，这里就不输出了
+				return;
+			}
+			
+			memcpy(encode_frame->data,dst_data,sizeof(uint8_t**) * 4);
+			free_flag = true;
+		}
+		else {
+			memcpy(encode_frame->data,packet->data,sizeof(uint8_t**) * 4);
+		}
+		
+		/* send the frame for encoding */
+		ret = avcodec_send_frame(encoder_ctx, encode_frame);
+		if(ret < 0){
+			core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+			if(free_flag){
+				
+				av_freep(&dst_data);
+			}
+			return;
+		}
+		
+		receive_packet();
+		
+		if(free_flag){
+			
+			av_freep(&dst_data);
 		}
 	}
 	
+	/**
+	 * @brief receive_packet
+	 * 获取编码后的包，并推进队列
+	 */
+	inline void receive_packet() noexcept{
+		int ret = 0;
+		constexpr char api[] = "codec::AEPD::receive_packet";
+		AVPacket * src_packet = nullptr;
+		
+		//其实只有输入nullptr结束编码的时候循环才起作用
+		while(ret >= 0){
+			src_packet = av_packet_alloc();
+			if(src_packet == nullptr){
+				core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
+											 api,
+											 LogLevel::WARNING_LEVEL);
+				return;
+			}
+			ret = avcodec_receive_packet(encoder_ctx,src_packet);
+			if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
+				break;
+			}
+			else if(ret < 0){
+				core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+				break;
+			}
+			//以下操作是拷贝数据
+			auto dst_packet = core::FramePacket::Make_Shared();
+			if(dst_packet == nullptr){
+				core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
+											 api,
+											 LogLevel::WARNING_LEVEL);
+				break;
+			}
+			dst_packet->size = src_packet->size;
+
+			//浅拷贝,减少数据的拷贝次数
+			dst_packet->data[0] = src_packet->data;
+			dst_packet->packet = src_packet;
+			//这里设置格式是为了后面发送包的时候设置各种参数
+			//感觉这里不需要赋值,对于编码数据，不需要设置格式,只需要设置编码格式
+			//好像音频需要用到
+			dst_packet->format = default_resample_format;
+			//设置有效负载类型，也就是编码格式
+			dst_packet->payload_type = payload_type;
+			
+			dst_packet->pts = src_packet->pts;
+			dst_packet->dts = src_packet->dts;
+			core::Logger::Print("audio size:{}",
+								api,
+								LogLevel::ALLINFO_LEVEL,
+								dst_packet->size);
+			
+			//让退出循环时不要释放掉该packet
+			src_packet = nullptr;
+			queue->push_one(dst_packet);
+		}
+		
+		if(src_packet != nullptr)
+			av_packet_free(&src_packet);
+	}
 private:
 	/**
 	 * @brief _init_encoder
