@@ -87,7 +87,7 @@ LiveEngine::LiveEngine():
 	d_ptr->rtp_send->set_video_send_queue(d_ptr->video_encoder);
 	//音频设置
 	d_ptr->rtp_send->set_audio_session(d_ptr->audio_session);
-	d_ptr->rtp_send->set_audio_send_queue(nullptr);
+    d_ptr->rtp_send->set_audio_send_queue(d_ptr->audio_encoder);
 	
 	//AbstractQueue是线程安全的，所以只需要一个接收线程处理即可
 	d_ptr->video_session->set_rtp_recv_object(d_ptr->rtp_recv);

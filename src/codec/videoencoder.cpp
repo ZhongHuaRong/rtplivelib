@@ -383,10 +383,13 @@ public:
             }
 			
             //拷贝帧到显存
-            if( av_hwframe_transfer_data(encode_hw_frame, encode_sw_frame, 0) < 0){
+            ret = av_hwframe_transfer_data(encode_hw_frame, encode_sw_frame, 0);
+            if( ret < 0){
                 core::Logger::Print("av_hwframe_transfer_data error",
 									api,
 									LogLevel::MOREINFO_LEVEL);
+
+                core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::ERROR_LEVEL);
                 return;
             }
             ret = avcodec_send_frame(encoder_ctx,encode_hw_frame);
@@ -518,7 +521,7 @@ private:
 		bool ret;
 		switch(hwdtype){
 		case HardwareDevice::QSV:
-			ret = _init_encoder("h264_qsv",format);
+            ret = _init_encoder("h264_qsv",format);
 			//在初始化编码器上下文后，设置参数
 			_set_encoder_param(format);
 			if(ret == false || hwdevice->init_device(encoder_ctx,encoder,hwdtype) == false){

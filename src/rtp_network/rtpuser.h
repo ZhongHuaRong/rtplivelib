@@ -3,6 +3,7 @@
 
 #include "../core/config.h"
 #include "../codec/videodecoder.h"
+#include "../codec/audiodecoder.h"
 #include "../display/player.h"
 #include "rtpsession.h"
 #include "rtppacket.h"
@@ -73,7 +74,7 @@ protected:
 								 const int & frame_w,const int & frame_h) noexcept;
 private:
 	codec::VideoDecoder _vdecoder;
-	codec::VideoDecoder _adecoder;
+    codec::AudioDecoder _adecoder;
 	display::VideoPlayer _vplay;
 	fec::FECDecoder * const _afecdecoder;
 	fec::FECDecoder * const _vfecdecoder;
