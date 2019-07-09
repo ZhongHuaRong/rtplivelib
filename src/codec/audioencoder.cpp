@@ -211,44 +211,55 @@ public:
 		bool free_flag{false};
 		uint8_t **dst_data = nullptr;
 		
-		if( ifmt != default_resample_format){
-			//需要重采样
-			
-			//只有在resample重新生成才需要初始化,一般在open_ctx里面就初始化了
-			if( resample == nullptr && _init_resample() == false)
-				return ;
-			
-			if( packet->format.channels == 0 && packet->format.bits == 0){
-				core::Logger::Print_APP_Info(core::MessageNum::Format_invalid_format,
-											 api,
-											 LogLevel::WARNING_LEVEL);
-				return;
+		if( packet == nullptr){
+			//当编码结束时传入nullptr
+			ret = avcodec_send_frame(encoder_ctx, nullptr);
+		} else {
+			if( ifmt != default_resample_format){
+				//需要重采样
+				
+				//只有在resample重新生成才需要初始化,一般在open_ctx里面就初始化了
+				if( resample == nullptr && _init_resample() == false)
+					return ;
+				
+				if( packet->format.channels == 0 && packet->format.bits == 0){
+					core::Logger::Print_APP_Info(core::MessageNum::Format_invalid_format,
+												 api,
+												 LogLevel::WARNING_LEVEL);
+					return;
+				}
+				
+				int nb{0},size{0};
+				uint8_t **src_data = static_cast<uint8_t**>(packet->data);
+				if( resample->resample(&src_data,packet->size / (packet->format.bits * 4 / packet->format.channels),
+									   &dst_data,nb,size) == false){
+					//日志在resample里面已经输出，这里就不输出了
+					return;
+				}
+				
+//				memcpy(encode_frame->data,dst_data,sizeof(uint8_t**) * 4);
+				encode_frame->data[0] = dst_data[0];
+				free_flag = true;
+				encode_frame->nb_samples = nb;
+				
+			}
+			else {
+				//不需要重采样
+//				memcpy(encode_frame->data,packet->data,sizeof(packet->data));
+				//只用到第一个
+				encode_frame->data[0] = packet->data[0];
+				encode_frame->nb_samples = packet->size / (packet->format.bits * 4 / packet->format.channels);
 			}
 			
-			int nb{0},size{0};
-			uint8_t **src_data = static_cast<uint8_t**>(packet->data);
-			if( resample->resample(&src_data,packet->size / (packet->format.bits * 4 / packet->format.channels),
-								   &dst_data,nb,size) == false){
-				//日志在resample里面已经输出，这里就不输出了
-				return;
-			}
-			
-			memcpy(encode_frame->data,dst_data,sizeof(uint8_t**) * 4);
-			free_flag = true;
-			encode_frame->nb_samples = nb;
-		}
-		else {
-			memcpy(encode_frame->data,packet->data,sizeof(uint8_t**) * 4);
-			encode_frame->nb_samples = packet->size / (packet->format.bits * 4 / packet->format.channels);
+			/* send the frame for encoding */
+			ret = avcodec_send_frame(encoder_ctx, encode_frame);
 		}
 		
-		/* send the frame for encoding */
-		ret = avcodec_send_frame(encoder_ctx, encode_frame);
 		if(ret < 0){
 			core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
 			if(free_flag){
-				
-				av_freep(&dst_data);
+				av_free(dst_data[0]);
+				av_free(dst_data);
 			}
 			return;
 		}
@@ -256,8 +267,8 @@ public:
 		receive_packet();
 		
 		if(free_flag){
-			
-			av_freep(&dst_data);
+			av_free(dst_data[0]);
+			av_free(dst_data);
 		}
 	}
 	

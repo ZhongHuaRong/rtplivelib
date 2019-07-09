@@ -250,12 +250,9 @@ bool Resample::resample(core::FramePacket *dst, core::FramePacket *src) noexcept
         dst->reset_pointer();
         
         dst->format = d_ptr->ofmt;
-        //这里赋值需要注意一下
-        //FramePacket的data是数组来的，而data的是指针，需要释放掉data的外层指针
-        for( auto n = 0;n < 4;++n){
-            dst->data[n] = data[n];
-        }
-        av_freep(&data);
+        //这里赋值需要注意一下 
+        dst->data[0] = data[0];
+        av_free(data);
         dst->size = size;
         return true;
     }
