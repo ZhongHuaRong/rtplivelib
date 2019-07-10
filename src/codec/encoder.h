@@ -18,6 +18,7 @@ namespace codec {
  * @brief The VideoEncode class
  * 编码器的基类
  * 处理一些编码器相关操作
+ * 该类是线程安全类
  */
 class RTPLIVELIBSHARED_EXPORT Encoder : 
 		public core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
@@ -112,7 +113,6 @@ protected:
 	 * @brief encode
 	 * 子类需要实现这个接口
 	 * 用于实际编码
-	 * @param packet
 	 */
 	virtual void encode(core::FramePacket * packet) noexcept = 0 ;
 	
@@ -121,7 +121,9 @@ protected:
 	 * 创建编码器
 	 * @param name
 	 * 编码器名字
-	 * @return 
+	 * @see set_encoder_param
+	 * @see open_encoder
+	 * @see close_encoder
 	 */
 	bool creat_encoder(const char * name) noexcept;
 	
@@ -132,8 +134,28 @@ protected:
 	 * 这个接口也是纯虚的，需要子类实现
 	 * @param format
 	 * 用于设置的参数
+	 * @see creat_encoder
 	 */
 	virtual void set_encoder_param(const core::Format & format) noexcept = 0;
+	
+	/**
+	 * @brief open_encoder
+	 * 开启编码器
+	 * 需要提前设置好参数，否则将会打开失败
+	 * @see creat_encoder
+	 * @see set_encoder_param
+	 * @see close_encoder
+	 */
+	bool open_encoder() noexcept;
+	
+	/**
+	 * @brief close_encoder
+	 * 关闭解码器，同时释放内存
+	 * @see creat_encoder
+	 * @see set_encoder_param
+	 * @see open_encoder
+	 */
+	void close_encoder() noexcept;
 	
 	/**
 	 * @brief on_thread_run
