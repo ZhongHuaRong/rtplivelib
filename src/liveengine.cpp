@@ -74,6 +74,7 @@ LiveEngine::LiveEngine():
 	//设置视频输入队列，输入队列为device的video_factory
 	d_ptr->video_encoder->set_input_queue(device->get_video_factory());
 	d_ptr->video_encoder->set_max_size(60);
+	device->get_video_factory()->set_max_size(60);
 	
 	//设置音频输入队列，输入队列为device的audio_factory
 	d_ptr->audio_encoder->set_input_queue(device->get_audio_factory());

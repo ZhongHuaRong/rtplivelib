@@ -116,12 +116,12 @@ public:
 	 * 返回最新的包，如果没有则返回nullptr
 	 */
 	inline virtual Unit get_latest() noexcept{
-		std::lock_guard<std::mutex> lk(_mutex);
 		if(_queue->empty())
 			return nullptr;
 		while(_queue->size() > 1){
 			erase_first();
 		}
+		std::lock_guard<std::mutex> lk(_mutex);
 		auto ptr = _queue->front();
 		_queue->pop();
 		return ptr;
@@ -149,6 +149,7 @@ public:
 	 * 抹除首个元素
 	 */
 	inline void erase_first() noexcept{
+		std::lock_guard<std::mutex> lk(_mutex);
 		if( _queue->empty())
 			return;
 		auto ptr = _queue->front();
@@ -161,7 +162,6 @@ public:
 	 * 清空队列
 	 */
 	inline void clear() noexcept{
-		std::lock_guard<std::mutex> lk(_mutex);
 		while(has_data()){
 			erase_first();
 		}
