@@ -111,7 +111,8 @@ HEADERS += \
     src/codec/audioencoder.h \
     src/core/globalcallback.h \
     src/audio_processing/resample.h \
-    src/codec/audiodecoder.h
+    src/codec/audiodecoder.h \
+    src/codec/encoder.h
 
 SOURCES += \
     src/core/abstractthread.cpp \
@@ -149,4 +150,5 @@ SOURCES += \
     src/codec/audioencoder.cpp \
     src/core/globalcallback.cpp \
     src/audio_processing/resample.cpp \
-    src/codec/audiodecoder.cpp
+    src/codec/audiodecoder.cpp \
+    src/codec/encoder.cpp
