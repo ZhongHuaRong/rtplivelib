@@ -116,7 +116,7 @@ void VideoEncoder::encode(core::FramePacket *packet) noexcept
 
 void VideoEncoder::set_encoder_param(const core::Format &format) noexcept
 {
-	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
+//	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 	//设置好格式
 	encoder_ctx->width = format.width;
 	encoder_ctx->height = format.height;
@@ -148,7 +148,7 @@ void VideoEncoder::receive_packet() noexcept
 										 LogLevel::WARNING_LEVEL);
 			return;
 		}
-		std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
+//		std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 		ret = avcodec_receive_packet(encoder_ctx,src_packet);
 		if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
 			break;

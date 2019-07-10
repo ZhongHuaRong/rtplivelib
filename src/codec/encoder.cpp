@@ -85,7 +85,7 @@ bool Encoder::create_encoder(const char *name) noexcept
 			return false;
 		}
 		
-		std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
+//		std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 		if(encoder_ctx != nullptr)
 			avcodec_free_context(&encoder_ctx);
 		
@@ -102,7 +102,7 @@ bool Encoder::create_encoder(const char *name) noexcept
 bool Encoder::open_encoder() noexcept
 {
 	constexpr char api[] = "codec::Encoder::open_encoder";
-	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
+//	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 	if( encoder_ctx == nullptr || encoder == nullptr){
 		core::Logger::Print_APP_Info(core::MessageNum::Codec_codec_context_alloc_failed,
 									 api,
@@ -128,7 +128,7 @@ void Encoder::close_encoder() noexcept
 {
 	if(encoder_ctx == nullptr)
 		return;
-	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
+//	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 	this->encode(nullptr);
 	avcodec_free_context(&encoder_ctx);
 }

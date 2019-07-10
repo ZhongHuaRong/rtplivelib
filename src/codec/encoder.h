@@ -18,7 +18,8 @@ namespace codec {
  * @brief The VideoEncode class
  * 编码器的基类
  * 处理一些编码器相关操作
- * 该类是线程安全类
+ * 该类不是线程安全类，不允许在编码过程中调用set_encoder_name来更换编码器
+ * 因为所有编码设置都是自动设置好的，不需要提供外部接口，上锁会影响效率，暂时不考虑线程安全
  */
 class RTPLIVELIBSHARED_EXPORT Encoder : 
 		public core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
@@ -29,7 +30,6 @@ public:
 	/**
 	 * @brief VideoEncode
 	 * 不带参数的构造函数，没啥作用，需要调用set_input_queue设置一个输入队列
-	 * 简称生产者
 	 * @param use_hw_accleration
 	 * 用于标识是否开启硬件加速,Video一般需要，Audio则不需要
 	 */

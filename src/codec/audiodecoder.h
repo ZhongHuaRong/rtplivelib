@@ -15,10 +15,7 @@ class AudioDecoderPrivateData;
 
 /**
  * @brief The AudioDecoder class
- * 解码类
- * 这里不允许外部设置硬解类型
- * 内部将会选择一项最优方案硬解
- * 当所有方案都不行的时候，将会软解，软解的话，速度性能都跟不上
+ * 音频解码类
  */
 class RTPLIVELIBSHARED_EXPORT AudioDecoder :
         public core::AbstractQueue<std::pair<rtp_network::RTPSession::PayloadType,std::shared_ptr<core::FramePacket>>>

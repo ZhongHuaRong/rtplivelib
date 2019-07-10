@@ -25,7 +25,6 @@ public:
 	/**
 	 * @brief VideoEncode
 	 * 不带参数的构造函数，没啥作用，需要调用set_input_queue设置一个输入队列
-	 * 简称生产者
 	 */
 	VideoEncoder(bool use_hw_acceleration = true,
 				 HardwareDevice::HWDType hwa_type = HardwareDevice::Auto);

@@ -11,7 +11,6 @@ namespace codec {
 /**
  * @brief The VideoEncode class
  * 编码默认采用的是AAC,也只有AAC
- * 先不提供更改编码器的接口
  */
 class RTPLIVELIBSHARED_EXPORT AudioEncoder : public Encoder
 {
@@ -19,7 +18,6 @@ public:
 	/**
 	 * @brief AudioEncoder
 	 * 不带参数的构造函数，没啥作用，需要调用set_input_queue设置一个输入队列
-	 * 简称生产者
 	 */
 	AudioEncoder();
 	
@@ -36,6 +34,12 @@ public:
 	 * 释放资源
 	 */
 	virtual ~AudioEncoder() override;
+
+    /**
+     * @brief set_hardware_acceleration
+     * 音频编码不需要硬件加速
+     */
+    void set_hardware_acceleration(bool flag,HardwareDevice::HWDType hwa_type = HardwareDevice::Auto) noexcept = delete;
 protected:
 	/**
 	 * @brief encode

@@ -1,5 +1,8 @@
 #include "audiodecoder.h"
-
+#include "../core/logger.h"
+extern "C"{
+#include "libavcodec/avcodec.h"
+}
 
 namespace rtplivelib {
 
