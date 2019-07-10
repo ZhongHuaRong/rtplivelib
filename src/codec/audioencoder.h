@@ -1,25 +1,20 @@
 
 #pragma once
 
-#include "../core/abstractqueue.h"
-#include "../core/format.h"
+#include "encoder.h"
+#include "../audio_processing/resample.h"
 
 namespace rtplivelib {
 
 namespace codec {
-
-class AudioEncoderPrivateData;
 
 /**
  * @brief The VideoEncode class
  * 编码默认采用的是AAC,也只有AAC
  * 先不提供更改编码器的接口
  */
-class RTPLIVELIBSHARED_EXPORT AudioEncoder : 
-		public core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
+class RTPLIVELIBSHARED_EXPORT AudioEncoder : public Encoder
 {
-public:
-	using Queue = core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>;
 public:
 	/**
 	 * @brief AudioEncoder
@@ -41,80 +36,62 @@ public:
 	 * 释放资源
 	 */
 	virtual ~AudioEncoder() override;
-	
-	/**
-	 * @brief get_codec_id
-	 * 获取当前编码器id
-	 * 给外部提供当前是哪种编码格式
-	 * @return 
-	 */
-	int get_encoder_id() noexcept;
-	
-	/**
-	 * @brief set_input_queue
-	 * 设置一个队列(生产者)
-	 * 只有设置了队列，线程才启动
-	 */
-	void set_input_queue(Queue * input_queue) noexcept;
-	
-	/**
-	 * @brief has_input_queue
-	 * 判断是否含有队列
-	 */
-	bool has_input_queue() noexcept;
-	
-	/**
-	 * @brief get_input_queue
-	 * 获取内置的队列，可能为nullptr
-	 */
-	const Queue * get_input_queue() noexcept;
 protected:
 	/**
-	 * @brief on_thread_run
-	 * 线程运行时需要处理的操作
+	 * @brief encode
+	 * 编码
 	 */
-	virtual void on_thread_run() noexcept override;
+	virtual void encode(core::FramePacket * packet) noexcept override;
 	
 	/**
-	 * @brief on_thread_pause
-	 * 线程暂停时的回调
+	 * @brief set_encoder_param
+	 * 设置编码器参数
+	 * 要注意，需要先调用creat_encoder创建编码器，否则不能正常使用该接口
+	 * @param format
+	 * 用于设置的参数
+	 * @see creat_encoder
 	 */
-	virtual void on_thread_pause() noexcept override;
+	virtual void set_encoder_param(const core::Format & format) noexcept override;
 	
 	/**
-	 * @brief get_thread_pause_condition
-	 * 该函数用于判断线程是否需要暂停
-	 * @return 
-	 * 返回true则线程睡眠
-	 * 默认是返回true，线程启动即睡眠
+	 * @brief receive_packet
+	 * 接受编码成功后的包
 	 */
-	virtual bool get_thread_pause_condition() noexcept override;
-private:
+	void receive_packet() noexcept;
+	
+private:	
 	/**
-	 * @brief get_next_packet
-	 * 从队列里获取下一个包
+	 * @brief _alloc_encode_frame
+	 * 为编码帧分配空间
 	 * @return 
-	 * 如果失败则返回nullptr
 	 */
-	core::FramePacket::SharedPacket _get_next_packet() noexcept;
+	bool _alloc_encode_frame() noexcept;
+	
+	/**
+	 * @brief open_ctx
+	 * 打开编码器,对父类的open_encoder接口进行了封装
+	 */
+	bool _open_ctx(const core::FramePacket * packet) noexcept;
+	
+	/**
+	 * @brief _init_resample
+	 * 初始化采样器，如果分配失败，则该次编码跳过
+	 * @return 
+	 */
+	bool _init_resample() noexcept;
 private:
-	std::mutex _mutex;
-	Queue * _queue;
-	AudioEncoderPrivateData * const d_ptr;
+	//用于保存上一次输入时的音频格式，通过前后对比来重新设置编码器参数
+	//现在改为格式不一致则进行重采样(本意是不想通过重采样来处理的,但是好像只有S16是可以成功打开编码器)
+	core::Format ifmt;
+	//用于重采样的默认格式
+	const core::Format default_resample_format{0,0,0,44100,2,16};
+	//用于判断是否给frame设置参数
+	bool reassignment{false};
+	//实际用去编码的数据结构
+	AVFrame * encode_frame{nullptr};
+	//当输入格式不符合编码格式时则需要重采样
+	audio_processing::Resample * resample{nullptr};
 };
-
-inline void AudioEncoder::set_input_queue(AudioEncoder::Queue * input_queue) noexcept	{
-	std::lock_guard<std::mutex> lk(_mutex);
-	auto _q = _queue;
-	_queue = input_queue;
-	if(_q != nullptr)
-		_q->exit_wait_resource();
-	if(_queue != nullptr)
-		start_thread();
-	
-}
-inline bool AudioEncoder::has_input_queue() noexcept								{		return _queue != nullptr;}
-inline const AudioEncoder::Queue * AudioEncoder::get_input_queue() noexcept			{		return _queue;}
 
 } // namespace codec
 
