@@ -1,9 +1,8 @@
 
 #pragma once
 
-#include "../core/abstractqueue.h"
-#include "../core/format.h"
-#include "hardwaredevice.h"
+#include "encoder.h"
+#include "../image_processing/scale.h"
 
 namespace rtplivelib {
 
@@ -20,34 +19,22 @@ class VideoEncoderPrivateData;
  * N卡采用NVENC
  * Intel核显采用qsv
  */
-class RTPLIVELIBSHARED_EXPORT VideoEncoder : 
-		public core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
+class RTPLIVELIBSHARED_EXPORT VideoEncoder : public Encoder
 {
-public:
-	using Queue = core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>;
 public:
 	/**
 	 * @brief VideoEncode
 	 * 不带参数的构造函数，没啥作用，需要调用set_input_queue设置一个输入队列
 	 * 简称生产者
-	 * 不提供codec id,只是暴露编码器id修改的接口
-	 * @param codec_id
-	 * 这个是编码器id,173是HEVC
 	 */
-	VideoEncoder(int codec_id = 173,
-				 bool use_hw_acceleration = true,
+	VideoEncoder(bool use_hw_acceleration = true,
 				 HardwareDevice::HWDType hwa_type = HardwareDevice::Auto);
 	
 	/**
 	 * @brief VideoEncode
 	 * 带有输入队列参数的构造函数，将会直接工作
-	 * @param input_queue
-	 * 输入队列
-	 * @param codec_id
-	 * 这个是编码器id,173是HEVC
 	 */
 	explicit VideoEncoder(Queue * input_queue,
-						  int codec_id = 173,
 						  bool use_hw_acceleration = true,
 						  HardwareDevice::HWDType hwa_type = HardwareDevice::Auto);
 	
@@ -56,105 +43,114 @@ public:
 	 * 释放资源
 	 */
 	virtual ~VideoEncoder() override;
-	
-	/**
-	 * @brief set_codec_id
-     * 不推荐外部调用该接口
-     * 设置编码器
-	 * 不允许在编码的时候调用该接口
-	 * 不过不提供id,内部调动的接口
-	 * @param codec_id
-	 * 这个是编码器id,173是HEVC
-	 * @return 
-	 * 是否设置成功
-	 */
-	bool set_encoder_id(int codec_id) noexcept;
-	
-	/**
-	 * @brief get_codec_id
-	 * 获取当前编码器id
-	 * 给外部提供当前是哪种编码格式
-	 * @return 
-	 */
-	int get_encoder_id() noexcept;
-	
-	/**
-	 * @brief set_hardware_acceleration
-	 * 是否开启硬件加速，
-	 * 默认在调用构造函数的时候传入true开启硬件加速
-	 * 如果硬件加速出来的效果不好，而机器性能又不能完全软压的情况下
-	 * 请调低分辨率
-	 * @param hwa_type
-	 * 硬件设备类型，默认是自动选择
-	 * 也可以手动选择，当选择的硬件设备无法打开的时候将会使用纯CPU进行编码
-	 */
-	void set_hardware_acceleration(bool flag,HardwareDevice::HWDType hwa_type = HardwareDevice::Auto) noexcept;
-	
-	/**
-	 * @brief set_input_queue
-	 * 设置一个队列(生产者)
-	 * 只有设置了队列，线程才启动
-	 */
-	void set_input_queue(Queue * input_queue) noexcept;
-	
-	/**
-	 * @brief has_input_queue
-	 * 判断是否含有队列
-	 */
-	bool has_input_queue() noexcept;
-	
-	/**
-	 * @brief get_input_queue
-	 * 获取内置的队列，可能为nullptr
-	 */
-	const Queue * get_input_queue() noexcept;
 protected:
 	/**
-	 * @brief on_thread_run
-	 * 线程运行时需要处理的操作
+	 * @brief encode
+	 * 编码
 	 */
-	virtual void on_thread_run() noexcept override;
+	virtual void encode(core::FramePacket * packet) noexcept override;
 	
 	/**
-	 * @brief on_thread_pause
-	 * 线程暂停时的回调
+	 * @brief set_encoder_param
+	 * 设置编码器参数
+	 * 要注意，需要先调用creat_encoder创建编码器，否则不能正常使用该接口
+	 * @param format
+	 * 用于设置的参数
+	 * @see creat_encoder
 	 */
-	virtual void on_thread_pause() noexcept override;
+	virtual void set_encoder_param(const core::Format & format) noexcept override;
 	
 	/**
-	 * @brief get_thread_pause_condition
-	 * 该函数用于判断线程是否需要暂停
-	 * @return 
-	 * 返回true则线程睡眠
-	 * 默认是返回true，线程启动即睡眠
+	 * @brief receive_packet
+	 * 接受编码成功后的包
 	 */
-	virtual bool get_thread_pause_condition() noexcept override;
-private:
+	void receive_packet() noexcept;
+	
+public:
 	/**
-	 * @brief get_next_packet
-	 * 从队列里获取下一个包
+	 * @brief _init_hwdevice
+	 * 初始化硬件设备并启动编码器
+	 * 将会优先选择HEVC，如果不支持则换成264
+	 * @param hwdtype
+	 * 硬件设备类型
+	 * @param format
+	 * 图像格式
 	 * @return 
-	 * 如果失败则返回nullptr
 	 */
-	core::FramePacket::SharedPacket _get_next_packet() noexcept;
+	bool _init_hwdevice(HardwareDevice::HWDType hwdtype,const core::Format& format) noexcept;
+	
+	/**
+	 * @brief _select_hwdevice
+	 * 根据当前情况选择最优的硬件加速方案
+	 * 目前只设置qsv
+	 * @param packet
+	 * 将要编码的包信息
+	 * @return 
+	 */
+	bool _select_hwdevice(const core::FramePacket * packet) noexcept;
+	
+	/**
+	 * @brief _set_sw_encoder_ctx
+	 * 设置编码器上下文并打开编码器
+	 * 这个接口将会启动纯CPU进行编码
+	 * 在输入图像的时候，要严格按照格式设置
+	 * @param dst_format
+	 * 目标格式
+	 * @param fps
+	 * 每秒帧数 
+	 */
+	void _set_sw_encoder_ctx(const core::FramePacket * packet) noexcept;
+	
+	/**
+	 * @brief _close_ctx
+	 * 关闭上下文,同时也会释放帧
+	 */
+	void _close_ctx() noexcept;
+	
+	/**
+	 * @brief _alloc_frame
+	 * 分配并初始化AVFrame
+	 * 会根据提前设定好的格式进行初始化，不需要额外输入格式,简化操作
+	 */
+	AVFrame * _alloc_frame() noexcept;
+	
+	/**
+	 * @brief _alloc_hw_frame
+	 * 因为硬件帧和软件帧不一样，分开实现
+	 * 这个函数必须在硬件编码器上下文初始化后调用
+	 * @param packet
+	 * 给硬件帧分配空间
+	 * @return 
+	 */
+	AVFrame * _alloc_hw_frame() noexcept;
+	
+	/**
+	 * @brief _free_frame
+	 * 释放软件帧和硬件帧
+	 */
+	void _free_frame() noexcept;
+	
+	/**
+	 * @brief _set_frame_data
+	 * 通过packet设置AVFAVFrame的数据
+	 * @return 
+	 * 如果设置失败则返回false
+	 */
+	bool _set_frame_data(AVFrame * frame,core::FramePacket *packet) noexcept;
 private:
-	std::mutex _mutex;
-	Queue * _queue;
-	VideoEncoderPrivateData * const d_ptr;
+	//硬件加速类
+	HardwareDevice * hwdevice{nullptr};
+	//保存上一次正确编码时的输入格式
+	core::Format format;
+	//目前正在使用的类型,用于判断用户是否修改硬件加速方案
+	HardwareDevice::HWDType hwd_type_cur{HardwareDevice::None};
+	//用于格式转换
+	image_processing::Scale * scale_ctx{new image_processing::Scale};
+	//用来编码的数据结构，只在设置format的时候分配一次
+	//随着格式的改变和上下文一起重新分配
+	AVFrame * encode_sw_frame{nullptr};
+	AVFrame * encode_hw_frame{nullptr};
 };
-
-inline void VideoEncoder::set_input_queue(VideoEncoder::Queue * input_queue) noexcept	{
-	std::lock_guard<std::mutex> lk(_mutex);
-	auto _q = _queue;
-	_queue = input_queue;
-	if(_q != nullptr)
-		_q->exit_wait_resource();
-	if(_queue != nullptr)
-		start_thread();
-	
-}
-inline bool VideoEncoder::has_input_queue() noexcept								{		return _queue != nullptr;}
-inline const VideoEncoder::Queue * VideoEncoder::get_input_queue() noexcept			{		return _queue;}
 
 } // namespace codec
 

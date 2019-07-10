@@ -11,20 +11,17 @@ namespace rtplivelib {
 
 namespace codec {
 
-Encoder::Encoder(const char * codec_name,bool use_hw_acceleration,HardwareDevice::HWDType hwa_type):
+Encoder::Encoder(bool use_hw_acceleration,HardwareDevice::HWDType hwa_type):
 	_queue(nullptr)
 {
-	set_encoder_name(codec_name);
 	set_hardware_acceleration(use_hw_acceleration,hwa_type);
 }
 
 Encoder::Encoder(Encoder::Queue *queue,
-				 const char * codec_name,
 				 bool use_hw_acceleration,
 				 HardwareDevice::HWDType hwa_type):
 	_queue(queue)
 {
-	set_encoder_name(codec_name);
 	set_hardware_acceleration(use_hw_acceleration,hwa_type);
 	start_thread();
 }
@@ -37,9 +34,7 @@ Encoder::~Encoder()
 
 bool Encoder::set_encoder_name(const char *codec_name) noexcept
 {
-	if(get_exit_flag())
-		return false;
-	return creat_encoder(codec_name);
+	return create_encoder(codec_name);
 }
 
 std::string Encoder::get_encoder_name() noexcept
@@ -69,7 +64,7 @@ void Encoder::set_hardware_acceleration(bool flag,HardwareDevice::HWDType hwa_ty
 	hwd_type_user = hwa_type;
 }
 
-bool Encoder::creat_encoder(const char *name) noexcept
+bool Encoder::create_encoder(const char *name) noexcept
 {
 	constexpr char api[] = "codec::Encoder::creat_encoder";
 	

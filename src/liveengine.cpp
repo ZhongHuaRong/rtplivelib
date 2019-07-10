@@ -30,7 +30,7 @@ public:
 	 * 初始化
 	 */
 	LiveEnginePrivateData():
-		video_encoder(new codec::VideoEncoder(AV_CODEC_ID_HEVC,true)),
+		video_encoder(new codec::VideoEncoder()),
 		audio_encoder(new codec::AudioEncoder()),
 		video_session(new rtp_network::RTPSession),
 		audio_session(new rtp_network::RTPSession),
@@ -73,7 +73,7 @@ LiveEngine::LiveEngine():
 	/*在初始化的时候，关联所有类,让其可以正常工作*/
 	//设置视频输入队列，输入队列为device的video_factory
 	d_ptr->video_encoder->set_input_queue(device->get_video_factory());
-	d_ptr->video_encoder->set_max_size(30);
+	d_ptr->video_encoder->set_max_size(60);
 	
 	//设置音频输入队列，输入队列为device的audio_factory
 	d_ptr->audio_encoder->set_input_queue(device->get_audio_factory());
