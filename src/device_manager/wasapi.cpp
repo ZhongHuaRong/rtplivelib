@@ -142,6 +142,7 @@ bool WASAPI::set_current_device(const std::wstring &id, WASAPI::FlowType ft) noe
     stop();
     SafeRelease()(&this->pDevice);
     this->pDevice = pDevice;
+    current_flow_type = ft;
     return true;
 }
 
@@ -161,6 +162,7 @@ bool WASAPI::set_default_device(WASAPI::FlowType ft) noexcept
 	stop();
 	SafeRelease()(&this->pDevice);
     this->pDevice = pDevice;
+    current_flow_type = ft;
     return true;
 }
 
@@ -215,13 +217,25 @@ bool WASAPI::start() noexcept
 
 	nFrameSize = (pwfx->wBitsPerSample / 8) * pwfx->nChannels;
 
-	hr = pAudioClient->Initialize(
-		AUDCLNT_SHAREMODE_SHARED,
-		AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK,
-		50 * 10000, // 100纳秒为基本单位
-		0,
-		pwfx,
-		nullptr);
+	//不考虑第三种
+	if(current_flow_type == FlowType::RENDER){
+		hr = pAudioClient->Initialize(
+			AUDCLNT_SHAREMODE_SHARED,
+			AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK,
+			50 * 10000, // 100纳秒为基本单位
+			0,
+			pwfx,
+			nullptr);
+	} else if(current_flow_type == FlowType::CAPTURE){
+		hr = pAudioClient->Initialize(
+			AUDCLNT_SHAREMODE_SHARED,
+			AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+			50 * 10000, // 100纳秒为基本单位
+			0,
+			pwfx,
+			nullptr);
+	} else
+		return false;
 	
 	if (FAILED(hr)) {
 		SafeRelease()(&pAudioClient);

@@ -170,6 +170,7 @@ private:
 	PROPERTYKEY				key;
 	HANDLE					event{nullptr};
 	std::recursive_mutex	mutex;
+	FlowType				current_flow_type{FlowType::RENDER};
 	
 	volatile bool _is_running_flag{false};
 };
