@@ -91,6 +91,7 @@ public:
      * @brief fill_audio
      * 填充音频数据
      * @param udata
+     * 用户数据
      * @param stream
      * @param len
      */
@@ -108,7 +109,7 @@ public:
             ptr->audio_chunk = ptr->tmp->data[0];
             ptr->audio_pos = ptr->audio_chunk;
             ptr->audio_len = ptr->tmp->size;
-            return; 
+//            return; 
         }
         len=(len>ptr->audio_len?ptr->audio_len:len);
      

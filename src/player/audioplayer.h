@@ -17,6 +17,8 @@ class AudioPlayerPrivateData;
  *   (这种方式是开多线程播放)
  * 2：调用play接口播放(当前线程播放)
  * 第一种方式播放虽然方便，但是不允许数据前处理，需要继承捕捉类实现on_frame_data实现
+ * 
+ * 由于play也是异步播放了，所以建议采用第二种方式播放音频
  */
 class RTPLIVELIBSHARED_EXPORT AudioPlayer:public AbstractPlayer
 {
@@ -26,9 +28,10 @@ public:
 	virtual ~AudioPlayer() override;
 	
 	/**
-	 * @brief show
-	 * 重载函数
-	 * 该接口不会复制一份
+	 * @brief play
+	 * 播放音频
+	 * 播放操作是异步的，所以该接口会立即返回
+	 * 要注意，pakcet包数据在外部最好不要进行改动
 	 */
 	virtual bool play(core::FramePacket::SharedPacket packet) noexcept override;
 private:
