@@ -1,7 +1,7 @@
 #include "videoprocessingfactory.h"
 
 #include <algorithm>
-#include "../display/player.h"
+#include "../player/videoplayer.h"
 #include "../core/time.h"
 #include "../core/logger.h"
 extern "C" {
@@ -30,7 +30,7 @@ class VideoProcessingFactoryPrivateData{
 public:
 	//因为该类处理视频时，只有注册回调才能获取到数据
 	//所以内部设置播放器用于播放
-	display::VideoPlayer *player{nullptr};
+	player::VideoPlayer *player{nullptr};
 	std::mutex player_mutex;
 	//转换格式用的结构体
 	core::Format scale_format_current;
@@ -231,7 +231,7 @@ void VideoProcessingFactory::set_display_win_id(void *id) noexcept(false)
 	else {
 		if(d_ptr->player == nullptr) {
 			try {
-				d_ptr->player = new display::VideoPlayer;
+				d_ptr->player = new player::VideoPlayer;
 			} catch (const std::bad_alloc& except) {
 				throw except;
 			}
@@ -320,7 +320,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 				GlobalCallBack::Get_CallBack()->on_video_frame_merge(merge_packet);
 			std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 			if(d_ptr->player != nullptr)
-				d_ptr->player->show(merge_packet.get());
+				d_ptr->player->play(merge_packet);
 			push_one(merge_packet);
 		}
 	}
@@ -336,7 +336,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		}
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
-			d_ptr->player->show(packet.get());
+			d_ptr->player->play(packet);
 		push_one(packet);
 		return;
 	}
@@ -369,7 +369,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
-			d_ptr->player->show(packet.get());
+			d_ptr->player->play(packet);
 		push_one(packet);
 		return;
 	}

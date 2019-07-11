@@ -8,7 +8,7 @@ extern "C" {
 
 namespace rtplivelib {
 
-namespace display {
+namespace player {
 
 class VideoPlayerPrivateData{
 public:
@@ -227,7 +227,7 @@ void VideoPlayer::show_screen_size_changed(const int &win_w,const int & win_h,
  * @brief set_win_id
  * 更改窗口id
  */
-void VideoPlayer::set_win_id(void *id)
+void VideoPlayer::set_win_id(void *id) noexcept
 {
 	//如果和之前的设置差不多，不处理
 	if(id == d_ptr->show_id)
@@ -243,7 +243,7 @@ void VideoPlayer::set_win_id(void *id)
  * @brief show
  * 显示
  */
-bool VideoPlayer::show(const core::Format& format,uint8_t * data[],int linesize[])
+bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[]) noexcept
 {
 	//如果显示窗口不存在或者图片不存在，则不显示，其他情况都可以
 	if(d_ptr->show_screen == nullptr || data ==nullptr)

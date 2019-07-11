@@ -35,7 +35,7 @@ public:
 	 * @brief set_player_object
 	 * 临时接口，用于设置播放器
 	 */
-	void set_player_object(display::AbstractPlayer * player) noexcept;
+	void set_player_object(player::AbstractPlayer * player) noexcept;
 protected:
 	/**
 	 * @brief on_thread_run

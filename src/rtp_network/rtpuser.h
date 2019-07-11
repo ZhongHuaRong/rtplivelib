@@ -75,7 +75,7 @@ protected:
 private:
 	codec::VideoDecoder _vdecoder;
     codec::AudioDecoder _adecoder;
-	display::VideoPlayer _vplay;
+	player::VideoPlayer _vplay;
 	fec::FECDecoder * const _afecdecoder;
 	fec::FECDecoder * const _vfecdecoder;
 	

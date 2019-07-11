@@ -4,7 +4,7 @@
 
 namespace rtplivelib{
 
-namespace display {
+namespace player {
 
 enum struct PlayFormat{
 	PF_VIDEO = 0x01,
@@ -45,29 +45,29 @@ public:
 	 * 窗口显示ID，音频则无视该参数
 	 */
 	void set_player_object(device_manager::AbstractCapture * object,
-							void * winId = nullptr);
+							void * winId = nullptr) noexcept;
 	
 	/**
 	 * @brief set_win_id
-	 * 设置窗口id
+	 * 设置窗口id,音频下该接口没作用
 	 * @param id
 	 * 窗口id
 	 * @param format
 	 * 显示的图像格式
 	 */
-	virtual void set_win_id(void *id) = 0;
+	virtual void set_win_id(void *id) noexcept;
 	
 	/**
 	 * @brief show
 	 * 重载函数
 	 */
-	virtual bool show(core::FramePacket*);
+	virtual bool play(core::FramePacket::SharedPacket packet) noexcept;
 	
 	/**
 	 * @brief show
 	 * 子类实现显示方案
 	 */
-	virtual bool show(const core::Format& format,uint8_t * data[],int linesize[]);
+	virtual bool play(const core::Format& format,uint8_t * data[],int linesize[]) noexcept  = 0;
 protected:
 	/**
 	 * @brief on_thread_run
@@ -100,10 +100,10 @@ private:
 
 inline bool AbstractPlayer::get_init_result() noexcept									{		return _init_result;}
 inline bool AbstractPlayer::get_thread_pause_condition() noexcept						{		return false;}
-inline bool AbstractPlayer::show(core::FramePacket* packet)								{
-	return show(packet->format,packet->data,packet->linesize);
+inline void AbstractPlayer::set_win_id(void *) noexcept									{}
+inline bool AbstractPlayer::play(core::FramePacket::SharedPacket packet)	noexcept	{
+	return play(packet->format,packet->data,packet->linesize);
 }
-inline bool AbstractPlayer::show(const core::Format&,uint8_t *[],int[])						{		return false;}
 
 }// namespace display
 

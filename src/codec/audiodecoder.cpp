@@ -19,7 +19,7 @@ public:
 	AVCodecParserContext *parser_ctx{nullptr};
 	PayloadType cur_pt{PayloadType::RTP_PT_NONE};
 	core::Format cur_fmt;
-	display::AbstractPlayer *player{nullptr};
+	player::AbstractPlayer *player{nullptr};
 	AVPacket * pkt{nullptr};
 	AVFrame * frame{nullptr};
 	AVFrame * sw_frame{nullptr};
@@ -322,7 +322,7 @@ codec::AudioDecoder::~AudioDecoder()
     delete d_ptr;
 }
 
-void AudioDecoder::set_player_object(display::AbstractPlayer *player) noexcept
+void AudioDecoder::set_player_object(player::AbstractPlayer *player) noexcept
 {
     d_ptr->player = player;
 }

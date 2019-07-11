@@ -25,7 +25,7 @@ public:
 	AVCodecParserContext *parser_ctx{nullptr};
 	PayloadType cur_pt{PayloadType::RTP_PT_NONE};
 	core::Format cur_fmt;
-	display::AbstractPlayer *player{nullptr};
+	player::AbstractPlayer *player{nullptr};
 	AVPacket * pkt{nullptr};
 	AVFrame * frame{nullptr};
 	AVFrame * sw_frame{nullptr};
@@ -364,7 +364,7 @@ public:
 			cur_fmt.height = frame->height;
 			cur_fmt.pixel_format = frame->format;
 		}
-		player->show(cur_fmt,data,linesize);
+		player->play(cur_fmt,data,linesize);
 		
 		//释放本次分配的空间
 		if(is_alloc){
@@ -561,7 +561,7 @@ codec::VideoDecoder::~VideoDecoder()
 	delete d_ptr;
 }
 
-void VideoDecoder::set_player_object(display::AbstractPlayer *player) noexcept
+void VideoDecoder::set_player_object(player::AbstractPlayer *player) noexcept
 {
 	d_ptr->player = player;
 }

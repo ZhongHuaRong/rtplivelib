@@ -5,7 +5,7 @@
 
 namespace rtplivelib {
 
-namespace display {
+namespace player {
 
 class VideoPlayerPrivateData;
 
@@ -44,13 +44,13 @@ public:
 	 * @param format
 	 * 显示的图像格式
 	 */
-	virtual void set_win_id(void *id) override;
+	virtual void set_win_id(void *id)  noexcept override;
 	
 	/**
 	 * @brief show
 	 * 重载函数
 	 */
-	virtual bool show(core::FramePacket*) override;
+	virtual bool play(core::FramePacket::SharedPacket packet) noexcept override;
 	
 	/**
 	 * @brief show
@@ -68,7 +68,7 @@ public:
 	 * 行宽
 	 * 注意点同上
 	 */
-	virtual bool show(const core::Format& format,uint8_t * data[],int linesize[]) override;
+	virtual bool play(const core::Format& format,uint8_t * data[],int linesize[])  noexcept override;
 private:
 	/**
 	 * @brief _set_horizontal_black_border
@@ -86,8 +86,8 @@ private:
 	VideoPlayerPrivateData * const d_ptr;
 };
 
-inline bool VideoPlayer::show(core::FramePacket* packet)									{
-	return AbstractPlayer::show(packet);
+inline bool VideoPlayer::play(core::FramePacket::SharedPacket packet)	noexcept	{
+	return AbstractPlayer::play(packet);
 }
 
 class RTPLIVELIBSHARED_EXPORT AudioPlayer:public AbstractPlayer

@@ -5,7 +5,7 @@
 
 namespace rtplivelib{
 
-namespace display {
+namespace player {
 
 
 AbstractPlayer::AbstractPlayer(PlayFormat format):
@@ -52,7 +52,7 @@ AbstractPlayer::~AbstractPlayer()
  * 窗口显示ID，音频则无视该参数
  */
 void AbstractPlayer::set_player_object(rtplivelib::device_manager::AbstractCapture *object,
-									   void *winId)
+									   void *winId) noexcept
 {
 	if(object == nullptr && _play_object == nullptr)
 		return;
@@ -97,7 +97,7 @@ void AbstractPlayer::on_thread_run() noexcept
 		auto pack = _get_next_packet();
 		if(pack == nullptr)
 			continue;
-		show(pack.get());
+		this->play(pack);
 	}
 }
 
