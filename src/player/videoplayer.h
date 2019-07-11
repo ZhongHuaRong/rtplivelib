@@ -68,7 +68,7 @@ public:
 	 * 行宽
 	 * 注意点同上
 	 */
-	virtual bool play(const core::Format& format,uint8_t * data[],int linesize[])  noexcept override;
+	virtual bool play(const core::Format& format,uint8_t * data[],int linesize[])  noexcept;
 private:
 	/**
 	 * @brief _set_horizontal_black_border
@@ -87,7 +87,7 @@ private:
 };
 
 inline bool VideoPlayer::play(core::FramePacket::SharedPacket packet)	noexcept	{
-	return AbstractPlayer::play(packet);
+	return play(packet->format,packet->data,packet->linesize);
 }
 
 } // namespace player

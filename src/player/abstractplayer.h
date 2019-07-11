@@ -59,15 +59,9 @@ public:
 	
 	/**
 	 * @brief show
-	 * 重载函数
-	 */
-	virtual bool play(core::FramePacket::SharedPacket packet) noexcept;
-	
-	/**
-	 * @brief show
 	 * 子类实现显示方案
 	 */
-	virtual bool play(const core::Format& format,uint8_t * data[],int linesize[]) noexcept  = 0;
+	virtual bool play(core::FramePacket::SharedPacket packet) noexcept = 0;
 protected:
 	/**
 	 * @brief on_thread_run
@@ -101,9 +95,6 @@ private:
 inline bool AbstractPlayer::get_init_result() noexcept									{		return _init_result;}
 inline bool AbstractPlayer::get_thread_pause_condition() noexcept						{		return false;}
 inline void AbstractPlayer::set_win_id(void *) noexcept									{}
-inline bool AbstractPlayer::play(core::FramePacket::SharedPacket packet)	noexcept	{
-	return play(packet->format,packet->data,packet->linesize);
-}
 
 }// namespace player
 

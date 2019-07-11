@@ -4,7 +4,7 @@
 #include "../core/abstractqueue.h"
 #include "../core/format.h"
 #include "../rtp_network/rtpsession.h"
-#include "../player/abstractplayer.h"
+#include "../player/videoplayer.h"
 #include <memory>
 
 namespace rtplivelib {
@@ -35,7 +35,7 @@ public:
 	 * @brief set_player_object
 	 * 临时接口，用于设置播放器
 	 */
-	void set_player_object(player::AbstractPlayer * player) noexcept;
+	void set_player_object(player::VideoPlayer * player) noexcept;
 protected:
 	/**
 	 * @brief on_thread_run

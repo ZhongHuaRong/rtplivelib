@@ -28,7 +28,7 @@ class RTPLIVELIBSHARED_EXPORT AbstractQueue : public AbstractThread
 public:
 	using value_type			= Packet;
 	using reference				= Packet&;
-	using const_reference		= const Packet&;
+	using const_reference			= const Packet&;
 	using pointer				= Packet*;
 	using const_pointer			= const Packet&;
 	using PacketQueue			= std::queue<Unit>;
@@ -71,8 +71,8 @@ public:
 		std::unique_lock<std::mutex> lk(_mutex);
 //		auto flag = _queue_read_condition.wait_for(lk,std::chrono::milliseconds(millisecond));
 		auto flag = _queue_read_condition.wait_until(lk,
-													 std::chrono::system_clock::now() + 
-													 std::chrono::milliseconds(millisecond));
+							     std::chrono::system_clock::now() + 
+							     std::chrono::milliseconds(millisecond));
 		return flag != std::cv_status::timeout;
 	}
 	

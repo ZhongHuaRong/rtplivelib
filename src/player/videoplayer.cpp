@@ -59,7 +59,7 @@ public:
 			return;
 		show_screen = SDL_CreateWindowFrom(show_id);
 		if(show_screen == nullptr){
-			constexpr char api[] = "rtplivelib::display::VideoPlayer::create_window";
+			constexpr char api[] = "rtplivelib::player::VideoPlayer::create_window";
 			core::Logger::Print_APP_Info(core::MessageNum::SDL_window_create_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
@@ -80,7 +80,7 @@ public:
 		//硬件加速有问题，先设置成软件渲染
 		renderer = SDL_CreateRenderer(show_screen, -1, SDL_RENDERER_SOFTWARE);
 		if(renderer == nullptr){
-			constexpr char api[] = "rtplivelib::display::VideoPlayer::create_renderer";
+			constexpr char api[] = "rtplivelib::player::VideoPlayer::create_renderer";
 			core::Logger::Print_APP_Info(core::MessageNum::SDL_renderer_create_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
@@ -129,7 +129,7 @@ public:
 			break;
 		}
 		
-		constexpr char api[] = "rtplivelib::display::VideoPlayer::set_format";
+		constexpr char api[] = "rtplivelib::player::VideoPlayer::set_format";
 		if(texture == nullptr){
 			core::Logger::Print_APP_Info(core::MessageNum::SDL_texture_create_failed,
 										 api,
@@ -294,7 +294,7 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 	auto ret = SDL_RenderCopy( d_ptr->renderer, d_ptr->texture, nullptr, d_ptr->show_rect); 
 	if(ret != 0){
 		core::Logger::Print(SDL_GetError(),
-							"rtplivelib::display::VideoPlayer::show",
+							"rtplivelib::player::VideoPlayer::show",
 							LogLevel::WARNING_LEVEL);
 		return false;
 	}
