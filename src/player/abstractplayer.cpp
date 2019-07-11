@@ -111,6 +111,6 @@ core::FramePacket::SharedPacket AbstractPlayer::_get_next_packet() noexcept
 	return _play_object->get_next();
 }
 
-}// namespace display
+}// namespace player
 
 } // namespace rtplivelib

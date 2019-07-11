@@ -328,14 +328,6 @@ void VideoPlayer::_set_vertical_black_border(const int & win_w,const int & win_h
 	d_ptr->frame_w = frame_w;
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-
-AudioPlayer::AudioPlayer():
-	AbstractPlayer (PlayFormat::PF_AUDIO)
-{
-	
-}
-
-} // namespace display
+} // namespace player
 
 }// namespace rtplivelib

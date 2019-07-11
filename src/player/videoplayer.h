@@ -15,7 +15,7 @@ class VideoPlayerPrivateData;
  * 有两种播放方式
  * 1：通过设置set_player_object传入捕捉类和窗口id，然后start_capture就可以播放了
  *   (这种方式是开多线程播放)
- * 2：通过set_win_id设置窗口id，然后调用show接口播放(当前线程播放)
+ * 2：通过set_win_id设置窗口id，然后调用play接口播放(当前线程播放)
  * 第一种方式播放虽然方便，但是不允许数据前处理，需要继承捕捉类实现on_frame_data实现
  */
 class RTPLIVELIBSHARED_EXPORT VideoPlayer:public AbstractPlayer
@@ -90,12 +90,6 @@ inline bool VideoPlayer::play(core::FramePacket::SharedPacket packet)	noexcept	{
 	return AbstractPlayer::play(packet);
 }
 
-class RTPLIVELIBSHARED_EXPORT AudioPlayer:public AbstractPlayer
-{
-public:
-	AudioPlayer();
-};
-
-} // namespace display
+} // namespace player
 
 }// namespace rtplivelib

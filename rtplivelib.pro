@@ -112,7 +112,8 @@ HEADERS += \
     src/audio_processing/resample.h \
     src/codec/audiodecoder.h \
     src/codec/encoder.h \
-    src/player/videoplayer.h
+    src/player/videoplayer.h \
+    src/player/audioplayer.h
 
 SOURCES += \
     src/core/abstractthread.cpp \
@@ -151,4 +152,5 @@ SOURCES += \
     src/audio_processing/resample.cpp \
     src/codec/audiodecoder.cpp \
     src/codec/encoder.cpp \
-    src/player/videoplayer.cpp
+    src/player/videoplayer.cpp \
+    src/player/audioplayer.cpp

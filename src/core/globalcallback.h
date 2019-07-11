@@ -107,14 +107,6 @@ public:
 											  uint32_t delay) ;
 	
 	/**
-	 * @brief on_capture_to_show_time
-	 * 采集到帧－>显示画面所需要的时间
-	 * @param time
-	 * 单位是毫秒
-	 */
-	virtual void on_capture_to_send_time(const long & time) ;
-	
-	/**
 	 * @brief Register_CallBack
 	 * 注册回调函数
 	 * 一个程序只需要一个回调
@@ -138,8 +130,6 @@ inline void GlobalCallBack::on_user_exit(const std::string& ,
 inline void GlobalCallBack::on_upload_bandwidth(uint64_t ,uint64_t)									{}
 inline void GlobalCallBack::on_download_bandwidth(uint64_t,uint64_t)								{}
 inline void GlobalCallBack::on_local_network_information(uint32_t ,float,uint32_t  )				{}
-
-inline void GlobalCallBack::on_capture_to_send_time(const long &)									{}
 
 inline void GlobalCallBack::Register_CallBack(GlobalCallBack * ptr) noexcept				{
 	cb_ptr = ptr;

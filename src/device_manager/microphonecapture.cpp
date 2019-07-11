@@ -1,7 +1,9 @@
 #include "microphonecapture.h"
-#include "wasapi.h"
 #include "../core/stringformat.h"
 #include "../core/logger.h"
+#if defined (WIN64)
+#include "wasapi.h"
+#endif
 
 namespace rtplivelib {
 
@@ -13,7 +15,6 @@ public:
 	WASAPI audio_api;
 	static constexpr WASAPI::FlowType FT{WASAPI::CAPTURE};
 #endif
-	std::string fmt_name;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////

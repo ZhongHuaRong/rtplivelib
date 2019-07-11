@@ -105,6 +105,6 @@ inline bool AbstractPlayer::play(core::FramePacket::SharedPacket packet)	noexcep
 	return play(packet->format,packet->data,packet->linesize);
 }
 
-}// namespace display
+}// namespace player
 
 } // namespace rtplivelib
