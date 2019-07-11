@@ -4,7 +4,7 @@
 #include "../core/abstractqueue.h"
 #include "../core/format.h"
 #include "../rtp_network/rtpsession.h"
-#include "../display/abstractplayer.h"
+#include "../player/abstractplayer.h"
 #include <memory>
 
 namespace rtplivelib {

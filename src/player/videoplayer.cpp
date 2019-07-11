@@ -1,4 +1,4 @@
-#include "player.h"
+#include "videoplayer.h"
 #include "../core/logger.h"
 extern "C" {
 #include "SDL2/SDL.h"

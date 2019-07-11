@@ -73,8 +73,7 @@ HEADERS += \
     src/core/abstractqueue.h \
     src/core/abstractthread.h \
     src/core/config.h \
-    src/display/abstractplayer.h \
-    src/display/player.h \
+    src/player/abstractplayer.h \
     src/core/format.h \
     src/device_manager/abstractcapture.h \
     src/device_manager/audioprocessingfactory.h \
@@ -112,12 +111,12 @@ HEADERS += \
     src/core/globalcallback.h \
     src/audio_processing/resample.h \
     src/codec/audiodecoder.h \
-    src/codec/encoder.h
+    src/codec/encoder.h \
+    src/player/videoplayer.h
 
 SOURCES += \
     src/core/abstractthread.cpp \
-    src/display/abstractplayer.cpp \
-    src/display/player.cpp \
+    src/player/abstractplayer.cpp \
     src/core/format.cpp \
     src/device_manager/abstractcapture.cpp \
     src/device_manager/audioprocessingfactory.cpp \
@@ -151,4 +150,5 @@ SOURCES += \
     src/core/globalcallback.cpp \
     src/audio_processing/resample.cpp \
     src/codec/audiodecoder.cpp \
-    src/codec/encoder.cpp
+    src/codec/encoder.cpp \
+    src/player/videoplayer.cpp

@@ -4,7 +4,7 @@
 #include "../core/config.h"
 #include "../codec/videodecoder.h"
 #include "../codec/audiodecoder.h"
-#include "../display/player.h"
+#include "../player/videoplayer.h"
 #include "rtpsession.h"
 #include "rtppacket.h"
 #include "fec/fecdecoder.h"
