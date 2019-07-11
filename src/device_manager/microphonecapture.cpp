@@ -58,17 +58,21 @@ bool MicrophoneCapture::set_current_device_name(std::string name) noexcept
 	if(name.compare(current_device_name) == 0)
 		return true;
 	
-	auto temp = current_device_name;
-	current_device_name = name;
 	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(name),MicrophoneCapturePrivateData::FT);
-	if(!result){
-		current_device_name = temp;
+    constexpr char api[] = "device_manager::MicrophoneCapture::set_current_device_name";
+    if(result){
+        current_device_name = name;
 		core::Logger::Print_APP_Info(core::MessageNum::Device_change_success,
-									 "device_manager::MicrophoneCapture::set_current_device_name",
-									 LogLevel::ERROR_LEVEL,
+                                     api,
+                                     LogLevel::INFO_LEVEL,
 									 current_device_name.c_str());
-	}
-	return result;
+    } else{
+        core::Logger::Print_APP_Info(core::MessageNum::Device_change_failed,
+                                     api,
+                                     LogLevel::ERROR_LEVEL,
+                                     current_device_name.c_str());
+    }
+    return result;
 }
 
 /**

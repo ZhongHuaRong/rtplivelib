@@ -109,9 +109,9 @@ public:
 	 * @brief check_pt
 	 * 检查包的有效载荷类型，如果发现更换了，得及时调整编码上下文
 	 */
-	inline void check_pt(const PayloadType pt,
-						 const Packet & pack) noexcept {
-		
+    inline void check_pt(const PayloadType pt,
+                         const Packet & pack) noexcept {
+        UNUSED(pack)
 		//软解的初始化
 		//这里需要注意一下，判断hwd_type_cur是为了防止硬解转为软解的时候的误判
 		if( pt == cur_pt && parser_ctx != nullptr && decoder_ctx != nullptr )

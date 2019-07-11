@@ -14,12 +14,22 @@ public:
 	LiveEngine();
 	
 	virtual ~LiveEngine();
+
+    /**
+     * @brief set_local_microphone_audio
+     * 播放本地的麦克风音频
+     * @param flag
+     * true则是开启,false则是关闭
+     * @see AudioProcessingFactory::play_microphone_audio
+     */
+    void set_local_microphone_audio(bool flag) noexcept;
 	
 	/**
 	 * @brief set_local_display_win_id
 	 * 设置本地视频显示窗口的ｉｄ
 	 * @param win_id
-	 * 需要显示的窗口ｉｄ
+     * 需要显示的窗口id
+     * @see VideoProcessingFactory::set_display_win_id
 	 */
 	void set_local_display_win_id(void* win_id);
 	

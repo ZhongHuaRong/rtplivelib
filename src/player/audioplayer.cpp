@@ -144,6 +144,7 @@ bool AudioPlayer::play(core::FramePacket::SharedPacket packet) noexcept
     }
     
     d_ptr->audio_data_queue.push_one(packet);
+    return true;
 }
 
 } // namespace player

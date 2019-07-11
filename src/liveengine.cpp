@@ -104,7 +104,12 @@ LiveEngine::~LiveEngine()
 	delete d_ptr;
 	
 	//在这里清除全局的日志模块
-	core::Logger::Clear_all();
+    core::Logger::Clear_all();
+}
+
+void LiveEngine::set_local_microphone_audio(bool flag) noexcept
+{
+    device->get_audio_factory()->play_microphone_audio(flag);
 }
 
 void LiveEngine::set_local_display_win_id(void *win_id)

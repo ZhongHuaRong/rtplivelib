@@ -267,6 +267,7 @@ public:
 								LogLevel::DEBUG_LEVEL);
 			return AV_PIX_FMT_NONE;
 		};
+        return true;
 	}
 private:
     AVBufferRef *hw_device_ctx{nullptr};

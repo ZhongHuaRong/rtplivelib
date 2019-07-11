@@ -4,6 +4,7 @@
 #include "abstractcapture.h"
 #include "microphonecapture.h"
 #include "soundcardcapture.h"
+#include "../player/audioplayer.h"
 #include "../core/globalcallback.h"
 
 class AVInputFormat;
@@ -72,6 +73,15 @@ public:
 	 * 外部调用start_capture接口捕捉的，需要调用此函数
 	 */
 	void notify_capture() noexcept;
+
+    /**
+     * @brief play_microphone_audio
+     * 播放本地麦克风音频
+     * @param flag
+     * true:播放
+     * false:暂停
+     */
+    void play_microphone_audio(bool flag) noexcept;
 	
 	/**
 	 * 这里提供接口获取底层对象，直接使用对象的接口更加方便的获取各种参数
@@ -109,6 +119,9 @@ protected:
 private:
 	device_manager::MicrophoneCapture *mc_ptr{nullptr};
 	device_manager::SoundCardCapture *sc_ptr{nullptr};
+    //用时初始化
+    player::AudioPlayer * player{nullptr};
+    volatile bool play_flag{false};
 };
 
 inline device_manager::MicrophoneCapture *AudioProcessingFactory::get_microphone_capture_object() noexcept		{		return mc_ptr;}

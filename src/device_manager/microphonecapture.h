@@ -32,8 +32,15 @@ public:
 	
 	virtual std::map<std::string,std::string> get_all_device_info() noexcept(false) override;
 	
+    /**
+     * @brief set_current_device_name
+     * 设置当前设备名字id，要注意的是id,不是设备名字
+     * 也就是get_all_device_info返回的value，而不是key
+     * @param name
+     * 设备id
+     * @return
+     */
 	virtual bool set_current_device_name(std::string name) noexcept override;
-
 protected:
     /**
      * @brief on_start

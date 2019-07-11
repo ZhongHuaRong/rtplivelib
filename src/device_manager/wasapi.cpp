@@ -81,7 +81,6 @@ std::vector<WASAPI::device_info> WASAPI::get_all_device_info(WASAPI::FlowType ft
 	
 	IMMDevice *pDevice{nullptr};
 	std::vector<WASAPI::device_info> info_list;
-	info_list.resize(count);
 	for(auto n = 0u; n < count; ++n){
 		
 		hr = collenction->Item(n,&pDevice);
