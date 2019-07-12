@@ -22,19 +22,32 @@ public:
 
     ~SoundCardCapture() override;
 	
-	virtual std::map<std::string,std::string> get_all_device_info() noexcept override;
+	/**
+	 * @brief get_all_device_info
+	 * 获取所有设备的信息，其实也就是名字而已
+	 * 这里说明一下，key是面向程序的，value是面向用户的
+	 * key存的是设备id(外部调用可以忽略该字段)，value存的是设备名字(对用户友好)
+	 * @return 
+	 * 返回一个map
+	 */
+	virtual std::map<std::string,std::string> get_all_device_info()  noexcept(false) override;
 
-    /**
-     * @brief set_current_device_name
-     * 设置当前设备名字id，要注意的是id,不是设备名字
-     * 也就是get_all_device_info返回的value，而不是key
-     * 声卡的话还是设置默认设备就可以了
-     * @param name
-     * 设备id
-     * @return
-     */
-	virtual bool set_current_device_name(std::string name) noexcept override;
+	/**
+	 * @brief set_current_device
+	 * 通过设备id更换当前设备
+	 * 获取设备信息后，使用key来获取id，value是设备名字
+	 * 如果失败则返回false
+	 * @see get_all_device_info
+	 */
+	virtual bool set_current_device(std::string device_id) noexcept override;
 
+	
+	/**
+	 * @brief set_default_device
+	 * 将当前设备更换成默认设备,简易接口
+	 * @return 
+	 */
+	virtual bool set_default_device() noexcept override;
 protected:
     /**
      * @brief OnStart

@@ -24,7 +24,7 @@ namespace device_manager {
  * 捕捉数据的类型，在子类的构造函数中输入
  */
 AbstractCapture::AbstractCapture(CaptureType type) noexcept:
-	current_device_name("NULL"),
+	current_device_info("NULL","NULL"),
 	current_device_value(0),
 	_type(type),
 	_is_running_flag(false)
@@ -84,7 +84,7 @@ void AbstractCapture::stop_capture() noexcept
    core::Logger::Print_APP_Info(core::MessageNum::Device_stop_capture,
                                 "device_manager::AbstractCapture::stop_capture",
                                 LogLevel::INFO_LEVEL,
-                                current_device_name.c_str());
+                                current_device_info.second.c_str());
 }
 
 /**

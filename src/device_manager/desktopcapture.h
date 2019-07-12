@@ -63,21 +63,29 @@ public:
 	/**
 	 * @brief get_all_device_info
 	 * 获取所有设备的信息，其实也就是名字而已
-	 * 这里说明一下，key是面向用户的，value是面向程序的
-	 * key存的是设备名字，value存的是程序需要调用的字符串
-	 * 通过这个接口也可以获取到最新的设备数量
+	 * 这里说明一下，key是面向程序的，value是面向用户的
+	 * key存的是设备id(外部调用可以忽略该字段)，value存的是设备名字(对用户友好)
 	 * @return 
 	 * 返回一个map
-	 * @exception
-	 * func_not_implemented_error异常
 	 */
 	virtual std::map<std::string,std::string> get_all_device_info() noexcept(false) override;
 	
 	/**
-	 * @brief set_current_device_name
-	 * 根据名字设置当前设备，成功则返回true，失败则返回false 
+	 * @brief set_current_device
+	 * 通过设备id更换当前设备
+	 * 获取设备信息后，使用key来获取id，value是设备名字
+	 * 如果失败则返回false
+	 * @see get_all_device_info
 	 */
-	virtual bool set_current_device_name(std::string name) noexcept override;
+	virtual bool set_current_device(std::string device_id) noexcept override;
+	
+	/**
+	 * @brief set_default_device
+	 * 将当前设备更换成默认设备,简易接口
+	 * 该接口未实现
+	 * @return 
+	 */
+	virtual bool set_default_device() noexcept override;
 
 protected:
     /**

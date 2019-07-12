@@ -23,11 +23,11 @@ SoundCardCapture::SoundCardCapture() :
 	AbstractCapture(CaptureType::Soundcard),
 	d_ptr(new SoundCardCapturePrivateData)
 {
-	
 	d_ptr->audio_api.set_default_device(SoundCardCapturePrivateData::FT);
 	
 	auto pair = d_ptr->audio_api.get_current_device_info();
-	current_device_name = core::StringFormat::WString2String(pair.second);
+	current_device_info.first = core::StringFormat::WString2String(pair.first);
+	current_device_info.second = core::StringFormat::WString2String(pair.second);
 	
 	/*在子类初始化里开启线程*/
 	start_thread();
@@ -40,7 +40,7 @@ SoundCardCapture::~SoundCardCapture()
 	delete d_ptr;
 }
 
-std::map<std::string, std::string> SoundCardCapture::get_all_device_info() noexcept
+std::map<std::string, std::string> SoundCardCapture::get_all_device_info()  noexcept(false)
 {
 	std::map<std::string,std::string> info_map;
 
@@ -51,21 +51,34 @@ std::map<std::string, std::string> SoundCardCapture::get_all_device_info() noexc
 	return info_map;
 }
 
-bool SoundCardCapture::set_current_device_name(std::string name) noexcept
+bool SoundCardCapture::set_current_device(std::string device_id) noexcept
 {
-	if(name.compare(current_device_name) == 0)
+	if(device_id.compare(current_device_info.first) == 0)
 		return true;
-	auto temp = current_device_name;
-	current_device_name = name;
-	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(name),SoundCardCapturePrivateData::FT);
-	if(!result){
-		current_device_name = temp;
+	
+	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(device_id),
+													  SoundCardCapturePrivateData::FT);
+    constexpr char api[] = "device_manager::SoundCardCapture::set_current_device";
+    if(result){
+        auto pair = d_ptr->audio_api.get_current_device_info();
+        current_device_info.first = core::StringFormat::WString2String(pair.first);
+        current_device_info.second = core::StringFormat::WString2String(pair.second);
 		core::Logger::Print_APP_Info(core::MessageNum::Device_change_success,
-									 "device_manager::SoundCardCapture::set_current_device_name",
-									 LogLevel::ERROR_LEVEL,
-									 current_device_name.c_str());
-	}
-	return result;
+                                     api,
+                                     LogLevel::INFO_LEVEL,
+									 current_device_info.second.c_str());
+    } else{
+        core::Logger::Print_APP_Info(core::MessageNum::Device_change_failed,
+                                     api,
+                                     LogLevel::ERROR_LEVEL,
+                                     current_device_info.second.c_str());
+    }
+    return result;
+}
+
+bool SoundCardCapture::set_default_device() noexcept
+{
+    return d_ptr->audio_api.set_default_device(SoundCardCapturePrivateData::FT);
 }
 
 /**

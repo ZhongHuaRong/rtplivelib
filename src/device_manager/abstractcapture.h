@@ -39,6 +39,7 @@ public:
 	
 	using FramePacket = core::FramePacket;
 	using SharedPacket = core::FramePacket::SharedPacket;
+	using device_info = std::pair<std::string,std::string>;
 public:
     /**
      * @def AbstractCapture
@@ -87,28 +88,36 @@ public:
 	virtual uint32_t get_device_value() noexcept;
 	
 	/**
-	 * @brief get_current_device_name
-	 * 返回的是设备的名字
+	 * @brief get_current_device_info
+	 * 返回设备信息,包含设备名字和设备id，id是内部使用字段
 	 * @return 
 	 */
-	virtual std::string get_current_device_name() noexcept;
+	virtual device_info get_current_device_info() noexcept;
 	
 	/**
 	 * @brief get_all_device_info
 	 * 获取所有设备的信息，其实也就是名字而已
-	 * 这里说明一下，key是面向用户的，value是面向程序的
-	 * key存的是设备名字，value存的是程序需要调用的字符串(外部调用可以忽略该字段)
+	 * 这里说明一下，key是面向程序的，value是面向用户的
+	 * key存的是设备id(外部调用可以忽略该字段)，value存的是设备名字(对用户友好)
 	 * @return 
 	 * 返回一个map
 	 */
-	virtual std::map<std::string,std::string> get_all_device_info() = 0;
+	virtual std::map<std::string,std::string> get_all_device_info() noexcept(false) = 0;
 	
 	/**
-	 * @brief set_current_device_name
-	 * 通过设备名字设置设备
-	 * 如果失败则返回false
+	 * @brief set_default_device
+	 * 将当前设备更换成默认设备,简易接口
 	 */
-	virtual bool set_current_device_name(std::string name) = 0;
+	virtual bool set_default_device() noexcept = 0;
+	
+	/**
+	 * @brief set_current_device
+	 * 通过设备id更换当前设备
+	 * 获取设备信息后，使用key来获取id，value是设备名字
+	 * 如果失败则返回false
+	 * @see get_all_device_info
+	 */
+	virtual bool set_current_device(std::string device_id) noexcept = 0;
 
     /**
      * @brief get_type
@@ -172,7 +181,7 @@ private:
 	virtual void on_thread_pause() noexcept  override final;
 	
 protected:
-	std::string current_device_name;
+	device_info current_device_info;
 	/**
 	 * @brief _current_device_value
 	 * 视频指当前帧数，音频指音量值
@@ -183,14 +192,14 @@ private:
 	volatile bool _is_running_flag;
 };
 
-inline bool AbstractCapture::is_running() noexcept									{		return _is_running_flag;}
-inline AbstractCapture::CaptureType AbstractCapture::get_type()  noexcept			{		return _type;}
-inline void AbstractCapture::on_stop() noexcept										{		}
-inline bool AbstractCapture::get_thread_pause_condition() noexcept					{		return !_is_running_flag;}
-inline std::string AbstractCapture::get_current_device_name() noexcept				{		return current_device_name;}
-inline uint32_t AbstractCapture::get_device_value() noexcept						{		return current_device_value;}
-inline bool AbstractCapture::on_frame_data(FramePacket *)							{		return true;}
-inline void AbstractCapture::on_thread_pause() noexcept								{		this->on_stop();}
+inline bool AbstractCapture::is_running() noexcept											{		return _is_running_flag;}
+inline AbstractCapture::CaptureType AbstractCapture::get_type()  noexcept					{		return _type;}
+inline void AbstractCapture::on_stop() noexcept												{		}
+inline bool AbstractCapture::get_thread_pause_condition() noexcept							{		return !_is_running_flag;}
+inline AbstractCapture::device_info AbstractCapture::get_current_device_info() noexcept		{		return current_device_info;}
+inline uint32_t AbstractCapture::get_device_value() noexcept								{		return current_device_value;}
+inline bool AbstractCapture::on_frame_data(FramePacket *)									{		return true;}
+inline void AbstractCapture::on_thread_pause() noexcept										{		this->on_stop();}
 
 } // namespace device_manager
 

@@ -44,14 +44,19 @@ DesktopCapture::DesktopCapture() :
 	AVDeviceInfoList *info_list = nullptr;
 	avdevice_list_input_sources(d_ptr->ifmt,nullptr,nullptr,&info_list);
 	if(info_list != nullptr && info_list->nb_devices != 0){
-		if(info_list->default_device == -1)
-			current_device_name = info_list->devices[0]->device_description;
-		else
-			current_device_name = info_list->devices[info_list->default_device]->device_description;
+		if(info_list->default_device == -1){
+			current_device_info.first = info_list->devices[0]->device_description;
+			current_device_info.second = info_list->devices[0]->device_description;
+		}
+		else{
+			current_device_info.first = info_list->devices[info_list->default_device]->device_description;
+			current_device_info.second = info_list->devices[info_list->default_device]->device_description;
+		}
 	}
 	
 #if defined (WIN32)
-	current_device_name = "desktop";
+	current_device_info.first = "desktop";
+	current_device_info.second = current_device_info.first;
 #endif
 	
 	/*在子类初始化里开启线程*/
@@ -101,22 +106,29 @@ std::map<std::string,std::string> DesktopCapture::get_all_device_info() noexcept
 	}
 }
 
-bool DesktopCapture::set_current_device_name(std::string name) noexcept
+bool DesktopCapture::set_current_device(std::string device_id) noexcept
 {
-	if(name.compare(current_device_name) == 0){
+	//只区分设备id，不区分设备名字
+	if(device_id.compare(current_device_info.second) == 0){
 		return true;
 	}
-	auto temp = current_device_name;
-	current_device_name = name;
+	auto temp = current_device_info;
+	current_device_info.first = device_id;
+	current_device_info.second = device_id;
 	auto result = open_device();
 	if(!result){
-		current_device_name = temp;
+		current_device_info = temp;
 		core::Logger::Print_APP_Info(core::MessageNum::Device_change_success,
-									 "device_manager::CameraCapture::set_current_device_name",
+									 "device_manager::DesktopCapture::set_current_device",
 									 LogLevel::ERROR_LEVEL,
-									 current_device_name.c_str());
+									 current_device_info.first.c_str());
 	}
 	return result;
+}
+
+bool DesktopCapture::set_default_device() noexcept
+{
+	
 }
 
 AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept

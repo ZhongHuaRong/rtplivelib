@@ -26,7 +26,8 @@ MicrophoneCapture::MicrophoneCapture() :
 	d_ptr->audio_api.set_default_device(MicrophoneCapturePrivateData::FT);
 	
 	auto pair = d_ptr->audio_api.get_current_device_info();
-	current_device_name = core::StringFormat::WString2String(pair.second);
+	current_device_info.first = core::StringFormat::WString2String(pair.first);
+	current_device_info.second = core::StringFormat::WString2String(pair.second);
 	
 	/*在子类初始化里开启线程*/
 	start_thread();
@@ -44,35 +45,39 @@ std::map<std::string,std::string> MicrophoneCapture::get_all_device_info() noexc
 
 	auto list_info = d_ptr->audio_api.get_all_device_info(MicrophoneCapturePrivateData::FT);
 	for(auto i = list_info.begin(); i != list_info.end(); ++i){
-		info_map[core::StringFormat::WString2String(i->second)] = core::StringFormat::WString2String(i->first);
+		info_map[core::StringFormat::WString2String(i->first)] = core::StringFormat::WString2String(i->second);
 	}
 	return info_map;
 }
 
-/**
- * @brief set_current_device_name
- * 根据名字设置当前设备，成功则返回true，失败则返回false 
- */
-bool MicrophoneCapture::set_current_device_name(std::string name) noexcept
+bool MicrophoneCapture::set_current_device(std::string device_id) noexcept
 {
-	if(name.compare(current_device_name) == 0)
+	if(device_id.compare(current_device_info.first) == 0)
 		return true;
 	
-	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(name),MicrophoneCapturePrivateData::FT);
-    constexpr char api[] = "device_manager::MicrophoneCapture::set_current_device_name";
+	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(device_id),
+													  MicrophoneCapturePrivateData::FT);
+    constexpr char api[] = "device_manager::MicrophoneCapture::set_current_device";
     if(result){
-        current_device_name = name;
+        auto pair = d_ptr->audio_api.get_current_device_info();
+        current_device_info.first = core::StringFormat::WString2String(pair.first);
+        current_device_info.second = core::StringFormat::WString2String(pair.second);
 		core::Logger::Print_APP_Info(core::MessageNum::Device_change_success,
                                      api,
                                      LogLevel::INFO_LEVEL,
-									 current_device_name.c_str());
+									 current_device_info.second.c_str());
     } else{
         core::Logger::Print_APP_Info(core::MessageNum::Device_change_failed,
                                      api,
                                      LogLevel::ERROR_LEVEL,
-                                     current_device_name.c_str());
+                                     current_device_info.second.c_str());
     }
     return result;
+}
+
+bool MicrophoneCapture::set_default_device() noexcept
+{
+    return d_ptr->audio_api.set_default_device(MicrophoneCapturePrivateData::FT);
 }
 
 /**
