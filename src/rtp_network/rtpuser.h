@@ -76,8 +76,8 @@ private:
 	codec::VideoDecoder _vdecoder;
     codec::AudioDecoder _adecoder;
 	player::VideoPlayer _vplay;
-	fec::FECDecoder * const _afecdecoder;
-	fec::FECDecoder * const _vfecdecoder;
+	fec::FECDecoder _afecdecoder;
+	fec::FECDecoder _vfecdecoder;
 	
 	friend class RTPUserManager;
 };

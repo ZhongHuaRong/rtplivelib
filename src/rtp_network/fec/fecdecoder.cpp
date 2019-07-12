@@ -284,7 +284,7 @@ core::FramePacket *FECDecoder::decode(RTPPacket *packet) noexcept
         frame->size = data.second;
         frame->payload_type = cache.get_payload_type();
         frame->pts = frame->dts = list->ts;
-		core::Logger::Print("decode success","",LogLevel::ERROR_LEVEL);
+		core::Logger::Print("decode success","",LogLevel::MOREINFO_LEVEL);
 		list->release_decode_array(pair);
 		delete list;
         return frame;

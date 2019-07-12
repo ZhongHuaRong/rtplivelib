@@ -16,17 +16,13 @@ namespace rtplivelib{
 
 namespace rtp_network {
 
-RTPUser::RTPUser():
-	_afecdecoder(new fec::FECDecoder),
-	_vfecdecoder(new fec::FECDecoder)
+RTPUser::RTPUser()
 {
 	_vdecoder.set_player_object(&_vplay);
 }
 
 RTPUser::~RTPUser()
 {
-	delete _afecdecoder;
-	delete _vfecdecoder;
 }
 
 void RTPUser::deal_with_packet(RTPPacket *rtp_packet) noexcept
@@ -50,11 +46,11 @@ void RTPUser::deal_with_packet(RTPPacket *rtp_packet) noexcept
 	case RTPSession::PayloadType::RTP_PT_HEVC:
 	case RTPSession::PayloadType::RTP_PT_H264:
 	case RTPSession::PayloadType::RTP_PT_VP9:
-		fec_ptr = _vfecdecoder;
+		fec_ptr = &_vfecdecoder;
 		decoder_ptr = &_vdecoder;
 		break;
 	case RTPSession::PayloadType::RTP_PT_AAC:
-		fec_ptr = _afecdecoder;
+		fec_ptr = &_afecdecoder;
 		decoder_ptr = &_adecoder;
 		break;
 	default:

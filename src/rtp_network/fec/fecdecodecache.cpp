@@ -211,7 +211,6 @@ public:
 	void operator () (FECDecodeCache* cache) {
 		cache->lock_source();
 		cache->remove_first();
-		core::Logger::Print("remove","",LogLevel::ERROR_LEVEL);
 		cache->unlock_source();
 	}
 };
@@ -308,7 +307,7 @@ PackageVector *FECDecodeCache::push() noexcept
 	if(list.empty())
 		return nullptr;
 	
-	auto & ptr = list.begin()->second;
+	auto ptr = list.begin()->second;
 	if(ptr == nullptr)
 		return nullptr;
 	
@@ -379,7 +378,7 @@ PackageVector *FECDecodeCache::insert(void *data, const uint64_t &len,
 	
 	i->insert_data(data,len,pos,packet);
 	
-	core::Logger::Print("ts:{},pos:{},src_nb:{}","",LogLevel::INFO_LEVEL,ts,pos,src_nb);
+	core::Logger::Print("ts:{},pos:{},src_nb:{}","",LogLevel::MOREINFO_LEVEL,ts,pos,src_nb);
 	return i;
 }
 

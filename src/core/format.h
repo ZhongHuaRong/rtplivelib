@@ -171,7 +171,11 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 * @return 
 	 */
 	static inline FramePacket * Make_Packet(){
-		return static_cast<FramePacket *>(malloc(sizeof(FramePacket)));
+		try {
+			return new FramePacket;
+		} catch (const std::bad_alloc&) {
+			return nullptr;
+		}
 	}
 	
 	/**
