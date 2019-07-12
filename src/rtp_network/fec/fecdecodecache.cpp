@@ -327,11 +327,11 @@ void FECDecodeCache::remove_first() noexcept
 	
 	auto & ptr = list.begin()->second;
 	
-	list.erase(list.begin());
 	if(ptr != nullptr){
 		min_timestamp = ptr->ts + 1;
 		delete ptr;
 	}
+	list.erase(list.begin());
 }
 
 void FECDecodeCache::lock_source() noexcept
