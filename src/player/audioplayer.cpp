@@ -67,8 +67,8 @@ public:
             wanted_spec.samples = size / ( format.bits / 4) / format.channels; 
         wanted_spec.callback = AudioPlayerPrivateData::fill_audio; 
         wanted_spec.userdata = this;
-     
-        if (SDL_OpenAudio(&wanted_spec, nullptr)<0){ 
+
+        if (SDL_OpenAudio(&wanted_spec, nullptr)<0){
             core::Logger::Print_APP_Info(core::MessageNum::SDL_device_open_failed,
                                          api,
                                          LogLevel::ERROR_LEVEL);
@@ -88,8 +88,9 @@ public:
     void close_device() noexcept{
         if(open_flag == false)
             return;
-        //这里不知道是否是关闭所有设别
-//        SDL_CloseAudio();
+        //这里不关闭的话，音频输入格式更改的时候就会导致SDL_OpenAudio失败
+        SDL_PauseAudio(1);
+        SDL_CloseAudio();
         open_flag = false;
     }
     
