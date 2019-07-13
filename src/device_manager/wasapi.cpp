@@ -136,12 +136,16 @@ bool WASAPI::set_current_device(const std::wstring &id, WASAPI::FlowType ft) noe
         return false;
     }
     
-    std::lock_guard<decltype(mutex)> lk(mutex);
+    mutex.lock();
     //成功了再释放以前的设备
+    auto flag = _is_running_flag;
     stop();
     SafeRelease()(&this->pDevice);
     this->pDevice = pDevice;
     current_flow_type = ft;
+    mutex.unlock();
+    if( flag == true)
+        start();
     return true;
 }
 
@@ -156,12 +160,16 @@ bool WASAPI::set_default_device(WASAPI::FlowType ft) noexcept
 		return false;
 	}
 	
-	std::lock_guard<decltype(mutex)> lk(mutex);
+	mutex.lock();
 	//成功了再释放以前的设备
+	auto flag = _is_running_flag;
 	stop();
 	SafeRelease()(&this->pDevice);
     this->pDevice = pDevice;
     current_flow_type = ft;
+    mutex.unlock();
+    if( flag == true)
+        start();
     return true;
 }
 
@@ -258,6 +266,8 @@ bool WASAPI::start() noexcept
 	
 	_is_running_flag = true;
 	notify_thread();
+	//防止外部调用正在使用read_packet接口
+	exit_wait_resource();
 	return true;
 }
 
