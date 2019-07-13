@@ -32,9 +32,12 @@ public:
      * @brief open_device
      * 打开设备，
      * @param format
+     * 音频格式
+     * @param size
+     * 一个包的大小，用于计算样本数
      * @return 
      */
-    bool open_device(const core::Format &format) noexcept{
+    bool open_device(const core::Format &format,int size) noexcept{
         //只通过flag标识来判断是否打开,
         //如果open_flag为false，则一定会尝试打开设备
         if( open_flag == true)
@@ -58,7 +61,10 @@ public:
         }
         wanted_spec.channels = static_cast<uint8_t>(format.channels); 
         wanted_spec.silence = 0; 
-        wanted_spec.samples = 512; 
+        if( format.bits == 0 || format.channels == 0)
+            wanted_spec.samples = 512;
+        else
+            wanted_spec.samples = size / ( format.bits / 4) / format.channels; 
         wanted_spec.callback = AudioPlayerPrivateData::fill_audio; 
         wanted_spec.userdata = this;
      
@@ -139,7 +145,7 @@ bool AudioPlayer::play(core::FramePacket::SharedPacket packet) noexcept
     //格式不一致则重新打开
     if( d_ptr->ofmt != packet->format){
         d_ptr->close_device();
-        if(d_ptr->open_device(packet->format) == false)
+        if(d_ptr->open_device(packet->format,packet->size) == false)
             return false;
     }
     
