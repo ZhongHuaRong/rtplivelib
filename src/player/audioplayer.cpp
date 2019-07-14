@@ -64,7 +64,7 @@ public:
         if( format.bits == 0 || format.channels == 0)
             wanted_spec.samples = 512;
         else
-            wanted_spec.samples = size / ( format.bits / 4) / format.channels; 
+            wanted_spec.samples = size / ( format.bits / 8) / format.channels;
         wanted_spec.callback = AudioPlayerPrivateData::fill_audio; 
         wanted_spec.userdata = this;
 
@@ -107,7 +107,8 @@ public:
         if( udata == nullptr)
             return;
         auto ptr = static_cast<AudioPlayerPrivateData*>(udata);
-        SDL_memset(stream, 0, len);
+
+        SDL_memset(stream, INT_MIN, len);
         if(ptr->audio_len == 0){
             ptr->tmp = ptr->audio_data_queue.get_next();
             if( ptr->tmp == nullptr)
@@ -122,7 +123,7 @@ public:
      
         SDL_MixAudio(stream,ptr->audio_pos,len,SDL_MIX_MAXVOLUME);
         ptr->audio_pos += len; 
-        ptr->audio_len -= len; 
+        ptr->audio_len -= len;
     }
 };
 

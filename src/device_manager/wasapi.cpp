@@ -237,7 +237,7 @@ bool WASAPI::start() noexcept
 		hr = pAudioClient->Initialize(
 			AUDCLNT_SHAREMODE_SHARED,
 			AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
-			50 * 10000, // 100纳秒为基本单位
+            10 * 10000, // 100纳秒为基本单位
 			0,
 			pwfx,
 			nullptr);
