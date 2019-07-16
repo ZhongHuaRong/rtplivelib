@@ -4,6 +4,9 @@
 #if defined (WIN64)
 #include "wasapi.h"
 #endif
+#if defined (unix)
+#include "alsa.h"
+#endif
 
 namespace rtplivelib {
 
@@ -14,6 +17,10 @@ public:
 #if defined (WIN64)
 	WASAPI audio_api;
 	static constexpr WASAPI::FlowType FT{WASAPI::RENDER};
+#endif
+#if defined (unix)
+	ALSA audio_api;
+	static constexpr ALSA::FlowType FT{ALSA::RENDER};
 #endif
 };
 

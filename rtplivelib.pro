@@ -40,10 +40,17 @@ LIBS += -L$$PWD/SDK/UNIX/lib/ -lavdevice \
 	-L$$PWD/SDK/UNIX/lib/ -lswresample \
 	-L$$PWD/SDK/UNIX/lib/ -lSDL2 \
 	-L$$PWD/SDK/UNIX/lib/ -ljrtp \
-	-L$$PWD/SDK/UNIX/lib/ -ljthread
+	-L$$PWD/SDK/UNIX/lib/ -ljthread \
+	-lasound
 
 INCLUDEPATH += $$PWD/SDK/UNIX/include
 DEPENDPATH += $$PWD/SDK/UNIX/include
+
+HEADERS += \
+	src/device_manager/alsa.h
+	
+SOURCES += \
+	src/device_manager/alsa.cpp
 }
 
 win32{
@@ -64,6 +71,12 @@ LIBS += -lWs2_32 \
 
 INCLUDEPATH += $$PWD/SDK/win32/include
 DEPENDPATH += $$PWD/SDK/win32/include
+
+HEADERS += \
+	src/device_manager/wasapi.h
+	
+SOURCES += \
+	src/device_manager/wasapi.cpp
 }
 
 INCLUDEPATH += $$PWD/SDK/include
@@ -105,7 +118,6 @@ HEADERS += \
     src/rtp_network/fec/fecencoder.h \
     src/device_manager/microphonecapture.h \
     src/device_manager/soundcardcapture.h \
-    src/device_manager/wasapi.h \
     src/core/stringformat.h \
     src/codec/audioencoder.h \
     src/core/globalcallback.h \
@@ -145,7 +157,6 @@ SOURCES += \
     src/rtp_network/fec/fecencoder.cpp \
     src/device_manager/microphonecapture.cpp \
     src/device_manager/soundcardcapture.cpp \
-    src/device_manager/wasapi.cpp \
     src/core/stringformat.cpp \
     src/codec/audioencoder.cpp \
     src/core/globalcallback.cpp \

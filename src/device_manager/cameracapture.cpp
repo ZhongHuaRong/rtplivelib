@@ -103,6 +103,7 @@ std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(
 bool CameraCapture::set_default_device() noexcept
 {
 	//先不实现
+	return false;
 }
 
 bool CameraCapture::set_current_device(std::string device_id) noexcept
@@ -221,7 +222,7 @@ bool CameraCapture::open_device() noexcept
 #elif defined (unix)
 	bool n;
 	try {
-		auto ptr = get_all_device_info()[current_device_name].c_str();
+		auto ptr = get_all_device_info()[current_device_info.second].c_str();
 		n = avformat_open_input(&d_ptr->fmtContxt, ptr,
 								d_ptr->ifmt,&options);
 	} catch (const core::func_not_implemented_error& exception) {

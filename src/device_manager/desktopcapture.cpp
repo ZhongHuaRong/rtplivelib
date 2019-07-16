@@ -247,7 +247,7 @@ bool DesktopCapture::open_device() noexcept
 	/*暂时只考虑截取屏幕的情况，截取窗口和另外的屏幕以后再考虑*/
 	auto n = avformat_open_input(&d_ptr->fmtContxt, "desktop", d_ptr->ifmt, &options);
 #elif defined (unix)
-	auto ptr = get_all_device_info()[current_device_name].c_str();
+	auto ptr = get_all_device_info()[current_device_info.second].c_str();
 	auto n = avformat_open_input(&d_ptr->fmtContxt, ptr, 
 								 d_ptr->ifmt, &options);
 #endif
