@@ -48,13 +48,16 @@
 优先使用自带的lib库，已经经过测试没有问题！如果出现问题，可以参考[这里](https://github.com/ZhongHuaRong/rtplivelib/blob/master/build.md)自己手动编译lib库。
 
 ### 其他要求
-如果要使用硬件加速，则需要安装一系列的SDK。目前只使用了qsv，这里简单说一下Media SDK的安装
 * Windows<br>
-1.更新到最新的显卡驱动<br>
-2.去Intel官网下载[Intel Media SDK](https://software.intel.com/en-us/media-sdk/choose-download/client),需要intel账号才能下载<br>
-3.安装Intel Media SDK。如果安装失败则需要考虑是不是显卡驱动问题<br>
+  * 如果要使用硬件加速，则需要安装一系列的SDK。目前只使用了qsv，这里简单说一下Media SDK的安装<br>
+    1.更新到最新的显卡驱动<br>
+    2.去Intel官网下载[Intel Media SDK](https://software.intel.com/en-us/media-sdk/choose-download/client),需要intel账号才能下载<br>
+    3.安装Intel Media SDK。如果安装失败则需要考虑是不是显卡驱动问题<br>
+
 * Linux<br>
-这个我没有安装成功，先不写<br>
+  * Media SDK的安装<br>
+    这个我没有安装成功，先不写<br>
+  * 音频采集使用的是alsa，所以在Linux开发需要先安装alsa.需要去ALSA项目主页[下载alsa-lib](http://www.alsa-project.org/main/index.php/Main_Page).<br>
 
 ## 使用
 配合一个GUI应用和一个服务器应用，可以简单跑一下流程<br>
