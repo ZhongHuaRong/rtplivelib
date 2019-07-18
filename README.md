@@ -53,12 +53,12 @@
     1.更新到最新的显卡驱动<br>
     2.去Intel官网下载[Intel Media SDK](https://software.intel.com/en-us/media-sdk/choose-download/client),需要intel账号才能下载<br>
     3.安装Intel Media SDK。如果安装失败则需要考虑是不是显卡驱动问题<br>
-    4.安装[mfx](https://github.com/lu-zero/mfx_dispatch)库
+    4.安装[mfx](https://github.com/lu-zero/mfx_dispatch)库，没有这个库编译的时候将会提示缺少头文件
 
 * Linux<br>
   * Media SDK的安装<br>
     这个我没有安装成功，先不写<br>
-    安装[mfx](https://github.com/lu-zero/mfx_dispatch)库
+    安装[mfx](https://github.com/lu-zero/mfx_dispatch)库，没有这个库编译的时候将会提示缺少头文件
 
 ## 使用
 配合一个GUI应用和一个服务器应用，可以简单跑一下流程<br>
