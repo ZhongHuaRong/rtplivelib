@@ -200,19 +200,19 @@ inline bool VideoEncoder::_init_hwdevice(HardwareDevice::HWDType hwdtype,const c
 	case HardwareDevice::QSV:
 		//这里说明一下，这里只是用于测试，等测试完成了将会换回HEVC 
 		ret = create_encoder("h264_qsv");
-		//在初始化编码器上下文后，设置参数
-		set_encoder_param(format);
 		if(ret == false || hwdevice->init_device(encoder_ctx,encoder,hwdtype) == false){
 			ret = create_encoder("h264_qsv");
-			set_encoder_param(format);
 			if( ret == false || hwdevice->init_device(encoder_ctx,encoder,hwdtype) == false){
 				return false;
 			}
 			else {
+				set_encoder_param(format);
 				payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_H264;
 			}
 		}
 		else {
+			//在初始化编码器上下文后，设置参数
+			set_encoder_param(format);
 			payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_H264;
 		}
 		break;
