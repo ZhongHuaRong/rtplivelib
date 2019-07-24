@@ -41,16 +41,16 @@ LIBS += -L$$PWD/SDK/UNIX/lib/ -lavdevice \
 	-L$$PWD/SDK/UNIX/lib/ -lSDL2 \
 	-L$$PWD/SDK/UNIX/lib/ -ljrtp \
 	-L$$PWD/SDK/UNIX/lib/ -ljthread \
-	-lasound
+	-L$$PWD/SDK/UNIX/lib/ -lopenfec
 
 INCLUDEPATH += $$PWD/SDK/UNIX/include
 DEPENDPATH += $$PWD/SDK/UNIX/include
 
 HEADERS += \
-	src/device_manager/alsa.h
+    src/device_manager/alsa.h
 	
 SOURCES += \
-	src/device_manager/alsa.cpp
+    src/device_manager/alsa.cpp
 }
 
 win32{
@@ -125,7 +125,7 @@ HEADERS += \
     src/codec/audiodecoder.h \
     src/codec/encoder.h \
     src/player/videoplayer.h \
-    src/player/audioplayer.h
+    src/player/audioplayer.h 
 
 SOURCES += \
     src/core/abstractthread.cpp \
@@ -164,4 +164,4 @@ SOURCES += \
     src/codec/audiodecoder.cpp \
     src/codec/encoder.cpp \
     src/player/videoplayer.cpp \
-    src/player/audioplayer.cpp
+    src/player/audioplayer.cpp 

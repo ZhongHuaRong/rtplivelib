@@ -17,8 +17,7 @@ public:
 #if defined (WIN64)
 	WASAPI audio_api;
 	static constexpr WASAPI::FlowType FT{WASAPI::RENDER};
-#endif
-#if defined (unix)
+#elif defined (unix)
 	ALSA audio_api;
 	static constexpr ALSA::FlowType FT{ALSA::RENDER};
 #endif
@@ -33,8 +32,13 @@ SoundCardCapture::SoundCardCapture() :
 	d_ptr->audio_api.set_default_device(SoundCardCapturePrivateData::FT);
 	
 	auto pair = d_ptr->audio_api.get_current_device_info();
+#if defined (WIN64)
 	current_device_info.first = core::StringFormat::WString2String(pair.first);
 	current_device_info.second = core::StringFormat::WString2String(pair.second);
+#elif defined(unix)
+	current_device_info.first = pair.first;
+	current_device_info.second = pair.second;
+#endif
 	
 	/*在子类初始化里开启线程*/
 	start_thread();
@@ -53,7 +57,11 @@ std::map<std::string, std::string> SoundCardCapture::get_all_device_info()  noex
 
 	auto list_info = d_ptr->audio_api.get_all_device_info(SoundCardCapturePrivateData::FT);
 	for(auto i = list_info.begin(); i != list_info.end(); ++i){
-		info_map[core::StringFormat::WString2String(i->second)] = core::StringFormat::WString2String(i->first);
+#if defined (WIN64)
+		info_map[core::StringFormat::WString2String(i->first)] = core::StringFormat::WString2String(i->second);
+#elif defined(unix)
+		info_map[i->first] = i->second;
+#endif
 	}
 	return info_map;
 }
@@ -62,14 +70,23 @@ bool SoundCardCapture::set_current_device(std::string device_id) noexcept
 {
 	if(device_id.compare(current_device_info.first) == 0)
 		return true;
-	
+#if defined (WIN64)
 	auto result = d_ptr->audio_api.set_current_device(core::StringFormat::String2WString(device_id),
 													  SoundCardCapturePrivateData::FT);
+#elif defined(unix)
+	auto result = d_ptr->audio_api.set_current_device(device_id,
+													  SoundCardCapturePrivateData::FT);
+#endif
     constexpr char api[] = "device_manager::SoundCardCapture::set_current_device";
     if(result){
         auto pair = d_ptr->audio_api.get_current_device_info();
-        current_device_info.first = core::StringFormat::WString2String(pair.first);
-        current_device_info.second = core::StringFormat::WString2String(pair.second);
+#if defined (WIN64)
+	current_device_info.first = core::StringFormat::WString2String(pair.first);
+	current_device_info.second = core::StringFormat::WString2String(pair.second);
+#elif defined(unix)
+	current_device_info.first = pair.first;
+	current_device_info.second = pair.second;
+#endif
 		core::Logger::Print_APP_Info(core::MessageNum::Device_change_success,
                                      api,
                                      LogLevel::INFO_LEVEL,

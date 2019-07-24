@@ -117,7 +117,7 @@ bool WASAPI::set_current_device(uint64_t num, WASAPI::FlowType ft) noexcept
         if( list.size() <= num )
             return false;
         
-        set_current_device(list[num].first,ft);
+        return set_current_device(list[num].first,ft);
     } catch (...) {
         return false;
     }

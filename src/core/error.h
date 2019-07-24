@@ -3,7 +3,7 @@
 
 #include "config.h"
 #include <string>
-#include <string.h>
+#include "except.h"
 
 namespace rtplivelib {
 
@@ -21,8 +21,8 @@ constexpr char MessageString[][128] = {
 	"AVInputFormat not find({})",
 	"Close input format context",
 	"Open input format context,device:[{}],result:[{}]",
-        "Device change success,current name:{}",
-        "Device change failed ,current name:{}",
+	"Device change success,current name:{}",
+	"Device change failed ,current name:{}",
 	"device read frame failed",
 	"[{}]Device stop capture",
 	"Device information acquisition failed ",
@@ -83,7 +83,7 @@ enum struct MessageNum {
 	InputFormat_context_close,
 	InputFormat_context_open,
 	Device_change_success,
-        Device_change_failed,
+	Device_change_failed,
 	Device_read_frame_failed,
 	Device_stop_capture,
 	Device_info_failed,
@@ -130,6 +130,22 @@ enum struct MessageNum {
 	FEC_encode_failed,
 	Timer_time_less_than_zero
 };
+
+/**
+ * @brief get_error_string
+ * 获取错误信息
+ * @param num
+ * 错误编号
+ * @return 
+ * 返回错误信息，如果NUM越界了将会抛出range_error异常
+ */
+//static std::string get_error_string(const enum MessageNum num) noexcept(false) {
+//	try {
+//		return std::string(MessageString[static_cast<int>(num)]);
+//	} catch ( const std::range_error& e) {
+//		throw e;
+//	}
+//}
 
 } // namespace core
 

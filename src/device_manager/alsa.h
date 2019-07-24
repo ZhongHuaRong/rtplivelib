@@ -9,6 +9,12 @@ namespace rtplivelib {
 
 namespace device_manager{
 
+class ALSAPrivateData;
+
+/**
+ * @brief The ALSA class
+ * Linux系统下的音频采集
+ */
 class ALSA :
         protected core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
 {
@@ -19,12 +25,13 @@ public:
         ALL = 2
     };
     
-    //first:设备id
+    //first:设备名字
     //second:设备名字
-    using device_info = std::pair<std::wstring,std::wstring>;
+	//两个字段保存的是同样的数据
+    using device_info = std::pair<std::string,std::string>;
 public:
     /**
-     * @brief WASAPI
+     * @brief ALSA
      */
     ALSA();
     
@@ -33,8 +40,6 @@ public:
     /**
      * @brief get_device_info
      * 获取相应设备信息
-     * 这个接口在我测试的时候发现有一些设备名字无法获取
-     * 建议直接使用默认的设备
      * @param ft
      * 设备类型
      * @return 
@@ -44,7 +49,7 @@ public:
     
     /**
      * @brief get_current_device_info
-     * 获取当前设备id和名字
+     * 获取当前设备名字
      * 如果没有设置，则返回默认声卡信息
      * @return 
      */
@@ -63,15 +68,15 @@ public:
     
     /**
      * @brief set_current_device
-     * 通过设备id更改当前使用的设备
+     * 通过设备名字更改当前使用的设备
      * 切换后需要手动调用start来开启设备
-     * @param id
-     * 设备id
+     * @param name
+     * 设备名字
      * @param ft
      * 设备类型
      * @return 
      */
-    bool set_current_device(const std::wstring& id,FlowType ft = ALL) noexcept;
+    bool set_current_device(const std::string& name,FlowType ft = ALL) noexcept;
     
     /**
      * @brief set_default_device
@@ -81,6 +86,18 @@ public:
      * @return 
      */
     bool set_default_device(FlowType ft = RENDER) noexcept;
+	
+	/**
+	 * @brief set_format
+	 * 设置采集的格式
+	 * 设置core::Format()则采用默认格式
+	 * 如果需要参数生效，则需要先stop,然后start
+	 * @warning 如果调用了set_current_device更换设备后，如果需要采用默认格式则需要重新调用一次该接口
+	 *			因为start会初始化format，导致下一次start也是这个参数
+	 * @see stop
+	 * @see start
+	 */
+	void set_format( const core::Format& format) noexcept;
     
     /**
      * @brief get_format
@@ -119,8 +136,6 @@ public:
      */
     core::FramePacket::SharedPacket read_packet() noexcept;
 protected:
-//    device_info get_device_info(IMMDevice * device) noexcept;
-    
     /**
 	 * @brief on_thread_run
 	 */
@@ -137,16 +152,7 @@ protected:
 	 */
 	virtual bool get_thread_pause_condition() noexcept override final;
 private:
-    /**
-     * @brief _init_enumerator
-     * 初始化枚举器
-     * @return 
-     */
-    bool _init_enumerator() noexcept;
-private:
-	std::recursive_mutex	mutex;
-	FlowType				current_flow_type{FlowType::RENDER};
-	
+	ALSAPrivateData * const d_ptr;
 	volatile bool _is_running_flag{false};
 };
 

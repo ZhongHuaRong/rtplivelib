@@ -103,7 +103,6 @@ std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(
 bool CameraCapture::set_default_device() noexcept
 {
 	//先不实现
-	return false;
 }
 
 bool CameraCapture::set_current_device(std::string device_id) noexcept
