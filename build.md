@@ -40,7 +40,7 @@ set(CMAKE_CXX_COMPILER "g++")<br>
 生成makefile后直接make就可以了，不过没有make install，需要手动copy
 
 # mfx
-[下载地址](https://github.com/lu-zero/mfx_dispatch)库，没有这个库编译的时候将会提示缺少头文件
+[下载地址](https://github.com/lu-zero/mfx_dispatch)，没有这个库编译的时候将会提示缺少头文件
 * ./configure
 * make clean
 * make -j8
