@@ -144,7 +144,7 @@ void AudioEncoder::encode(core::FramePacket *packet) noexcept
 			if( resample == nullptr && _init_resample() == false)
 				return ;
 			
-			if( packet->format.channels == 0 && packet->format.bits == 0){
+			if( packet->format.channels == 0 || packet->format.bits == 0){
 				core::Logger::Print_APP_Info(core::MessageNum::Format_invalid_format,
 											 api,
 											 LogLevel::WARNING_LEVEL);

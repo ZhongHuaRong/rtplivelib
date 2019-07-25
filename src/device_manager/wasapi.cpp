@@ -49,8 +49,9 @@ WASAPI::~WASAPI()
 {
     if(is_start()){
         stop();
-        exit_thread();
     }
+    exit_wait_resource();
+    exit_thread();
     SafeRelease()(&pEnumerator);
     SafeRelease()(&pDevice);
     SafeRelease()(&pAudioClient);

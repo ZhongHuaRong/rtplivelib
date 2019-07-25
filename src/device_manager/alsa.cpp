@@ -22,8 +22,6 @@ public:
 	int						buffer_size{0};
 };
 
-static constexpr char format_name[] = "alsa";
-
 ALSA::ALSA():
 	d_ptr(new ALSAPrivateData())
 {
@@ -34,6 +32,7 @@ ALSA::ALSA():
 ALSA::~ALSA()
 {
 	stop();
+	exit_wait_resource();
 	exit_thread();
 	if(d_ptr->params != nullptr)
 		snd_pcm_hw_params_free(d_ptr->params);
@@ -95,6 +94,7 @@ bool ALSA::set_current_device(const std::string &name, ALSA::FlowType ft) noexce
 {
 	UNUSED(ft)
 	stop();
+	std::lock_guard<decltype(d_ptr->mutex)> lk(d_ptr->mutex);
 	d_ptr->current_name = name;
 	return true;
 }
@@ -106,6 +106,7 @@ bool ALSA::set_default_device(ALSA::FlowType ft) noexcept
 
 void ALSA::set_format(const core::Format &format) noexcept
 {
+	std::lock_guard<decltype(d_ptr->mutex)> lk(d_ptr->mutex);
 	d_ptr->format = format;
 }
 
@@ -117,6 +118,7 @@ const core::Format ALSA::get_format() noexcept
 bool ALSA::start() noexcept
 {
 	constexpr char api[] = "device_manager::ALSA::start";
+	std::lock_guard<decltype(d_ptr->mutex)> lk(d_ptr->mutex);
 	if(d_ptr->handle != nullptr)
 		stop();
 	int rc = snd_pcm_open(&d_ptr->handle, d_ptr->current_name.c_str(),
@@ -129,7 +131,7 @@ bool ALSA::start() noexcept
 		return false;
 	}
 	if(d_ptr->params == nullptr){
-		snd_pcm_hw_params_alloca(&d_ptr->params);
+		snd_pcm_hw_params_malloc(&d_ptr->params);
 		if(d_ptr->params == nullptr){
 			return false;
 		}
@@ -229,16 +231,22 @@ bool ALSA::start() noexcept
 	
 	//设置缓冲区大小
 	d_ptr->buffer_size = d_ptr->frames * d_ptr->format.bits / 8 * d_ptr->format.channels;
+	_is_running_flag = true;
+	notify_thread();
+	//防止外部调用正在使用read_packet接口
+	exit_wait_resource();
 	return true;
 }
 
 bool ALSA::stop() noexcept
 {
+	std::lock_guard<decltype(d_ptr->mutex)> lk(d_ptr->mutex);
 	if(d_ptr->handle != nullptr){
 		snd_pcm_drain(d_ptr->handle);
 		snd_pcm_close(d_ptr->handle);
 		d_ptr->handle = nullptr;
 	}
+	_is_running_flag = false;
 	return true;
 }
 

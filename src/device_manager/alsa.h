@@ -14,6 +14,7 @@ class ALSAPrivateData;
 /**
  * @brief The ALSA class
  * Linux系统下的音频采集
+ * 该类所有接口都是线程安全
  */
 class ALSA :
         protected core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
