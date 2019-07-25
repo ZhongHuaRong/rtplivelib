@@ -197,7 +197,7 @@ bool ALSA::start() noexcept
 	snd_pcm_hw_params_get_period_size(d_ptr->params,&d_ptr->frames, &dir);
 	
 	//如果使用的是默认格式，则需要初始化format
-	if(d_ptr->format != core::Format()){
+	if(d_ptr->format == core::Format()){
 		uint32_t val;
 		snd_pcm_hw_params_get_channels(d_ptr->params,&val);
 		d_ptr->format.channels = static_cast<int>(val);
