@@ -39,6 +39,13 @@ set(CMAKE_CXX_COMPILER "g++")<br>
 * cmake -G "MinGW Makefiles" -DDEBUG:STRING=OFF<br>
 生成makefile后直接make就可以了，不过没有make install，需要手动copy
 
+# mfx
+[下载地址](https://github.com/lu-zero/mfx_dispatch)库，没有这个库编译的时候将会提示缺少头文件
+* ./configure
+* make clean
+* make -j8
+* make install
+
 ## ffmpeg
 编译这个就有点复杂了，我们需要定制一个ffmpeg动态链接库，需要x264,x265,libfdk-aac,libmfx(qsv需要)<br>
 x264,x265,libfdk-aac的编译方法，给一个帖子大家参考一下:https://www.cnblogs.com/yaoz/p/6944942.html<br>
