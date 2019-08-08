@@ -9,6 +9,29 @@ namespace device_manager {
 
 class CameraCapturePrivateData;
 
+struct VideoSize{
+    int widget;
+    int height;
+
+    std::string to_string() noexcept{
+        std::string size = std::to_string(widget);
+        size += "x";
+        size += std::to_string(height);
+        return size;
+    }
+
+    bool operator==(const VideoSize& size){
+        if(widget == size.widget && height == size.height)
+            return true;
+        else
+            return false;
+    }
+
+    bool operator!=(const VideoSize& size){
+        return !this->operator==(size);
+    }
+};
+
 /**
  * @brief The CameraCapture class
  * 该类负责摄像头的捕捉
@@ -51,6 +74,20 @@ public:
 	 * 获取预设的帧数
 	 */
 	int get_fps() noexcept;
+
+    /**
+     * @brief get_video_size
+     * 获取采集视频的分辨率大小
+     * @return
+     */
+    const VideoSize& get_video_size()noexcept;
+
+    /**
+     * @brief set_video_size
+     * 设置将要采集的视频分辨率
+     * @param size
+     */
+    void set_video_size(const VideoSize& size) noexcept;
 	
 	/**
 	 * @brief get_all_device_info
@@ -97,11 +134,13 @@ protected:
 	 */
 	bool open_device() noexcept;
 private:
-	int _fps;
+    int _fps{30};
+    VideoSize _size{640,480};
 	CameraCapturePrivateData * const d_ptr;
 };
 
 inline int CameraCapture::get_fps() noexcept												{		return _fps;}
+inline const VideoSize &CameraCapture::get_video_size() noexcept                            {       return _size;}
 
 }//namespace device_manager
 

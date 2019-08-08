@@ -65,7 +65,15 @@ void CameraCapture::set_fps(int value) {
 	if (value == _fps)
 		return;
 	_fps = value;
-	open_device();
+    open_device();
+}
+
+void CameraCapture::set_video_size(const VideoSize &size) noexcept
+{
+    if(_size == size)
+        return;
+    _size = size;
+    open_device();
 }
 
 std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(false)
@@ -267,7 +275,7 @@ bool CameraCapture::open_device() noexcept
 {
 	AVDictionary *options = nullptr;
 	av_dict_set(&options,"framerate",std::to_string(_fps).c_str(),0);
-	av_dict_set(&options,"video_size","640x480",0); 
+    av_dict_set(&options,"video_size",_size.to_string().c_str(),0);
 	
 	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	if(d_ptr->fmtContxt != nullptr){
