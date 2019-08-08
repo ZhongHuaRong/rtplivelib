@@ -7,6 +7,10 @@ extern "C" {
     #include <libavdevice/avdevice.h>
 	#include <libavutil/dict.h>
 }
+#if defined (WIN64)
+#include <dshow.h>
+#include "../core/stringformat.h"
+#endif
 
 namespace rtplivelib {
 
@@ -42,20 +46,8 @@ CameraCapture::CameraCapture() :
 									 LogLevel::ERROR_LEVEL,
 									 format_name);
 	}
-	
-	//这里只是为了设置当前名字
-	AVDeviceInfoList *info_list = nullptr;
-	avdevice_list_input_sources(d_ptr->ifmt,nullptr,nullptr,&info_list);
-	if(info_list != nullptr && info_list->nb_devices != 0){
-		if(info_list->default_device == -1){
-			current_device_info.first = info_list->devices[0]->device_description;
-			current_device_info.second = info_list->devices[0]->device_description;
-		}
-		else{
-			current_device_info.first = info_list->devices[info_list->default_device]->device_description;
-			current_device_info.second = info_list->devices[info_list->default_device]->device_description;
-		}
-	}
+	//初始化的时候将设备设置成默认设备
+	set_default_device();
 	
 	/*在子类初始化里开启线程*/
 	start_thread();
@@ -78,6 +70,7 @@ void CameraCapture::set_fps(int value) {
 
 std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(false)
 {
+#if defined (unix)
 	if(d_ptr->ifmt == nullptr){
 		throw core::uninitialized_error("AVInputFormat(ifmt)");
 	}
@@ -98,11 +91,79 @@ std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(
 		//这里不判断返回值了，因为我知道失败的情况一般是函数未实现
 		throw core::func_not_implemented_error(core::MessageString[int(core::MessageNum::Device_info_failed)]);
 	}
+#elif defined (WIN64)
+    ICreateDevEnum *pDevEnum{nullptr};
+    IEnumMoniker *pEnum {nullptr};
+    HRESULT hr = 0;
+    hr = CoCreateInstance(CLSID_SystemDeviceEnum,
+                          nullptr,
+                          CLSCTX_INPROC_SERVER,
+                          IID_ICreateDevEnum,
+                          reinterpret_cast<void**>(&pDevEnum));
+    if (SUCCEEDED(hr))
+    {
+        hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,&pEnum,0);
+        if (hr == S_OK)
+        {
+            //使用IEnumMoniker接口枚举所有的设备标识
+            IMoniker *pMoniker{nullptr};
+            ULONG cFetched{0};
+            std::map<std::string,std::string> info_map;
+            
+            while (pEnum->Next(1, &pMoniker, &cFetched) == S_OK)
+            {
+                IPropertyBag* pPropBag{nullptr};
+                hr = pMoniker->BindToStorage(nullptr, 
+                                             nullptr, 
+                                             IID_IPropertyBag,
+                                             reinterpret_cast<void**>(&pPropBag));
+                if(SUCCEEDED(hr)){
+                    BSTR devicePath{nullptr};
+                    std::pair<std::string,std::string> pair;
+                    
+                    hr = pMoniker->GetDisplayName(nullptr, nullptr, &devicePath);
+                    if(SUCCEEDED(hr)){
+                        //获取设备唯一ID
+                        //由于ffmpeg是根据设备名字更换设备的，所以这里不是最主要的
+                        pair.first = core::StringFormat::WString2String(devicePath);
+                    }
+                    
+                    VARIANT varName;
+                    varName.vt = VT_BSTR;
+                    VariantInit(&varName);
+                    hr = pPropBag->Read(L"FriendlyName", &varName, nullptr);
+                    if (SUCCEEDED(hr)){
+                        //获取设备友好名字
+                        pair.second = core::StringFormat::WString2String(varName.bstrVal);
+                        info_map.insert(pair);
+                    }
+                    VariantClear(&varName);
+                    pPropBag->Release();
+                }
+                pMoniker->Release();
+            }
+            pDevEnum->Release();
+            return info_map;
+        }
+        pDevEnum->Release();
+    } 
+    throw std::runtime_error("Unknown");
+#endif
 }
 
 bool CameraCapture::set_default_device() noexcept
 {
-	//先不实现
+	//说是设置成默认设备，其实是选择第一个设备
+	auto list = get_all_device_info();
+	if(list.size() == 0){
+		current_device_info.first.clear();
+		current_device_info.second.clear();
+		return false;
+	}
+	auto first = list.begin();
+	current_device_info.first = first->first;
+	current_device_info.second = first->second;
+	return true;
 }
 
 bool CameraCapture::set_current_device(std::string device_id) noexcept
@@ -204,10 +265,8 @@ void CameraCapture::on_stop()  noexcept{
 
 bool CameraCapture::open_device() noexcept
 {
-	char fps_char[5];
-	sprintf(fps_char,"%d",_fps);
 	AVDictionary *options = nullptr;
-	av_dict_set(&options,"framerate",fps_char,0);
+	av_dict_set(&options,"framerate",std::to_string(_fps).c_str(),0);
 	av_dict_set(&options,"video_size","640x480",0); 
 	
 	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
@@ -216,12 +275,13 @@ bool CameraCapture::open_device() noexcept
 	}
 	constexpr char api[] = "device_manager::CameraCapture::open_device";
 #if defined (WIN32)
-	auto n = avformat_open_input(&d_ptr->fmtContxt,"video=HD Pro Webcam C920",d_ptr->ifmt,&options);
+	
+	auto n = avformat_open_input(&d_ptr->fmtContxt,("video=" + current_device_info.second).c_str(),d_ptr->ifmt,&options);
 //    auto n = avformat_open_input(&d_ptr->fmtContxt,"video=USB2.0 VGA UVC WebCam",d_ptr->ifmt,&options);
 #elif defined (unix)
 	bool n;
 	try {
-		auto ptr = get_all_device_info()[current_device_info.second].c_str();
+		auto ptr = current_device_info.second.c_str();
 		n = avformat_open_input(&d_ptr->fmtContxt, ptr,
 								d_ptr->ifmt,&options);
 	} catch (const core::func_not_implemented_error& exception) {

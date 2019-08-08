@@ -15,14 +15,17 @@ class CameraCapturePrivateData;
  * 其实该类很多操作都和桌面捕捉一样，所以等以后有空会统一一下
  * 备注:
  * Windows系统
- * 采集设备用的是dshow，说实话，辣鸡东西来的
+ * 采集设备用的是dshow
+ * 这里我要说明一下
+ * 采用的是ffmpeg里面集成的dshow
+ * Windows的摄像头采集有研究过WPD，WIA2.0和dshow(自己实现)
+ * 奈何mingw里面没有wpd和wia2.0的头文件和lib
+ * dshow好像要扩展Filter和Pin才获取得到媒体数据，但是需要编译strmbase.lib
+ * cl编译出来的lib不好在mingw环境编译，等以后再研究一下
  * 摄像头默认采集的格式是yuyv422
  * Linux系统
- * 采用v4l2采集摄像头，老实说，这个是所有采集里面实现的最好的
- * 所有接口都已实现，可以枚举摄像头
+ * 采用v4l2采集摄像头
  * 采集的格式和Windows一样，都是yuyv422
- * 
- * 设备获取接口Windows的还没有实现
  * 
  * 如果需要用该类自己处理数据，则可以考虑继承该类，然后重写on_frame_data接口来前处理数据
  * 然后返回false，也可以用wait_resource_push()和get_next()来获取队列的数据

@@ -67,7 +67,9 @@ LIBS += -L$$PWD/SDK/win32/bin/ -lavdevice-58 \
 
 LIBS += -lWs2_32 \
 	-lAdvapi32 \
-	-lOle32
+	-lOle32 \
+	-lOleAut32 \
+	-lStrmiids 
 
 INCLUDEPATH += $$PWD/SDK/win32/include
 DEPENDPATH += $$PWD/SDK/win32/include
