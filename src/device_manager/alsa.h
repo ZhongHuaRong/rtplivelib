@@ -15,6 +15,7 @@ class ALSAPrivateData;
  * @brief The ALSA class
  * Linux系统下的音频采集
  * 该类所有接口都是线程安全
+ * 目前在Deepin系统采集到的声音是静音，有待完善
  */
 class ALSA :
         protected core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
