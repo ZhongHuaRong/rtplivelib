@@ -335,7 +335,7 @@ bool HardwareDevice::init_device(void *codec_ctx,void * codec,HardwareDevice::HW
     if(ret == false)
         return false;
     
-    AVCodec * c = static_cast<AVCodec*>(codec);
+//    AVCodec * c = static_cast<AVCodec*>(codec);
     if( av_codec_is_encoder(_c) ){
         //编码方案
         if( d_ptr->set_encoder_ctx(ctx) == false)
@@ -346,13 +346,13 @@ bool HardwareDevice::init_device(void *codec_ctx,void * codec,HardwareDevice::HW
         //这里说明一下,qsv好像不支持set_decoder_ctx2方式的初始化
         //所以在set_decoder_ctx2返回false的时候，尝试set_decoder_ctx
         //如果还是不行在软解
-        if( d_ptr->set_decoder_ctx2(ctx,c) == false){
+        if( d_ptr->set_decoder_ctx2(ctx,_c) == false){
             if( d_ptr->set_decoder_ctx(ctx) == false)
                 return false;
         }
     }
     
-    auto result = avcodec_open2(ctx,c,nullptr);
+    auto result = avcodec_open2(ctx,_c,nullptr);
     _init_result = (result >= 0);
     if(!_init_result)
         core::Logger::Print_FFMPEG_Info(result,
