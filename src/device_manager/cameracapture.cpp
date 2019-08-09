@@ -65,7 +65,9 @@ void CameraCapture::set_fps(int value) {
 	if (value == _fps)
 		return;
 	_fps = value;
-    open_device();
+	//开启的时候更换设置才重新打开设备
+	if(is_running())
+        open_device();
 }
 
 void CameraCapture::set_video_size(const VideoSize &size) noexcept
@@ -73,7 +75,9 @@ void CameraCapture::set_video_size(const VideoSize &size) noexcept
     if(_size == size)
         return;
     _size = size;
-    open_device();
+    //开启的时候更换设置才重新打开设备
+    if(is_running())
+        open_device();
 }
 
 std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(false)
