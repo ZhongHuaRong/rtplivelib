@@ -15,6 +15,8 @@
 4.yasm<br>
 5.pkg-config
 
+Android版本在另外一个文件说明，点击这里[跳转](https://github.com/ZhongHuaRong/rtplivelib/blob/master/Build_Android.md)
+
 ## jrtplib,jthread
 [jrtplib下载地址](http://research.edm.uhasselt.be/jori/page/CS/Jrtplib.html)<br>
 [jthread下载地址](http://research.edm.uhasselt.be/jori/page/CS/Jthread.html)<br>
