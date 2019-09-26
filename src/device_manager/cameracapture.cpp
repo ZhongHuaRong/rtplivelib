@@ -166,15 +166,20 @@ std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(
 bool CameraCapture::set_default_device() noexcept
 {
 	//说是设置成默认设备，其实是选择第一个设备
-	auto list = get_all_device_info();
-	if(list.size() == 0){
-		current_device_info.first.clear();
-		current_device_info.second.clear();
-		return false;
-	}
-	auto first = list.begin();
-	current_device_info.first = first->first;
-	current_device_info.second = first->second;
+    try {
+        auto list = get_all_device_info();
+        if(list.size() == 0){
+            current_device_info.first.clear();
+            current_device_info.second.clear();
+            return false;
+        }
+        auto first = list.begin();
+        current_device_info.first = first->first;
+        current_device_info.second = first->second;
+    } catch (...) {
+        return false;
+    }
+
 	return true;
 }
 
