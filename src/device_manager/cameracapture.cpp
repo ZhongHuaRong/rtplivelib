@@ -177,6 +177,8 @@ bool CameraCapture::set_default_device() noexcept
         current_device_info.first = first->first;
         current_device_info.second = first->second;
     } catch (...) {
+        current_device_info.first.clear();
+        current_device_info.second.clear();
         return false;
     }
 
