@@ -349,8 +349,10 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket *packet) noexcept
 void VideoEncoder::_close_ctx() noexcept
 {
 	close_encoder();
-	if(hwdevice)
+    if(hwdevice != nullptr){
 		delete hwdevice;
+        hwdevice = nullptr;
+    }
 	//重置硬件加速方案
 	hwd_type_cur = HardwareDevice::None;
 	//重置格式，以便关闭上下文后，用同样的格式也会重新开启上下文

@@ -37,7 +37,7 @@ constexpr uint16_t AUDIO_PORTBASE = VIDEO_PORTBASE + 2;
 #define SINGLEPORT
 
 #if defined (TEST)
-constexpr uint8_t SERVER_IP[] = { 192,168,31,75 };
+constexpr uint8_t SERVER_IP[] = { 192,168,2,8 };
 #else
 constexpr uint8_t SERVER_IP[] = { 54,223,240,118 };
 #endif
