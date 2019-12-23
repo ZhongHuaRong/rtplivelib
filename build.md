@@ -43,19 +43,16 @@ set(CMAKE_CXX_COMPILER "g++")<br>
 
 # mfx
 [下载地址](https://github.com/lu-zero/mfx_dispatch)，没有这个库编译的时候将会提示缺少头文件
-* ./configure
-* make clean
-* make -j8
-* make install
+安装步骤在下载页面
 
 ## ffmpeg
 编译这个就有点复杂了，我们需要定制一个ffmpeg动态链接库，需要x264,x265,libfdk-aac,libmfx(qsv需要)<br>
 x264,x265,libfdk-aac的编译方法，给一个帖子大家参考一下:https://www.cnblogs.com/yaoz/p/6944942.html<br>
 libmfx的编译很简单，只需要下面几步
-* ./configure
-* make clean
-* make -j8
-* make install
+* ./configure<br>
+* make clean<br>
+* make -j8<br>
+* make install<br>
 
 ffmpeg的编译:<br>
 `PKG_CONFIG_PATH路径记得修改为自己的`<br>
@@ -75,9 +72,9 @@ PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"  \\<br>
   --disable-parsers  \\<br>
   --disable-muxers \\<br>
   --disable-demuxers \\<br>
-  --disable-bsfs \\<br>
   --disable-protocols \\<br>
   --disable-filters \\<br>
+  --disable-bsfs \\<br>
   --disable-doc \\<br>
   --disable-static \\<br>
   --enable-shared \\<br>
@@ -87,27 +84,34 @@ PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"  \\<br>
   --enable-libmfx \\<br>
   --enable-decoder=hevc \\<br>
   --enable-decoder=hevc_qsv \\<br>
+  --enable-decoder=hevc_cuvid \\<br>
   --enable-decoder=h264 \\<br>
   --enable-decoder=h264_qsv \\<br>
+  --enable-decoder=h264_cuvid \\<br>
   --enable-decoder=aac \\<br>
   --enable-decoder=aac_fixed \\<br>
   --enable-decoder=aac_latm \\<br>
   --enable-decoder=libfdk_aac \\<br>
+  --enable-encoder=nvenc \\<br>
   --enable-encoder=libx265 \\<br>
   --enable-encoder=hevc_qsv \\<br>
+  --enable-encoder=hevc_nvenc \\<br>
+  --enable-encoder=nvenc_hevc \\<br>
   --enable-encoder=libx264 \\<br>
   --enable-encoder=libx264rgb \\<br>
   --enable-encoder=h264_qsv \\<br>
+  --enable-encoder=h264_nvenc \\<br>
+  --enable-encoder=nvenc_h264 \\<br>
   --enable-encoder=libfdk_aac \\<br>
-  --enable-encoder=aac \\<br>
   --enable-parser=aac \\<br>
   --enable-parser=aac_latm \\<br>
   --enable-parser=hevc \\<br>
   --enable-demuxer=aac \\<br>
   --enable-muxer=hevc \\<br>
-  --enable-filter=crop \\<br>
   --enable-gpl \\<br>
   --enable-nonfree
+ <br>
+*因为添加了NVENC和NVDEC,所以去掉了--enable-encoder=aac，带上这个会链接出错
   
 * Linux下的编译:<br>
 PKG_CONFIG_PATH="$HOME/Desktop/build-linux/lib/pkgconfig" \\<br>
@@ -155,6 +159,8 @@ PKG_CONFIG_PATH="$HOME/Desktop/build-linux/lib/pkgconfig" \\<br>
   --enable-filter=crop \\<br>
   --enable-gpl \\<br>
   --enable-nonfree
+  <br>
+*Linux的还没有更新
 
 可能大家在编译ffmpeg的时候出现各种问题，我简单罗列一下我遇到过的问题，大部分是在Windows下编译出现的，Linux是一步就完成了<br>
 * 在我没有设置disable-bsfs的时候，编译是会在avcodec的时候出现链接错误，需要自己调用gcc生成，去掉这个之后就可以直接编译成功了
@@ -164,3 +170,6 @@ PKG_CONFIG_PATH="$HOME/Desktop/build-linux/lib/pkgconfig" \\<br>
 在x265.pc文件里的Libs.private一行添加-lpthread，如下图所示:<br>
 ![](https://github.com/ZhongHuaRong/rtplivelib/blob/master/img/x265_pkg_config.png)<br>
 * 还有一些问题我没有记录下来，如果遇到一些包not found的话，可能是pkg-config的问题，也可能是包编译错误的问题。遇到问题多谷歌多百度就很容易解决了。
+* 说明一下gcc链接的问题，把make的出错的编译信息记下来，然后调用下面的命令，按情况添加dll<br>
+gcc *.o  -luuid -lole32 -liconv -L/usr/local/bin -lavutil-56 -lavfilter-7 -lpostproc-55 -lswresample-3 -lswscale-5 -lfdk-aac-1 -llibx265  -llibx264-157 -L/c/"Program Files (x86)"/IntelSWTools/"Intel(R) Media SDK 2019 R1"/"Software Development Kit"/bin/x64/ -llibmfxsw64 -shared  -o avcodec-58.dll -Wl,--output-def,avcodec-58.def,--out-implib,avcodec-58.a<br>
+把出错的编译信息里面的.o文件添加到gcc后面就可以链接成功了
