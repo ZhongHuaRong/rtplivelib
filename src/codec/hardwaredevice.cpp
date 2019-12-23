@@ -25,8 +25,10 @@ public:
     }
     
     inline void close_hwdevice_ctx() noexcept {
-        if(hw_device_ctx != nullptr)
+        if(hw_device_ctx != nullptr){
 			av_buffer_unref(&hw_device_ctx);
+            hw_device_ctx = nullptr;
+        }
     }
     
     /**
