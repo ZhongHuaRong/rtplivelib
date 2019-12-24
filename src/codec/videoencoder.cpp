@@ -83,12 +83,12 @@ void VideoEncoder::encode(core::FramePacket *packet) noexcept
         
         if( encode_hw_frame == nullptr){
             encode_hw_frame = _alloc_hw_frame();
-        }
-        if( encode_hw_frame == nullptr){
-            core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
-                                         api,
-                                         LogLevel::WARNING_LEVEL);
-            return;
+            if( encode_hw_frame == nullptr){
+                core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
+                                             api,
+                                             LogLevel::WARNING_LEVEL);
+                return;
+            }
         }
         
         //拷贝帧到显存
@@ -120,11 +120,11 @@ void VideoEncoder::set_encoder_param(const core::Format &format) noexcept
 	//设置好格式
 	encoder_ctx->width = format.width;
 	encoder_ctx->height = format.height;
-	encoder_ctx->time_base.num = format.frame_rate;
-	encoder_ctx->time_base.den = 1;
+	encoder_ctx->time_base.num = 1;
+	encoder_ctx->time_base.den = format.frame_rate;
 	
-	encoder_ctx->gop_size = 10;
-	encoder_ctx->max_b_frames = 1;
+	encoder_ctx->gop_size = 250;
+	encoder_ctx->max_b_frames = 0;
 	
 	//需要动态调整一下比特率,先不实行
 	if(format.height == 480 && format.width == 640)
@@ -148,6 +148,8 @@ void VideoEncoder::receive_packet() noexcept
 										 LogLevel::WARNING_LEVEL);
 			return;
 		}
+        src_packet->data = nullptr;
+        src_packet->size = 0;
 //		std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 		ret = avcodec_receive_packet(encoder_ctx,src_packet);
 		if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
@@ -196,35 +198,41 @@ void VideoEncoder::receive_packet() noexcept
 inline bool VideoEncoder::_init_hwdevice(HardwareDevice::HWDType hwdtype,const core::Format& format) noexcept
 {
 	bool ret;
+    //初始化两次,首先初始化HEVC，不支持再初始化264
+    std::string first_init;
+    std::string second_init;
 	switch(hwdtype){
 	case HardwareDevice::QSV:
-		//这里说明一下，这里只是用于测试，等测试完成了将会换回HEVC 
-		ret = create_encoder("h264_qsv");
-		//在初始化编码器上下文后，设置参数
-		if(ret == true)
-			set_encoder_param(format);
-		if(ret == false || hwdevice->init_device(encoder_ctx,encoder,hwdtype) == false){
-			ret = create_encoder("h264_qsv");
-			if(ret == true)
-				set_encoder_param(format);
-			if( ret == false || hwdevice->init_device(encoder_ctx,encoder,hwdtype) == false){
-				return false;
-			}
-			else {
-				payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_H264;
-			}
-		}
-		else {
-			payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_H264;
-		}
+        first_init = "hevc_qsv";
+		second_init = "h264_qsv";
 		break;
 	case HardwareDevice::NVIDIA:
+        first_init = "hevc_nvenc";
+		second_init = "h264_nvenc";
 		break;
 	default:
 		hwd_type_user = HardwareDevice::None;
 		return false;
 	}
 	
+    ret = create_encoder(first_init.c_str());
+    //在初始化编码器上下文后，设置参数
+    if(ret == true)
+        set_encoder_param(format);
+    if(ret == false || hwdevice->init_device(encoder_ctx,encoder,hwdtype) == false){
+        ret = create_encoder(second_init.c_str());
+        if(ret == true)
+            set_encoder_param(format);
+        if( ret == false || hwdevice->init_device(encoder_ctx,encoder,hwdtype) == false){
+            return false;
+        }
+        else {
+            payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_H264;
+        }
+    }
+    else {
+        payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_HEVC;
+    }
 	return true;
 }
 
@@ -261,9 +269,9 @@ bool VideoEncoder::_select_hwdevice(const core::FramePacket *packet) noexcept
 		if(hwdevice == nullptr)
 			hwdevice = new HardwareDevice();
 		//暂时没有实现
-		auto ret = _init_hwdevice(HardwareDevice::QSV,packet->format);
+		auto ret = _init_hwdevice(HardwareDevice::NVIDIA,packet->format);
 		if(ret == true){
-			hwd_type_cur = HardwareDevice::QSV;
+			hwd_type_cur = HardwareDevice::NVIDIA;
 			this->format = packet->format;
 			scale_ctx->set_default_output_format(format.width,format.height,hwdevice->get_swframe_pix_fmt());
 		}
@@ -313,7 +321,7 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket *packet) noexcept
 	//寻找纯CPU编码器
 	{
 		//这里说明一下，只是为了测试使用，测试完成后会换成libx265
-		auto ret = create_encoder("libx264");
+		auto ret = create_encoder("libx265");
 		if(ret == false){
 			ret = create_encoder("libx264");
 			if(ret == false){
@@ -324,7 +332,7 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket *packet) noexcept
 			}
 		}
 		else {
-			payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_H264;
+			payload_type = rtp_network::RTPSession::PayloadType::RTP_PT_HEVC;
 		}
 		set_encoder_param(packet->format);
 	}
@@ -392,10 +400,10 @@ AVFrame * VideoEncoder::_alloc_hw_frame() noexcept {
 		return nullptr;
 	AVFrame * frame = nullptr;
 	frame = av_frame_alloc();
-	if(frame == nullptr || encoder_ctx->hw_frames_ctx == nullptr){
+	if(frame == nullptr){
 		return nullptr;
 	}
-	if(av_hwframe_get_buffer(encoder_ctx->hw_frames_ctx, frame, 0) <0){
+	if(av_hwframe_get_buffer(encoder_ctx->hw_frames_ctx, frame, 0) < 0 ||  !frame->hw_frames_ctx){
 		av_frame_free(&frame);
 		return nullptr;
 	}

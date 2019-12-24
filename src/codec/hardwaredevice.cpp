@@ -337,7 +337,6 @@ bool HardwareDevice::init_device(void *codec_ctx,void * codec,HardwareDevice::HW
     if(ret == false)
         return false;
     
-//    AVCodec * c = static_cast<AVCodec*>(codec);
     if( av_codec_is_encoder(_c) ){
         //编码方案
         if( d_ptr->set_encoder_ctx(ctx) == false)

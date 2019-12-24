@@ -65,7 +65,7 @@ protected:
 	 */
 	void receive_packet() noexcept;
 	
-public:
+private:
 	/**
 	 * @brief _init_hwdevice
 	 * 初始化硬件设备并启动编码器
