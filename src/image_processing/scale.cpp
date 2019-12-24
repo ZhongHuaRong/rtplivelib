@@ -23,6 +23,7 @@ struct ScalePrivateData{
         std::lock_guard<std::recursive_mutex> lk(mutex);
         if(scale_ctx != nullptr){
             sws_freeContext(scale_ctx);
+            scale_ctx = nullptr;
         }
     }
     

@@ -123,6 +123,20 @@ public:
 	 * 如果字符串为空，则可以确认是没有加入房间的
 	 */
 	const std::string& get_room_name() noexcept;
+    
+    /**
+     * @brief get_audio_encoder
+     * 获取音频编码器
+     * @return 
+     */
+    void * get_audio_encoder() noexcept;
+    
+    /**
+     * @brief get_video_encoder
+     * 获取视频编码器
+     * @return 
+     */
+    void * get_video_encoder() noexcept;
 	
 	/**
 	 * @brief set_log_level

@@ -147,6 +147,8 @@ struct CropPrivateData{
 	 * 释放裁剪用的frame
 	 */
 	inline void release_crop_frame(){
+        if(crop_frame_in == nullptr)
+            return;
 		memset(crop_frame_in->data,0,sizeof(crop_frame_in->data));
 		av_frame_free(&crop_frame_in);
 	}

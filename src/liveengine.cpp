@@ -189,7 +189,17 @@ bool LiveEngine::enabled_push(bool enabled) noexcept
 
 const std::string& LiveEngine::get_room_name() noexcept
 {
-	return d_ptr->video_session->get_room_name();
+    return d_ptr->video_session->get_room_name();
+}
+
+void *LiveEngine::get_audio_encoder() noexcept
+{
+    return d_ptr->audio_encoder;
+}
+
+void *LiveEngine::get_video_encoder() noexcept
+{
+    return d_ptr->video_encoder;
 }
 
 void LiveEngine::set_log_level(LogLevel level) noexcept
