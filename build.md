@@ -108,6 +108,7 @@ PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"  \\<br>
   --enable-parser=hevc \\<br>
   --enable-demuxer=aac \\<br>
   --enable-muxer=hevc \\<br>
+  --enable-filter=crop \\<br>
   --enable-gpl \\<br>
   --enable-nonfree
  <br>
