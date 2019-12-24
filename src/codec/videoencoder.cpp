@@ -116,15 +116,15 @@ void VideoEncoder::encode(core::FramePacket *packet) noexcept
 
 void VideoEncoder::set_encoder_param(const core::Format &format) noexcept
 {
-//	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 	//设置好格式
 	encoder_ctx->width = format.width;
 	encoder_ctx->height = format.height;
 	encoder_ctx->time_base.num = 1;
 	encoder_ctx->time_base.den = format.frame_rate;
 	
-	encoder_ctx->gop_size = 250;
-	encoder_ctx->max_b_frames = 0;
+    //以下是用于软压用的参数设置，在硬压的时候会在hw里面再设置一次
+	encoder_ctx->gop_size = 10;
+	encoder_ctx->max_b_frames = 1;
 	
 	//需要动态调整一下比特率,先不实行
 	if(format.height == 480 && format.width == 640)

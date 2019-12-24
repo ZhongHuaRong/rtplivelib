@@ -48,6 +48,8 @@ public:
      * 初始化设备,将会打开编解码器
      * @param codec_ctx
      * 编解码器上下文,需要提前初始化
+     * @param type
+     * 硬件类型
      * @return 
      * 成功则返回真
      */

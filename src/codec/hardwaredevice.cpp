@@ -106,6 +106,9 @@ public:
 			ctx->pix_fmt = AV_PIX_FMT_CUDA;
 			frames_ctx->format = AV_PIX_FMT_CUDA;
             frames_ctx->sw_format = AV_PIX_FMT_NV12;
+            ctx->gop_size = 250;
+            ctx->max_b_frames = 0;
+            ctx->bit_rate = 1024 * 1024;
 			break;
 		case AV_HWDEVICE_TYPE_VAAPI:
 			//?
@@ -123,6 +126,9 @@ public:
 			frames_ctx->format = AV_PIX_FMT_QSV;
             frames_ctx->sw_format = AV_PIX_FMT_NV12;
             frames_ctx->initial_pool_size = 20;
+            ctx->gop_size = 10;
+            ctx->max_b_frames = 1;
+            ctx->bit_rate = 12000;
 			break;
 		case AV_HWDEVICE_TYPE_VIDEOTOOLBOX:
 			ctx->pix_fmt = AV_PIX_FMT_VIDEOTOOLBOX;
@@ -336,7 +342,7 @@ bool HardwareDevice::init_device(void *codec_ctx,void * codec,HardwareDevice::HW
     }
     if(ret == false)
         return false;
-    
+        
     if( av_codec_is_encoder(_c) ){
         //编码方案
         if( d_ptr->set_encoder_ctx(ctx) == false)
