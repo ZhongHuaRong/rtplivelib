@@ -165,13 +165,6 @@ struct CropPrivateData{
 		if(src == nullptr || dst == nullptr)
 			return false;
 		constexpr char api[] = "image_processing::CropPrivateData::crop";
-		//检查格式是否可以
-		if( src->format != ifmt ){
-			core::Logger::Print_APP_Info(core::MessageNum::Format_invalid_format,
-										 api,
-										 LogLevel::WARNING_LEVEL);
-			return false;
-		}
 
 		if(filter_graph == nullptr){
 			char descr[512];
@@ -289,6 +282,7 @@ bool Crop::crop(core::FramePacket *dst, core::FramePacket *src) noexcept
 {
     if( dst == nullptr || src == nullptr)
         return false;
+    set_default_input_format(src->format);
     return d_ptr->crop(dst,src);
 }
 

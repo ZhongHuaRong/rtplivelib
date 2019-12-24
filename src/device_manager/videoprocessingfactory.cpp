@@ -159,11 +159,6 @@ void VideoProcessingFactory::set_crop_rect(const image_processing::Rect &rect) n
 	}
 	
 	crop->set_default_crop_rect(rect);
-	//理论上来说只有设置 裁剪区域才开始裁剪
-	//为了避免在所以帧输入时都判断一次
-	//所以在输入格式更换之后需要调用一次该函数
-	if( d_ptr->privious_desktop_frame != nullptr)
-		crop->set_default_input_format(d_ptr->privious_desktop_frame->format);
 }
 
 void VideoProcessingFactory::set_overlay_rect(const image_processing::FRect &rect) noexcept
