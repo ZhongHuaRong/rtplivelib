@@ -41,6 +41,8 @@ public:
 	//保存上一帧
 	core::FramePacket::SharedPacket privious_camera_frame;
 	core::FramePacket::SharedPacket privious_desktop_frame;
+    //上一帧的时间戳
+    int64_t privious_ts{0};
 	
 	///////////////////////
 	//转换格式用的上下文
@@ -95,6 +97,11 @@ public:
 			return pri_frame;
 		}
 	}
+    
+    inline void on_real_time_fps(int64_t ts) noexcept{
+        core::GlobalCallBack::Get_CallBack()->on_video_real_time_fps(1000000.0f / (ts - privious_ts));
+        privious_ts = ts;
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -328,6 +335,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		//第一时间回调
 		if(GlobalCallBack::Get_CallBack() != nullptr){
 			GlobalCallBack::Get_CallBack()->on_camera_frame(packet);
+            d_ptr->on_real_time_fps(packet->pts);
 		}
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
@@ -360,6 +368,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		//裁剪后回调
 		if(GlobalCallBack::Get_CallBack() != nullptr){
 			GlobalCallBack::Get_CallBack()->on_desktop_frame(packet);
+            d_ptr->on_real_time_fps(packet->pts);
 		}
 		
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);

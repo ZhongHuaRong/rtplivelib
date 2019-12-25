@@ -55,6 +55,13 @@ public:
 	 * @param packet
 	 */
 	virtual void on_soundcard_packet(core::FramePacket::SharedPacket packet);
+    
+    /**
+     * @brief on_video_real_time_fps
+     * 获取实时的帧/秒
+     * @param fps
+     */
+    virtual void on_video_real_time_fps(float fps);
 	
 	/*以下回调继承的时候业务不要写的太复杂，会干扰rtp包或者rtcp包的接收和处理*/
 	
@@ -124,6 +131,7 @@ inline void GlobalCallBack::on_desktop_frame(core::FramePacket::SharedPacket )		
 inline void GlobalCallBack::on_video_frame_merge(core::FramePacket::SharedPacket )					{}
 inline void GlobalCallBack::on_microphone_packet(core::FramePacket::SharedPacket )					{}
 inline void GlobalCallBack::on_soundcard_packet(core::FramePacket::SharedPacket )					{}
+inline void GlobalCallBack::on_video_real_time_fps(float)                                           {}
 inline void GlobalCallBack::on_new_user_join(const std::string& )									{}
 inline void GlobalCallBack::on_user_exit(const std::string& ,
 											const void *, const uint64_t& )							{}
