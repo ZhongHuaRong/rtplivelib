@@ -1,9 +1,9 @@
 #include "fecdecoder.h"
-#include "../../core/format.h"
 #include <memory>
 #include <math.h>
 #include <string.h>
 #include "../../core/logger.h"
+#include "fecdecodecache.h"
 extern "C"{
 #include "libopenfec/lib_common/of_openfec_api.h"
 }
@@ -16,6 +16,8 @@ namespace fec {
 
 class FECDecoderPrivateData{
 public:
+    /*缓冲区*/
+    FECDecodeCache cache;
     /*不同算法对应的结构体*/
     of_rs_2_m_parameters_t	*rs_2_m_params{nullptr};
     of_ldpc_parameters_t * ldpc_params{nullptr};
@@ -222,15 +224,15 @@ FECDecoder::~FECDecoder()
 
 core::FramePacket *FECDecoder::decode(RTPPacket *packet) noexcept
 {
-	cache.lock_source();
-    auto ts = cache.pop(packet);
+	d_ptr->cache.lock_source();
+    auto ts = d_ptr->cache.pop(packet);
 	if( ts == 0 ){
-		cache.unlock_source();
+		d_ptr->cache.unlock_source();
         return nullptr;
 	}
 	
-	auto list = cache.push();
-	cache.unlock_source();
+	auto list = d_ptr->cache.push();
+	d_ptr->cache.unlock_source();
 	if( list == nullptr)
 		return nullptr;
     
@@ -250,7 +252,7 @@ core::FramePacket *FECDecoder::decode(RTPPacket *packet) noexcept
 		}
         frame->data[0] = static_cast<uint8_t*>(data.first);
         frame->size = data.second;
-        frame->payload_type = cache.get_payload_type();
+        frame->payload_type = d_ptr->cache.get_payload_type();
         frame->pts = frame->dts = list->ts;
         
 		delete list;
@@ -282,7 +284,7 @@ core::FramePacket *FECDecoder::decode(RTPPacket *packet) noexcept
 		}
         frame->data[0] = static_cast<uint8_t*>(data.first);
         frame->size = data.second;
-        frame->payload_type = cache.get_payload_type();
+        frame->payload_type = d_ptr->cache.get_payload_type();
         frame->pts = frame->dts = list->ts;
 		core::Logger::Print("decode success","",LogLevel::MOREINFO_LEVEL);
 		list->release_decode_array(pair);

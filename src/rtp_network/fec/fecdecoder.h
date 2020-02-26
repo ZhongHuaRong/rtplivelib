@@ -3,11 +3,13 @@
 #pragma once
 
 #include "../../core/config.h"
-#include "fecdecodecache.h"
+#include "../../core/format.h"
 
 namespace rtplivelib {
 
 namespace rtp_network {
+
+class RTPPacket;
 
 namespace fec {
 
@@ -34,7 +36,6 @@ public:
     core::FramePacket * decode(RTPPacket * packet) noexcept;
 private:
     FECDecoderPrivateData * const d_ptr;
-    FECDecodeCache cache;
 };
 
 
