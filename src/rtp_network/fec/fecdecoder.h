@@ -34,6 +34,9 @@ public:
      * @return 
      */
     core::FramePacket * decode(RTPPacket * packet) noexcept;
+    
+    bool decode(uint32_t src_pack_nb,uint32_t repair_pack_nb,uint32_t block_size,
+                           void ** src_data,void ** dst_data) noexcept;
 private:
     FECDecoderPrivateData * const d_ptr;
 };

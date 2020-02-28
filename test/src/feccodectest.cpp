@@ -38,6 +38,32 @@ std::list<uint32_t> simulated_packet_loss(uint32_t src_nb,uint32_t repair_nb){
     return std::list<uint32_t>(pk.begin(),pk.end());
 }
 
+std::pair<void **, void **> create_array(void ** data,uint32_t src_nb,uint32_t repair_nb) noexcept
+{
+	uint32_t total = src_nb + repair_nb;
+	auto first_ptr = static_cast<void **>(calloc(total,sizeof(void*)));
+	if(first_ptr == nullptr)
+		return std::pair<void **, void **>(nullptr,nullptr);
+	
+	auto second_ptr = static_cast<void **>(calloc(total,sizeof(void*)));
+	if(second_ptr == nullptr){
+		free(first_ptr);
+		return std::pair<void **, void **>(nullptr,nullptr);
+	}
+	
+    auto pack_num_list = simulated_packet_loss(src_nb,repair_nb);
+    
+    for(auto n = 0u; n < total; ++ n){
+        first_ptr[n] = nullptr;
+		second_ptr[n] = nullptr;
+	}
+    for(auto i = pack_num_list.begin();i != pack_num_list.end();++i){
+        auto j = *i;
+        first_ptr[*i] = data[*i];
+    }
+	return std::pair<void **, void **>(first_ptr,second_ptr);
+}
+
 TEST(FECTest,LDPCCodec){
     std::ifstream file;
     std::string file_path("./test.exe");
@@ -82,11 +108,14 @@ TEST(FECTest,LDPCCodec){
     auto data_ptr = encoder.get_data();
     
     //测试十次
-    for(auto n = 0;n < 10;++n){
-        auto pack_num_list = simulated_packet_loss(encoder.get_all_pack_nb() - encoder.get_repair_nb(),encoder.get_repair_nb());
+    for(auto n = 0;n < 1;++n){
+        auto pack = create_array(data_ptr,encoder.get_all_pack_nb() - encoder.get_repair_nb(),encoder.get_repair_nb());
         
-        for(auto i = pack_num_list.begin();i != pack_num_list.end();++i){
-            data_ptr[*i];
-        }
+        ret = decoder.decode(encoder.get_all_pack_nb() - encoder.get_repair_nb(),
+                             encoder.get_repair_nb(),
+                             size,
+                             pack.first,
+                             pack.second);
+        EXPECT_TRUE(ret);
     }
 }

@@ -83,7 +83,7 @@ public:
         if(rs_2_m_ses != nullptr)
             return true;
         
-        if (of_create_codec_instance(&rs_2_m_ses, OF_CODEC_REED_SOLOMON_GF_2_M_STABLE, OF_ENCODER, 2) != OF_STATUS_OK)
+        if (of_create_codec_instance(&rs_2_m_ses, OF_CODEC_REED_SOLOMON_GF_2_M_STABLE, OF_DECODER, 2) != OF_STATUS_OK)
             return false;
 
         return true;
@@ -131,7 +131,7 @@ public:
         if(ldpc_ses != nullptr)
             return true;
         
-        if (of_create_codec_instance(&ldpc_ses, OF_CODEC_REED_SOLOMON_GF_2_M_STABLE, OF_ENCODER, 2) != OF_STATUS_OK)
+        if (of_create_codec_instance(&ldpc_ses, OF_CODEC_LDPC_STAIRCASE_STABLE, OF_DECODER, 2) != OF_STATUS_OK)
             return false;
         
         return true;
@@ -147,7 +147,7 @@ public:
     inline bool set_ldpc_param(uint32_t nb_src_sym,uint32_t nb_rpr_sym,uint32_t symbol_length) noexcept {
         
         if(ldpc_params == nullptr){
-            ldpc_params = static_cast<of_ldpc_parameters_t*>(calloc(1, sizeof(of_rs_2_m_parameters_t)));
+            ldpc_params = static_cast<of_ldpc_parameters_t*>(calloc(1, sizeof(of_ldpc_parameters_t)));
             if(ldpc_params == nullptr)
                 return false;
         }
@@ -291,6 +291,13 @@ core::FramePacket *FECDecoder::decode(RTPPacket *packet) noexcept
 		delete list;
         return frame;
     }
+}
+
+bool FECDecoder::decode(uint32_t src_pack_nb, uint32_t repair_pack_nb, uint32_t block_size,
+                        void **src_data, void **dst_data) noexcept
+{
+    return d_ptr->decode(src_pack_nb,repair_pack_nb,block_size,
+                         src_data,dst_data);
 }
 
 
