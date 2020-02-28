@@ -36,7 +36,7 @@ public:
     uint32_t total_pack_nb{0};
     /*外部设置的冗余包数，用于判断是否需要初始化*/
     uint32_t repair_pack_nb{0};
-    
+    /*块大小*/
     uint32_t cur_sym_len{1024};
     /*原数据占有比例,越低冗余包越多*/
     float code_rate{0.8f};
@@ -237,7 +237,7 @@ public:
         of_parameters_t	*params = (of_parameters_t *) rs_2_m_params;
         params->nb_source_symbols	= nb_src_sym;		/* fill in the generic part of the of_parameters_t structure */
         params->nb_repair_symbols	= nb_rpr_sym;
-        params->encoding_symbol_length	= cur_sym_len;   
+        params->encoding_symbol_length	= cur_sym_len;
         
         if(rs_2_m_ses == nullptr) {
             create_rs_2_m();
@@ -260,7 +260,7 @@ public:
         if(ldpc_ses != nullptr)
             return true;
         
-        if (of_create_codec_instance(&ldpc_ses, OF_CODEC_REED_SOLOMON_GF_2_M_STABLE, OF_ENCODER, 2) != OF_STATUS_OK)
+        if (of_create_codec_instance(&ldpc_ses, OF_CODEC_LDPC_STAIRCASE_STABLE, OF_ENCODER, 2) != OF_STATUS_OK)
             return false;
         
         return true;
@@ -276,7 +276,7 @@ public:
     inline bool set_ldpc_param(uint32_t nb_src_sym,uint32_t nb_rpr_sym) noexcept {
         
         if(ldpc_params == nullptr){
-            ldpc_params = static_cast<of_ldpc_parameters_t*>(calloc(1, sizeof(of_rs_2_m_parameters_t)));
+            ldpc_params = static_cast<of_ldpc_parameters_t*>(calloc(1, sizeof(of_ldpc_parameters_t)));
             if(ldpc_params == nullptr)
                 return false;
         }
@@ -461,7 +461,7 @@ private:
         }
         
         //如果总包数比之前的大，则需要重新分配空间，其他情况不需要
-        //想减少分配空间的开销
+        //减少分配空间的开销
         if( _total > total_size || total_size == 0){
             if(create_symbols_tab(_total) == false)
                 return false;
@@ -493,17 +493,16 @@ private:
             enc_symbols_tab[n] = _d;
         }
         ++n;
-        auto len = n;
         
         //分配冗余数据空间,同时进行编码
         for(; n < _total; ++n){
-            enc_symbols_tab[n] = tmp_alloc[n - len];
+            enc_symbols_tab[n] = tmp_alloc[n - src_pack_nb];
             if(of_build_repair_symbol(_cur_ses, enc_symbols_tab, n) != OF_STATUS_OK){
                 core::Logger::Print("build repair error.(total:{},cur_repair:{},src_nb:{},tmp_alloc:{},size:{})",
                                     "",
                                     LogLevel::ERROR_LEVEL,
                                     total_pack_nb,
-                                    n,
+                                    n - src_pack_nb,
                                     src_pack_nb,
                                     repair_size,
                                     size);
