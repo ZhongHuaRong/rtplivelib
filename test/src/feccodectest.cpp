@@ -15,6 +15,8 @@ using namespace rtplivelib::rtp_network;
 using namespace rtplivelib::core;
 using namespace rtplivelib::rtp_network::fec;
 
+static std::streamsize size = 1024;
+
 /**
  * @brief simulated_packet_loss
  * 用于模拟丢包，将随机去除冗余包数量的包，返回包含包号的数组
@@ -32,7 +34,7 @@ std::list<uint32_t> simulated_packet_loss(uint32_t src_nb,uint32_t repair_nb){
     for(auto i = 0u;i < total;++i){
         pk.insert(i);
     }
-    while(pk.size() > src_nb){
+    while(pk.size() > src_nb + 10){
         pk.erase(rand() % total);
     }
     return std::list<uint32_t>(pk.begin(),pk.end());
@@ -58,34 +60,30 @@ std::pair<void **, void **> create_array(void ** data,uint32_t src_nb,uint32_t r
 		second_ptr[n] = nullptr;
 	}
     for(auto i = pack_num_list.begin();i != pack_num_list.end();++i){
-        auto j = *i;
         first_ptr[*i] = data[*i];
     }
 	return std::pair<void **, void **>(first_ptr,second_ptr);
 }
 
-TEST(FECTest,LDPCCodec){
+std::vector<std::ifstream::char_type> read_file(std::string name){
     std::ifstream file;
-    std::string file_path("./test.exe");
-    file.open(file_path,std::ios_base::binary);
+    std::string file_path(std::string("./debug/") + name);
+    file.open(file_path,std::ios_base::binary | std::ios_base::in);
     
     if(!file.is_open()){
-        file_path = "./debug/test.exe";
+        file_path = "./";
+        file_path += name;
         file.open(file_path,std::ios_base::binary);
     }
     
-    ASSERT_TRUE(file.is_open());
-    FECEncoder encoder;
-    FECDecoder decoder;
+    if(!file.is_open())
+        return std::vector<std::ifstream::char_type>();
     
-    encoder.set_code_rate(0.5f);
-    encoder.set_symbol_size(1024);
-    
-    std::streamsize size = 1024;
     std::ifstream::char_type * buf{nullptr};
     buf = new std::ifstream::char_type[size];
     
-    ASSERT_NE(buf,nullptr);
+    if(buf == nullptr)
+        return std::vector<std::ifstream::char_type>();
     
     //用于自动释放资源
     std::shared_ptr<std::ifstream::char_type> ptr(buf,[&](std::ifstream::char_type* p){
@@ -101,21 +99,49 @@ TEST(FECTest,LDPCCodec){
         data_vector.insert(data_vector.end(),buf,buf + read_size);
         read_size = file.readsome(buf,size);
     }
+    return data_vector;
+}
+
+void write_file(std::string name,void ** data,int nb,uint32_t size){
+    std::ofstream file;
+    file.open(name,std::ios_base::binary | std::ios_base::out);
+    for(auto i = 0;i < nb;++i){
+        file.write((char*)data[i],size);
+        file.flush();
+    }
+    file.close();
+}
+
+TEST(FECTest,LDPCCodec_RS){
+    FECEncoder encoder;
+    FECDecoder decoder;
+    
+    encoder.set_code_rate(0.8f);
+    encoder.set_symbol_size(size);
+    
+    auto data_vector = read_file("config.log");
     bool ret{false};
-    ret = encoder.encode(data_vector.data(),data_vector.size());
+    auto encode_size = data_vector.size() < size * 255 * encoder.get_code_rate()?
+                data_vector.size():size * 255* encoder.get_code_rate();
+    ret = encoder.encode(data_vector.data(),encode_size);
     ASSERT_TRUE(ret);
     
     auto data_ptr = encoder.get_data();
-    
-    //测试十次
+    auto src_nb = encoder.get_all_pack_nb() - encoder.get_repair_nb();
     for(auto n = 0;n < 1;++n){
-        auto pack = create_array(data_ptr,encoder.get_all_pack_nb() - encoder.get_repair_nb(),encoder.get_repair_nb());
+        auto pack = create_array(data_ptr,src_nb,encoder.get_repair_nb());
         
-        ret = decoder.decode(encoder.get_all_pack_nb() - encoder.get_repair_nb(),
+        ret = decoder.decode(src_nb,
                              encoder.get_repair_nb(),
                              size,
                              pack.first,
                              pack.second);
-        EXPECT_TRUE(ret);
+        ASSERT_TRUE(ret);
+        int count{0};
+        for(auto i = 0u;i < src_nb;++i){
+            EXPECT_EQ(memcmp(data_ptr[i],pack.second[i],size),0) << "i:" << i << ",count:" << ++count <<
+                                                                    ",repair:" << encoder.get_repair_nb();
+        }
+        write_file("./debug/2.txt",pack.second,src_nb,size);
     }
 }

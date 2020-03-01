@@ -281,7 +281,7 @@ public:
                 return false;
         }
         ldpc_params->prng_seed	= rand();
-        ldpc_params->N1		= 7;
+        ldpc_params->N1		= 11;
         of_parameters_t	*params = (of_parameters_t *) ldpc_params;
         params->nb_source_symbols	= nb_src_sym;		/* fill in the generic part of the of_parameters_t structure */
         params->nb_repair_symbols	= nb_rpr_sym;
@@ -448,7 +448,7 @@ private:
             total_pack_nb = _total;
             repair_pack_nb = _repair;
             //当包数比较少的时候采用rs_2_m,否则采用ldpc
-            if(_total<=255){
+            if(_total<=256){
                 if(set_rs_2_param(src_pack_nb,repair_pack_nb)==false)
                     return false;
                 _cur_ses = rs_2_m_ses;

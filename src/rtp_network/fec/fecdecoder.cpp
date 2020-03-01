@@ -57,6 +57,8 @@ public:
         if (rs_2_m_params){
             free(rs_2_m_params);
         }
+        rs_2_m_ses = nullptr;
+        rs_2_m_params = nullptr;
     }
     
     /**
@@ -70,6 +72,8 @@ public:
         if(ldpc_params){
             free(ldpc_params);
         }
+        ldpc_ses = nullptr;
+        ldpc_params = nullptr;
     }
     
     
@@ -152,7 +156,7 @@ public:
                 return false;
         }
         ldpc_params->prng_seed	= rand();
-        ldpc_params->N1		= 7;
+        ldpc_params->N1		= 11;
         of_parameters_t	*params = (of_parameters_t *) ldpc_params;
         params->nb_source_symbols	= nb_src_sym;		/* fill in the generic part of the of_parameters_t structure */
         params->nb_repair_symbols	= nb_rpr_sym;
@@ -179,7 +183,7 @@ public:
             this->repair_pack_nb = repair_pack_nb;
             this->sym_len = block_size;
             
-            if( src_pack_nb + repair_pack_nb <= 255){
+            if( src_pack_nb + repair_pack_nb <= 256){
                 if( this->set_rs_2_param(src_pack_nb,repair_pack_nb,block_size) == false)
                     return false;
                 else
