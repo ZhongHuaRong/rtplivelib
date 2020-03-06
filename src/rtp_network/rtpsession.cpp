@@ -235,7 +235,7 @@ void RTPSession::BYE_destroy(const int64_t& max_time_seconds, const uint32_t & m
 		return;
 	d_ptr->BYEDestroy(jrtplib::RTPTime(max_time_seconds,max_time_microseconds),reason,reason_len);
 	//因为这个没有返回值，所以在类内发送日志
-	core::Logger::Print_APP_Info(core::MessageNum::Rtp_destroy_session,
+	core::Logger::Print_APP_Info(core::Result::Rtp_destroy_session,
 								 "rtp_network::RTPSession::BYE_destroy",
 								 LogLevel::INFO_LEVEL,
 								 reason == nullptr?"no reason":static_cast<const char*>(reason));

@@ -54,16 +54,17 @@ SOURCES += \
 }
 
 win32{
-LIBS += -L$$PWD/SDK/win32/bin/ -lavdevice-58 \
-	-L$$PWD/SDK/win32/bin/ -lavcodec-58 \
-	-L$$PWD/SDK/win32/bin/ -lavformat-58 \
-	-L$$PWD/SDK/win32/bin/ -lavutil-56 \
-	-L$$PWD/SDK/win32/bin/ -lswscale-5 \
-	-L$$PWD/SDK/win32/bin/ -lavfilter-7 \
-	-L$$PWD/SDK/win32/bin/ -lswresample-3 \
-	-L$$PWD/SDK/win32/bin/ -lSDL2 \
-	-L$$PWD/SDK/win32/bin/ -llibjrtp \
-	-L$$PWD/SDK/win32/bin/ -llibopenfec
+LIBS += -L$$PWD/SDK/win64/bin/ -lavdevice-58 \
+	-L$$PWD/SDK/win64/bin/ -lavcodec-58 \
+	-L$$PWD/SDK/win64/bin/ -lavformat-58 \
+	-L$$PWD/SDK/win64/bin/ -lavutil-56 \
+	-L$$PWD/SDK/win64/bin/ -lswscale-5 \
+	-L$$PWD/SDK/win64/bin/ -lavfilter-7 \
+	-L$$PWD/SDK/win64/bin/ -lswresample-3 \
+	-L$$PWD/SDK/win64/bin/ -lSDL2 \
+	-L$$PWD/SDK/win64/bin/ -llibjrtp \
+	-L$$PWD/SDK/win64/bin/ -llibopenfec \
+        -L$$PWD/SDK/win64/lib/ -lwirehair
 
 LIBS += -lWs2_32 \
 	-lAdvapi32 \
@@ -71,8 +72,8 @@ LIBS += -lWs2_32 \
 	-lOleAut32 \
 	-lStrmiids 
 
-INCLUDEPATH += $$PWD/SDK/win32/include
-DEPENDPATH += $$PWD/SDK/win32/include
+INCLUDEPATH += $$PWD/SDK/win64/include
+DEPENDPATH += $$PWD/SDK/win64/include
 
 HEADERS += \
 	src/device_manager/wasapi.h
@@ -127,7 +128,9 @@ HEADERS += \
     src/codec/audiodecoder.h \
     src/codec/encoder.h \
     src/player/videoplayer.h \
-    src/player/audioplayer.h  
+    src/player/audioplayer.h \  
+    src/rtp_network/fec/codec/fecabstractcodec.h \
+    src/rtp_network/fec/codec/wirehair.h
 
 SOURCES += \
     src/core/abstractthread.cpp \
@@ -166,4 +169,5 @@ SOURCES += \
     src/codec/audiodecoder.cpp \
     src/codec/encoder.cpp \
     src/player/videoplayer.cpp \
-    src/player/audioplayer.cpp  
+    src/player/audioplayer.cpp \  
+    src/rtp_network/fec/codec/wirehair.cpp

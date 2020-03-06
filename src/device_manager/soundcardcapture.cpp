@@ -87,12 +87,12 @@ bool SoundCardCapture::set_current_device(std::string device_id) noexcept
 	current_device_info.first = pair.first;
 	current_device_info.second = pair.second;
 #endif
-		core::Logger::Print_APP_Info(core::MessageNum::Device_change_success,
+		core::Logger::Print_APP_Info(core::Result::Device_change_success,
                                      api,
                                      LogLevel::INFO_LEVEL,
 									 current_device_info.second.c_str());
     } else{
-        core::Logger::Print_APP_Info(core::MessageNum::Device_change_failed,
+        core::Logger::Print_APP_Info(core::Result::Device_change_failed,
                                      api,
                                      LogLevel::ERROR_LEVEL,
                                      current_device_info.second.c_str());

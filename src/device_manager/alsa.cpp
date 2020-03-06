@@ -273,7 +273,7 @@ void ALSA::on_thread_run() noexcept
 	
 	auto buffer = static_cast<uint8_t*>(malloc(d_ptr->buffer_size));
 	if( buffer == nullptr){
-		core::Logger::Print_APP_Info(core::MessageNum::FramePacket_data_alloc_failed,
+		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
 									 "ALSA::on_thread_run",
 									 LogLevel::WARNING_LEVEL);
 		return;
@@ -293,7 +293,7 @@ void ALSA::on_thread_run() noexcept
 	
 	auto packet = core::FramePacket::Make_Shared();
 	if(packet == nullptr){
-		core::Logger::Print_APP_Info(core::MessageNum::FramePacket_data_alloc_failed,
+		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
 									 "ALSA::on_thread_run",
 									 LogLevel::WARNING_LEVEL);
 		free(buffer);

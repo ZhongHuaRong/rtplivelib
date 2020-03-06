@@ -39,7 +39,7 @@ public:
 	
 	inline void set_wait_time(int millisecond) noexcept(false) {
 		if(millisecond <= 0){
-			throw std::invalid_argument(MessageString[int(core::MessageNum::Timer_time_less_than_zero)]);
+			throw std::invalid_argument(MessageString[int(core::Result::Timer_time_less_than_zero)]);
 		}
 		_wait_time = millisecond;
 	}

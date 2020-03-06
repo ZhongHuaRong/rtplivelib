@@ -94,7 +94,7 @@ public:
         int ret = av_samples_alloc_array_and_samples(&data, &dst_linesize, ofmt.channels,
                                                      dst_nb_samples, get_sample_format(ofmt.bits), 0);
         if( ret < 0){
-            core::Logger::Print_APP_Info(core::MessageNum::FramePacket_data_alloc_failed,
+            core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
                                          api,
                                          LogLevel::WARNING_LEVEL);
             core::Logger::Print_FFMPEG_Info(ret,
@@ -137,7 +137,7 @@ protected:
         release_ctx();
         swr_ctx = swr_alloc();
         if(!swr_ctx){
-            core::Logger::Print_APP_Info(core::MessageNum::SwrContext_init_failed,
+            core::Logger::Print_APP_Info(core::Result::SwrContext_init_failed,
                                          api,
                                          LogLevel::WARNING_LEVEL);
             return false;
@@ -154,7 +154,7 @@ protected:
         //初始化上下文
         int ret;
         if((ret = swr_init(swr_ctx)) < 0){
-            core::Logger::Print_APP_Info(core::MessageNum::SwrContext_init_failed,
+            core::Logger::Print_APP_Info(core::Result::SwrContext_init_failed,
                                          api,
                                          LogLevel::WARNING_LEVEL);
             core::Logger::Print_FFMPEG_Info(ret,

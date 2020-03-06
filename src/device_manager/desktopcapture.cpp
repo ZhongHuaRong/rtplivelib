@@ -34,7 +34,7 @@ DesktopCapture::DesktopCapture() :
 	d_ptr->ifmt = av_find_input_format(format_name);
 	//这里应该不会出现这种情况,但是ffmpeg库的编译出问题的话，这里就会触发了
 	if(d_ptr->ifmt == nullptr){
-		core::Logger::Print_APP_Info(core::MessageNum::InputFormat_format_not_found,
+		core::Logger::Print_APP_Info(core::Result::InputFormat_format_not_found,
 									 "device_manager::CameraCapture::CameraCapture",
 									 LogLevel::ERROR_LEVEL,
 									 format_name);
@@ -102,7 +102,7 @@ std::map<std::string,std::string> DesktopCapture::get_all_device_info() noexcept
 	}
 	else {
 		//这里不判断返回值了，因为我知道失败的情况一般是函数未实现
-		throw core::func_not_implemented_error(core::MessageString[int(core::MessageNum::Device_info_failed)]);
+		throw core::func_not_implemented_error(core::MessageString[int(core::Result::Device_info_failed)]);
 	}
 }
 
@@ -118,7 +118,7 @@ bool DesktopCapture::set_current_device(std::string device_id) noexcept
 	auto result = open_device();
 	if(!result){
 		current_device_info = temp;
-		core::Logger::Print_APP_Info(core::MessageNum::Device_change_success,
+		core::Logger::Print_APP_Info(core::Result::Device_change_success,
 									 "device_manager::DesktopCapture::set_current_device",
 									 LogLevel::ERROR_LEVEL,
 									 current_device_info.first.c_str());
@@ -148,7 +148,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	if(d_ptr->packet == nullptr){
 		d_ptr->packet = av_packet_alloc();
 		if(d_ptr->packet == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::FramePacket_packet_alloc_failed,
+			core::Logger::Print_APP_Info(core::Result::FramePacket_packet_alloc_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			return nullptr;
@@ -162,7 +162,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	av_packet_unref(d_ptr->packet);
 	auto ret = av_read_frame(d_ptr->fmtContxt, d_ptr->packet);
 	if( ret < 0){
-		core::Logger::Print_APP_Info(core::MessageNum::Device_read_frame_failed,
+		core::Logger::Print_APP_Info(core::Result::Device_read_frame_failed,
 									 api,
 									 LogLevel::WARNING_LEVEL);
 		core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
@@ -171,7 +171,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 		
 	auto ptr = FramePacket::Make_Shared();
 	if(ptr == nullptr){
-		core::Logger::Print_APP_Info(core::MessageNum::FramePacket_alloc_failed,
+		core::Logger::Print_APP_Info(core::Result::FramePacket_alloc_failed,
 									 api,
 									 LogLevel::WARNING_LEVEL);
 		return ptr;
@@ -185,7 +185,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	
 	ptr->data[0] = static_cast<uint8_t*>(av_malloc(static_cast<size_t>(ptr->size)));
 	if(ptr->data[0] == nullptr){
-		core::Logger::Print_APP_Info(core::MessageNum::FramePacket_data_alloc_failed,
+		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
 									 api,
 									 LogLevel::WARNING_LEVEL);
 		ptr->size = 0;
@@ -224,7 +224,7 @@ void DesktopCapture::on_stop() noexcept
 	if(d_ptr->fmtContxt == nullptr)
 		return;
 	avformat_close_input(&d_ptr->fmtContxt);
-	core::Logger::Print_APP_Info(core::MessageNum::InputFormat_context_close,
+	core::Logger::Print_APP_Info(core::Result::InputFormat_context_close,
 								 "device_manager::CameraCapture::on_stop",
 								 LogLevel::INFO_LEVEL);
 }
@@ -252,7 +252,7 @@ bool DesktopCapture::open_device() noexcept
 								 d_ptr->ifmt, &options);
 #endif
 	if( n != 0 ){
-		core::Logger::Print_APP_Info(core::MessageNum::InputFormat_context_open,
+		core::Logger::Print_APP_Info(core::Result::InputFormat_context_open,
 									 api,
 									 LogLevel::WARNING_LEVEL,
 									 "false");
@@ -260,7 +260,7 @@ bool DesktopCapture::open_device() noexcept
 									 api,
 									 LogLevel::WARNING_LEVEL);
 	}else {
-		core::Logger::Print_APP_Info(core::MessageNum::InputFormat_context_open,
+		core::Logger::Print_APP_Info(core::Result::InputFormat_context_open,
 									 api,
 									 LogLevel::INFO_LEVEL,
 									 "true");

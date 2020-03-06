@@ -75,7 +75,7 @@ public:
 		constexpr char api[] = "codec::VideoDecoderPD::init_parser_ctx";
 		
 		if(parser_ctx == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::Codec_decoder_parser_init_failed,
+			core::Logger::Print_APP_Info(core::Result::Codec_decoder_parser_init_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			return;
@@ -160,7 +160,7 @@ public:
 		auto ret = 0;
 		constexpr char api[] = "codec::VideoDecoderPD::parse";
 		if(parser_ctx == nullptr || decoder_ctx == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::Codec_parser_or_codec_not_init,
+			core::Logger::Print_APP_Info(core::Result::Codec_parser_or_codec_not_init,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			return;
@@ -221,7 +221,7 @@ private:
 		decoder = avcodec_find_decoder_by_name(name);
 		constexpr char api[] = "codec::VEPD::_init_encoder";
 		if(decoder == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::Codec_decoder_not_found,
+			core::Logger::Print_APP_Info(core::Result::Codec_decoder_not_found,
 										 api,
 										 LogLevel::WARNING_LEVEL,
 										 name);
@@ -231,13 +231,13 @@ private:
 			close_codec_ctx();
 			decoder_ctx = avcodec_alloc_context3(decoder);
 			if(decoder_ctx == nullptr){
-				core::Logger::Print_APP_Info(core::MessageNum::Codec_codec_context_alloc_failed,
+				core::Logger::Print_APP_Info(core::Result::Codec_codec_context_alloc_failed,
 											 api,
 											 LogLevel::WARNING_LEVEL);
 				return false;
 			}
 			
-			core::Logger::Print_APP_Info(core::MessageNum::Codec_decoder_init_success,
+			core::Logger::Print_APP_Info(core::Result::Codec_decoder_init_success,
 										 api,
 										 LogLevel::INFO_LEVEL,
 										 decoder->long_name);
@@ -274,7 +274,7 @@ private:
 		
 		decoder = avcodec_find_decoder(id);
 		if(decoder == nullptr) {
-			core::Logger::Print_APP_Info(core::MessageNum::Codec_decoder_not_found,
+			core::Logger::Print_APP_Info(core::Result::Codec_decoder_not_found,
 										 api,
 										 LogLevel::WARNING_LEVEL,
 										 id);
@@ -291,7 +291,7 @@ private:
 			decoder_ctx = avcodec_alloc_context3(decoder);
 			
 			if(decoder_ctx == nullptr){
-				core::Logger::Print_APP_Info(core::MessageNum::Codec_codec_context_alloc_failed,
+				core::Logger::Print_APP_Info(core::Result::Codec_codec_context_alloc_failed,
 											 api,
 											 LogLevel::WARNING_LEVEL);
 				return;
@@ -299,7 +299,7 @@ private:
 			
 			auto ret = avcodec_open2(decoder_ctx,decoder,nullptr);
 			if(ret != 0){
-				core::Logger::Print_APP_Info(core::MessageNum::Codec_codec_open_failed,
+				core::Logger::Print_APP_Info(core::Result::Codec_codec_open_failed,
 											 api,
 											 LogLevel::WARNING_LEVEL);
 				core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);

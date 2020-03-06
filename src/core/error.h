@@ -10,6 +10,8 @@ namespace rtplivelib {
 namespace core {
 
 constexpr char MessageString[][128] = {
+    "Success",
+    "Invalid parameter",
 	"Function not implemented",
 	"SwsContext initialization failed",
 	"SwrContext initialization failed",
@@ -66,12 +68,21 @@ constexpr char MessageString[][128] = {
 	"rtp destroy session(reason:{})",
 	"(rtcp)adding users has an unexpected error,new(name[{}],ssrc[{}]),old(name[{}],ssrc1[{}],ssrc2[{}])",
 	"(rtcp)unexpected data encountered when removed,user name is [{}]",
-	"FEC encode_failed",
+    "Encoding type is not set",
+    "Codec type is not set",
+    "Codec initialization failed",
+    "The codec is not an encoder",
+    "The codec is not an decoder",
+	"Encoding failed, error message has been output to the log",
+    "Decoding failed, error message has been output to the log",
+    "Need more packets to decode",
 	"time setting must be greater than zero"
 };
 
-enum struct MessageNum {
-	Function_not_implemented = 0x00,
+enum Result {
+    Success = 0x00,
+    Invalid_Parameter,
+	Function_not_implemented,
 	SwsContext_init_failed,
 	SwrContext_init_failed,
 	FramePacket_alloc_failed,
@@ -127,7 +138,14 @@ enum struct MessageNum {
 	Rtp_destroy_session,
 	Rtcp_insert_user_failed,
 	Rtcp_remove_abnormal,
-	FEC_encode_failed,
+    FEC_Not_Set_Codes,
+    FEC_Not_Set_Codec,
+    FEC_Codec_Open_Failed,
+    FEC_Codec_Not_Encoder,
+    FEC_Codec_Not_Decoder,
+	FEC_Encode_Failed,
+    FEC_Decode_Failed,
+    FEC_Decode_Need_More,
 	Timer_time_less_than_zero
 };
 

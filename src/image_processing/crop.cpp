@@ -117,7 +117,7 @@ struct CropPrivateData{
 		avfilter_inout_free(&outputs);
 		if(ret < 0){
 			constexpr char api[] = "image_processing::CropPrivateData::init_filter";
-			core::Logger::Print_APP_Info(core::MessageNum::Crop_filter_init_failed,
+			core::Logger::Print_APP_Info(core::Result::Crop_filter_init_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			core::Logger::Print_FFMPEG_Info(ret,

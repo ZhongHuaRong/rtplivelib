@@ -59,7 +59,7 @@ void VideoEncoder::encode(core::FramePacket *packet) noexcept
 		if(encode_sw_frame == nullptr)
 			encode_sw_frame = _alloc_frame();
 		if(encode_sw_frame == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
+			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			return;
@@ -84,7 +84,7 @@ void VideoEncoder::encode(core::FramePacket *packet) noexcept
         if( encode_hw_frame == nullptr){
             encode_hw_frame = _alloc_hw_frame();
             if( encode_hw_frame == nullptr){
-                core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
+                core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
                                              api,
                                              LogLevel::WARNING_LEVEL);
                 return;
@@ -143,7 +143,7 @@ void VideoEncoder::receive_packet() noexcept
 	while(ret >= 0){
 		src_packet = av_packet_alloc();
 		if(src_packet == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
+			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			return;
@@ -162,7 +162,7 @@ void VideoEncoder::receive_packet() noexcept
 		//以下操作是拷贝数据
 		auto dst_packet = core::FramePacket::Make_Shared();
 		if(dst_packet == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
+			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			break;
@@ -291,7 +291,7 @@ bool VideoEncoder::_select_hwdevice(const core::FramePacket *packet) noexcept
 		return ret;
 	}
 	default:
-		core::Logger::Print_APP_Info(core::MessageNum::Function_not_implemented,
+		core::Logger::Print_APP_Info(core::Result::Function_not_implemented,
 									 api,
 									 LogLevel::WARNING_LEVEL);
 		hwd_type_cur = hwd_type_user = HardwareDevice::None;
@@ -310,7 +310,7 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket *packet) noexcept
 		return;
 	constexpr char api[] = "codec::VEPD::set_encoder_ctx";
 	if(packet->format.frame_rate <= 0){
-		core::Logger::Print_APP_Info(core::MessageNum::Codec_frame_rate_must_more_than_zero,
+		core::Logger::Print_APP_Info(core::Result::Codec_frame_rate_must_more_than_zero,
 									 api,
 									 LogLevel::WARNING_LEVEL);
 		return;
@@ -342,7 +342,7 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket *packet) noexcept
 	
 	auto ret = avcodec_open2(encoder_ctx,encoder,nullptr);
 	if(ret < 0){
-		core::Logger::Print_APP_Info(core::MessageNum::Codec_codec_open_failed,
+		core::Logger::Print_APP_Info(core::Result::Codec_codec_open_failed,
 									 api,
 									 LogLevel::WARNING_LEVEL);
 		core::Logger::Print_FFMPEG_Info(ret,

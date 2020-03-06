@@ -145,7 +145,7 @@ void AudioEncoder::encode(core::FramePacket *packet) noexcept
 				return ;
 			
 			if( packet->format.channels == 0 || packet->format.bits == 0){
-				core::Logger::Print_APP_Info(core::MessageNum::Format_invalid_format,
+				core::Logger::Print_APP_Info(core::Result::Format_invalid_format,
 											 api,
 											 LogLevel::WARNING_LEVEL);
 				return;
@@ -234,7 +234,7 @@ void AudioEncoder::receive_packet() noexcept
 	while(ret >= 0){
 		src_packet = av_packet_alloc();
 		if(src_packet == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
+			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			return;
@@ -250,7 +250,7 @@ void AudioEncoder::receive_packet() noexcept
 		//以下操作是拷贝数据
 		auto dst_packet = core::FramePacket::Make_Shared();
 		if(dst_packet == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::FramePacket_frame_alloc_failed,
+			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			break;
@@ -319,7 +319,7 @@ bool AudioEncoder::_open_ctx(const core::FramePacket *packet) noexcept
 	set_encoder_param(packet->format);
 	auto ret = avcodec_open2(encoder_ctx,encoder,nullptr);
 	if(ret < 0){
-		core::Logger::Print_APP_Info(core::MessageNum::Codec_codec_open_failed,
+		core::Logger::Print_APP_Info(core::Result::Codec_codec_open_failed,
 									 api,
 									 LogLevel::WARNING_LEVEL);
 		core::Logger::Print_FFMPEG_Info(ret,

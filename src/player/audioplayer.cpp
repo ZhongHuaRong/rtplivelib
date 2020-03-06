@@ -69,7 +69,7 @@ public:
         wanted_spec.userdata = this;
 
         if (SDL_OpenAudio(&wanted_spec, nullptr)<0){
-            core::Logger::Print_APP_Info(core::MessageNum::SDL_device_open_failed,
+            core::Logger::Print_APP_Info(core::Result::SDL_device_open_failed,
                                          api,
                                          LogLevel::ERROR_LEVEL);
             return false; 

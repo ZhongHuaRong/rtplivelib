@@ -47,7 +47,7 @@ public:
             auto ret = av_hwdevice_ctx_create(&hw_device_ctx, type,
                                              nullptr, nullptr, 0);
             if( ret < 0){
-                core::Logger::Print_APP_Info(core::MessageNum::Codec_hardware_ctx_create_failed,
+                core::Logger::Print_APP_Info(core::Result::Codec_hardware_ctx_create_failed,
                                              api,
                                              LogLevel::WARNING_LEVEL,
                                              av_hwdevice_get_type_name(type));
@@ -57,7 +57,7 @@ public:
                 hwdevice_type = AV_HWDEVICE_TYPE_NONE;
             }
             else {
-                core::Logger::Print_APP_Info(core::MessageNum::Codec_hardware_ctx_create_success,
+                core::Logger::Print_APP_Info(core::Result::Codec_hardware_ctx_create_success,
                                              api,
                                              LogLevel::INFO_LEVEL,
                                              av_hwdevice_get_type_name(type));
@@ -86,7 +86,7 @@ public:
 		constexpr char api[] = "codec::HardwareDevicePrivateData::set_encoder_ctx";
 	
 		if ((hw_frames_ref = av_hwframe_ctx_alloc(hw_device_ctx)) == nullptr) {
-			core::Logger::Print_APP_Info(core::MessageNum::Codec_hard_frames_create_failed,
+			core::Logger::Print_APP_Info(core::Result::Codec_hard_frames_create_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL,
 										 av_hwdevice_get_type_name(hwdevice_type));
@@ -173,7 +173,7 @@ public:
 		
 		ctx->hw_frames_ctx = av_buffer_ref(hw_frames_ref);
 		if (!ctx->hw_frames_ctx)
-			core::Logger::Print_APP_Info(core::MessageNum::Codec_set_hard_frames_ctx_failed,
+			core::Logger::Print_APP_Info(core::Result::Codec_set_hard_frames_ctx_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 	

@@ -60,7 +60,7 @@ public:
 		show_screen = SDL_CreateWindowFrom(show_id);
 		if(show_screen == nullptr){
 			constexpr char api[] = "rtplivelib::player::VideoPlayer::create_window";
-			core::Logger::Print_APP_Info(core::MessageNum::SDL_window_create_failed,
+			core::Logger::Print_APP_Info(core::Result::SDL_window_create_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			core::Logger::Print(SDL_GetError(),
@@ -81,7 +81,7 @@ public:
 		renderer = SDL_CreateRenderer(show_screen, -1, SDL_RENDERER_SOFTWARE);
 		if(renderer == nullptr){
 			constexpr char api[] = "rtplivelib::player::VideoPlayer::create_renderer";
-			core::Logger::Print_APP_Info(core::MessageNum::SDL_renderer_create_failed,
+			core::Logger::Print_APP_Info(core::Result::SDL_renderer_create_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			core::Logger::Print(SDL_GetError(),
@@ -131,7 +131,7 @@ public:
 		
 		constexpr char api[] = "rtplivelib::player::VideoPlayer::set_format";
 		if(texture == nullptr){
-			core::Logger::Print_APP_Info(core::MessageNum::SDL_texture_create_failed,
+			core::Logger::Print_APP_Info(core::Result::SDL_texture_create_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			core::Logger::Print(SDL_GetError(),
@@ -140,7 +140,7 @@ public:
 		}
 		
 		show_format = format;
-		core::Logger::Print_APP_Info(core::MessageNum::SDL_show_format_update,
+		core::Logger::Print_APP_Info(core::Result::SDL_show_format_update,
 									 api,
 									 LogLevel::INFO_LEVEL,
 									 show_format.to_string().c_str());

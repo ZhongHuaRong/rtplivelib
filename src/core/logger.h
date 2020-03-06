@@ -115,7 +115,7 @@ public:
 	 * 输出的信息等级
 	 */
 	template<typename ... _T>
-	static inline void Print_APP_Info(MessageNum num,const char * api,enum LogLevel level,const _T &... t){
+	static inline void Print_APP_Info(Result num,const char * api,enum LogLevel level,const _T &... t){
 		Print(MessageString[static_cast<int>(num)],api,level,t...);
 	}
 	

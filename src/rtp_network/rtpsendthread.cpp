@@ -93,7 +93,7 @@ public:
 		auto && pt = static_cast<RTPSession::PayloadType>(payload_type);
 		auto && ret = session->set_default_payload_type(pt);
 		if(ret < 0){
-			core::Logger::Print_APP_Info(core::MessageNum::Rtp_set_payload_type_failed,
+			core::Logger::Print_APP_Info(core::Result::Rtp_set_payload_type_failed,
 										api,
 										LogLevel::WARNING_LEVEL,
 										type);
@@ -101,7 +101,7 @@ public:
 		}
 		ret = session->set_default_mark(false);
 		if(ret < 0){
-			core::Logger::Print_APP_Info(core::MessageNum::Rtp_set_mark_failed,
+			core::Logger::Print_APP_Info(core::Result::Rtp_set_mark_failed,
 										api,
 										LogLevel::WARNING_LEVEL);
 			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
@@ -117,7 +117,7 @@ public:
 			ret = session->set_default_timestamp_increment( 1u / sample_rate );
 		}
 		if(ret < 0){
-			core::Logger::Print_APP_Info(core::MessageNum::Rtp_set_timestamp_increment_failed,
+			core::Logger::Print_APP_Info(core::Result::Rtp_set_timestamp_increment_failed,
 										api,
 										LogLevel::WARNING_LEVEL,
 										type);
@@ -149,7 +149,7 @@ public:
 		session->set_maximum_packet_size(65535u);
 		const char* type = is_video? "video":"audio";
 		if(ret < 0){
-			core::Logger::Print_APP_Info(core::MessageNum::Rtp_set_timestamp_increment_failed,
+			core::Logger::Print_APP_Info(core::Result::Rtp_set_timestamp_increment_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL,
 										 type,
@@ -157,7 +157,7 @@ public:
 			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
 		}
 		else {
-			core::Logger::Print_APP_Info(core::MessageNum::Rtp_listening_port_base_success,
+			core::Logger::Print_APP_Info(core::Result::Rtp_listening_port_base_success,
 										 api,
 										 LogLevel::INFO_LEVEL,
 										 type,
@@ -223,7 +223,7 @@ public:
 		
 		auto && ret = session->add_destination(ip, port_base);
 		if(ret < 0){
-			core::Logger::Print_APP_Info(core::MessageNum::Rtp_create_destination_failed,
+			core::Logger::Print_APP_Info(core::Result::Rtp_create_destination_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL,
 										 type,
@@ -231,7 +231,7 @@ public:
 			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
 		}
 		else
-			core::Logger::Print_APP_Info(core::MessageNum::Rtp_create_destination_success,
+			core::Logger::Print_APP_Info(core::Result::Rtp_create_destination_success,
 										 api,
 										 LogLevel::INFO_LEVEL,
 										 type,
@@ -257,7 +257,7 @@ public:
 		
 		uint64_t msg{0};
 		if( fec_encoder.encode(packet->data[0],packet->size) == false) {
-			core::Logger::Print_APP_Info(core::MessageNum::FEC_encode_failed,
+			core::Logger::Print_APP_Info(core::Result::FEC_Encode_Failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			
@@ -318,7 +318,7 @@ private:
 		auto ret = session->send_packet_ex( d, size,cur_pos,&msg,8);
 		
 		if( ret < 0 ){
-			core::Logger::Print_APP_Info(core::MessageNum::Rtp_send_packet_failed,
+			core::Logger::Print_APP_Info(core::Result::Rtp_send_packet_failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);

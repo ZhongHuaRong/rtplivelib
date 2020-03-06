@@ -215,7 +215,7 @@ bool RTPUserManager::insert(uint32_t ssrc, const std::string &name) noexcept
 		//这个问题我考虑了一下，有可能是下面这种情况
 		//在处于某种情况,推流那边在没有发送BYE包的情况下退出会话
 		//然后重新登录，此时的SSRC已经改变，所以会出现这种情况，先不做处理
-		core::Logger::Print_APP_Info(core::MessageNum::Rtcp_insert_user_failed,
+		core::Logger::Print_APP_Info(core::Result::Rtcp_insert_user_failed,
 									 "rtp_network::RTPUserManager::insert",
 									 LogLevel::WARNING_LEVEL,
 									 name,ssrc,
@@ -280,7 +280,7 @@ bool RTPUserManager::find(const uint32_t & ssrc,User &user) noexcept
 		if( (*it)->ssrc == 0 && (*it)->another_ssrc == 0){
 			//如果一开始就两个ssrc都是0，好像是有点问题的
 			//得记录一下,然后移除该异常数据
-			core::Logger::Print_APP_Info(core::MessageNum::Rtcp_remove_abnormal,
+			core::Logger::Print_APP_Info(core::Result::Rtcp_remove_abnormal,
 										 "rtp_network::RTPUserManager::find",
 										 LogLevel::WARNING_LEVEL,
 										 (*it)->name.c_str());

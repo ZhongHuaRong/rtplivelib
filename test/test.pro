@@ -5,7 +5,8 @@ CONFIG -= qt
 
 SOURCES += \
         src/feccodectest.cpp \
-    src/testmain.cpp
+    src/testmain.cpp \
+    src/wirehairtest.cpp
 
 win32{
 LIBS += -L$$PWD/SDK/win32/lib/ -lgtest \
@@ -19,4 +20,7 @@ DEPENDPATH += $$PWD/SDK/win32/include
 
 INCLUDEPATH += $$PWD/../src
 DEPENDPATH += $$PWD/../src
+
+HEADERS += \
+    src/fectest.h
 

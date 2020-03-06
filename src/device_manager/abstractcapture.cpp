@@ -81,7 +81,7 @@ void AbstractCapture::stop_capture() noexcept
    /*如果程序因为这个原因出错，则取消注释*/
 //		std::lock_guard<std::mutex> lk(*_mutex);
    _is_running_flag = false;
-   core::Logger::Print_APP_Info(core::MessageNum::Device_stop_capture,
+   core::Logger::Print_APP_Info(core::Result::Device_stop_capture,
                                 "device_manager::AbstractCapture::stop_capture",
                                 LogLevel::INFO_LEVEL,
                                 current_device_info.second.c_str());

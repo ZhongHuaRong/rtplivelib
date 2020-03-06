@@ -51,7 +51,7 @@ struct ScalePrivateData{
             
             /*可能存在上下文分配失败的情况*/
             if( scale_ctx == nullptr){
-                core::Logger::Print_APP_Info(core::MessageNum::SwsContext_init_failed,
+                core::Logger::Print_APP_Info(core::Result::SwsContext_init_failed,
                                              api,
                                              LogLevel::WARNING_LEVEL);
                 return false;
