@@ -1,7 +1,7 @@
 
 #pragma once
 
-#if defined (WIN32)
+#if defined (WIN64)
 
 #if defined(RTPLIVELIB_LIBRARY)
 #  define RTPLIVELIBSHARED_EXPORT __declspec(dllexport)
@@ -45,6 +45,8 @@ constexpr uint8_t SERVER_IP[] = { 54,223,240,118 };
 constexpr int RTPPACKET_MAX_SIZE = 1300;
 
 #define UNUSED(x) (void)x;
+#define VERSION_MAJOR 0;
+#define VERSION_MINOR 1;
 
 //Logger类不外露
 enum LogLevel{

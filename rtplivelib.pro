@@ -7,7 +7,7 @@
 QT       -=  gui
 QT	-= core
 
-TARGET = rtplivelib
+TARGET = rtplive
 TEMPLATE = lib
 CONFIG += c++11 c++14
 

@@ -128,7 +128,9 @@ bool DesktopCapture::set_current_device(std::string device_id) noexcept
 
 bool DesktopCapture::set_default_device() noexcept
 {
-	
+	//这里没有实现
+    //预期应该是设置成主屏
+    return false;
 }
 
 AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept

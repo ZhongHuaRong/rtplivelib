@@ -1,0 +1,11 @@
+
+project(rtp_network)
+
+ADD_SUBDIRECTORY(fec)
+AUX_SOURCE_DIRECTORY(. src_dir)
+ADD_LIBRARY(${PROJECT_NAME} STATIC ${src_dir})
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} fec)
+
+file(GLOB headers "*.h")
+INSTALL(FILES ${headers}
+        DESTINATION ${HEADERS_INSTALL_DIR}/${PROJECT_NAME})
