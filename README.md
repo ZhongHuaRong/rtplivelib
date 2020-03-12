@@ -35,15 +35,24 @@
 
 ### 安装要求
 1.GCC<br>
-2.qmake<br>
+2.qmake or cmake<br>
 3.各种依赖库(ffmpeg,SDL2,jrtplib,x264,x265,libfdk-aac,libmfx,openfec),下载的时候已经自带，如果需要自己编译则可以看依赖库构建的步骤。
 好像Linux的.so库的链接不能拷贝过来，所以到时候需要自己创建链接<br>
 
 
-### 开发环境的搭建
-1.安装IDE（QtCreator），推荐把整个Qt SDK下载下来，链接：https://download.qt.io/official_releases/qt/<br>
+### 安装步骤
+* 使用qmake<br>
+  1.安装IDE（QtCreator），推荐把整个Qt SDK下载下来，链接：https://download.qt.io/official_releases/qt/<br>
   编译的时候,Windows系统推荐Mingw 64bit,Linux系统使用GCC 64bit,不要使用32bit<br>
-2.打开QtCreator，打开rtplivelib项目，构建即可生成lib库
+  2.打开QtCreator，打开rtplivelib项目，构建即可生成lib库
+* 使用cmake<br>
+  1.先进入build目录,根据系统选择相应的脚本<br>
+  2.在toolChain.cmake文件修改c/c++编译器的路径<br>
+  3.运行脚本,再调用make && make install即可完成编译和安装，目前仅支持Windows系统<br>
+    cd build/msys_mingw64/<br>
+    ./make-mingw64-Makefiles-Release.sh<br>
+    make -j8 && make install<br>
+
 
 ### 依赖库的构建
 优先使用自带的lib库，已经经过测试没有问题！如果出现问题，可以参考[这里](https://github.com/ZhongHuaRong/rtplivelib/blob/master/build.md)自己手动编译lib库。
