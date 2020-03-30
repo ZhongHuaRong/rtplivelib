@@ -116,9 +116,6 @@ HEADERS += \
     src/image_processing/crop.h \
     src/image_processing/scale.h \
     src/core/except.h \
-    src/rtp_network/fec/fecdecodecache.h \
-    src/rtp_network/fec/fecdecoder.h \
-    src/rtp_network/fec/fecencoder.h \
     src/device_manager/microphonecapture.h \
     src/device_manager/soundcardcapture.h \
     src/core/stringformat.h \
@@ -130,7 +127,9 @@ HEADERS += \
     src/player/videoplayer.h \
     src/player/audioplayer.h \  
     src/rtp_network/fec/codec/fecabstractcodec.h \
-    src/rtp_network/fec/codec/wirehair.h
+    src/rtp_network/fec/codec/wirehair.h \ 
+    src/rtp_network/fec/fecdecoder.h \
+    src/rtp_network/fec/fecencoder.h
 
 SOURCES += \
     src/core/abstractthread.cpp \
@@ -157,9 +156,6 @@ SOURCES += \
     src/image_processing/crop.cpp \
     src/image_processing/scale.cpp \
     src/core/except.cpp \
-    src/rtp_network/fec/fecdecodecache.cpp \
-    src/rtp_network/fec/fecdecoder.cpp \
-    src/rtp_network/fec/fecencoder.cpp \
     src/device_manager/microphonecapture.cpp \
     src/device_manager/soundcardcapture.cpp \
     src/core/stringformat.cpp \
@@ -170,4 +166,6 @@ SOURCES += \
     src/codec/encoder.cpp \
     src/player/videoplayer.cpp \
     src/player/audioplayer.cpp \  
-    src/rtp_network/fec/codec/wirehair.cpp
+    src/rtp_network/fec/codec/wirehair.cpp \ 
+    src/rtp_network/fec/fecdecoder.cpp \
+    src/rtp_network/fec/fecencoder.cpp

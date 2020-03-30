@@ -84,16 +84,13 @@ core::Result Wirehair::encode(uint16_t id,
     return core::Result::Success;
 }
 
-core::Result Wirehair::encode(void * data,
-                              uint32_t size,
-                              float rate,
-                              std::vector<std::vector<int8_t>> & output) noexcept
+core::Result Wirehair::encode(void *data,
+                              uint32_t size, 
+                              uint32_t count, 
+                              std::vector<std::vector<int8_t> > &output) noexcept
 {
     if(get_codec_type() != CodecType::Encoder){
         return core::Result::FEC_Codec_Not_Encoder;
-    }
-    if(rate < 0.001f || rate >= 1.0f){
-        return core::Result::Invalid_Parameter;
     }
     uint32_t && packet_size = get_packet_size();
     WirehairCodec encoder = wirehair_encoder_create(nullptr, data, size, packet_size);
@@ -103,15 +100,13 @@ core::Result Wirehair::encode(void * data,
         d_ptr->codec.reset(encoder,WirehairFree());
     }
     
-    auto src_nb = static_cast<float>(size) / packet_size;
-    auto total_nb = static_cast<uint32_t>(src_nb / rate) + 1;
     
     std::vector<int8_t> tmp(packet_size);
     uint32_t output_size{0};
     WirehairResult encodeResult;
     
     output.clear();
-    for(uint32_t id = 0;id < total_nb;++id){
+    for(uint32_t id = 0;id < count;++id){
         encodeResult = wirehair_encode(
             d_ptr->codec.get(), 
             id, 
@@ -130,8 +125,24 @@ core::Result Wirehair::encode(void * data,
         memcpy(ret.data(),tmp.data(),output_size);
         output.push_back(ret);
     }
-    
     return core::Result::Success;
+}
+
+core::Result Wirehair::encode(void * data,
+                              uint32_t size,
+                              float rate,
+                              std::vector<std::vector<int8_t>> & output) noexcept
+{
+    
+    if(rate < 0.001f || rate >= 1.0f){
+        return core::Result::Invalid_Parameter;
+    }
+    
+    uint32_t && packet_size = get_packet_size();
+    auto src_nb = static_cast<float>(size) / packet_size;
+    auto total_nb = static_cast<uint32_t>(src_nb / rate) + 1;
+
+    return encode(data,size,total_nb,output);
 }
 
 core::Result Wirehair::decode(uint16_t id,

@@ -147,6 +147,13 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 * 如果没有数据则一定是false
 	 */
 	bool is_frame() noexcept;
+    
+    /**
+     * @brief is_key
+     * 判断该包是否含有关键帧
+     * @return 
+     */
+    bool is_key() noexcept;
 	
 	/**
 	 * @brief Copy

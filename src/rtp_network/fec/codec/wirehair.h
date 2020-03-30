@@ -31,11 +31,29 @@ public:
     
     virtual ~Wirehair();
     
+    
     /**
      * @brief encode
      * 用于编码原符号
+     * @param data
+     * 源数据
+     * @param size
+     * 数据大小
+     * @param count
+     * 生成的包的数量
+     * @param output
+     * 输出的数据
+     */
+    virtual core::Result encode(void * data,
+                                uint32_t size,
+                                uint32_t count,
+                                std::vector<std::vector<int8_t>> & output) noexcept;
+    
+    /**
+     * @brief encode
+     * 重载函数
+     * 用于编码原符号
      * 由于喷泉码无码率的特点，rate参数表示将要编码的包数= size / packet_size / rate
-     * 所有包将输出到output内
      */
     virtual core::Result encode(void * data,
                                 uint32_t size,

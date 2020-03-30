@@ -11,7 +11,7 @@ SOURCES += \
 win32{
 LIBS += -L$$PWD/SDK/win32/lib/ -lgtest \
         -L$$PWD/SDK/win32/lib/ -lgmock \
-        -L$$PWD/../../build-rtplivelib-Desktop_Qt_5_12_2_MinGW_64_bit-Debug/debug/ -lrtplivelib
+        -L$$PWD/../../build-rtplivelib-Desktop_Qt_5_12_2_MinGW_64_bit-Debug/debug/ -lrtplive
 
 INCLUDEPATH += $$PWD/SDK/win32/include
 DEPENDPATH += $$PWD/SDK/win32/include

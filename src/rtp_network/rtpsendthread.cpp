@@ -46,7 +46,6 @@ public:
 		bandwidth(BandwidthCB())
 	{		
 		fec_encoder.set_symbol_size(RTPPACKET_MAX_SIZE);
-		fec_encoder.set_code_rate(0.5);
 	}
 	
 	/**
@@ -255,67 +254,56 @@ public:
 											object->_audio_session;
 		constexpr char api[] = "rtp_network::RtpSendThreadPD::send_packet";
 		
-		uint64_t msg{0};
-		if( fec_encoder.encode(packet->data[0],packet->size) == false) {
+        std::vector<std::vector<int8_t>> data;
+        fec::FECParam param;
+		if( fec_encoder.encode(packet,data,param) != core::Result::Success) {
 			core::Logger::Print_APP_Info(core::Result::FEC_Encode_Failed,
 										 api,
 										 LogLevel::WARNING_LEVEL);
 			
 			//编码失败后，直接发送
-			auto repair_nb = 0u;
-			//就算编码失败，这里的参数也是已经设置好了
-			auto src_nb = fec_encoder.get_all_pack_nb() - fec_encoder.get_repair_nb();
-			auto fill_size = fec_encoder.get_symbol_size() - packet->size % fec_encoder.get_symbol_size();
+            param.repair_nb = 0;
+			auto src_nb = param.size / param.symbol_size;
+            if(src_nb * param.symbol_size != param.size)
+                ++src_nb;
 			auto _d = packet->data[0];
-			auto cur_pos = 0u;
-			//高四位赋值
-			msg = (( src_nb << 16 ) & 0xffff0000 ) + ( repair_nb & 0x0000ffff );
-			msg = (( msg << 32) & 0xffffffff00000000 ) + ( fill_size & 0x00000000ffffffff );
+			uint16_t cur_pos = 0u;
 			
 			for( ; cur_pos < src_nb - 1; ++cur_pos ){
 				_send_packet_ex(session,
-								_d + cur_pos * fec_encoder.get_symbol_size(),
+								_d + cur_pos * param.symbol_size,
 								fec_encoder.get_symbol_size(),
 								cur_pos,
-								msg);
+								param);
 			}
 			
 			//发送最后一个包
 			_send_packet_ex(session,
-							_d + cur_pos * fec_encoder.get_symbol_size(),
-							packet->size % fec_encoder.get_symbol_size(),
+							_d + cur_pos * param.symbol_size,
+							param.size % param.symbol_size,
 							cur_pos,
-							msg);
+							param);
 		} else {
-			//编码成功后，依次发送并统计流量
-			auto repair_nb = fec_encoder.get_repair_nb();
-			auto src_nb = fec_encoder.get_all_pack_nb() - repair_nb;
-			auto fill_size = fec_encoder.get_symbol_size() - packet->size % fec_encoder.get_symbol_size();
-			auto _d = fec_encoder.get_data();
-			//高四位赋值
-			msg = ((src_nb << 16) & 0xffff0000 ) + ( repair_nb & 0x0000ffff );
-			msg = ((msg << 32) & 0xffffffff00000000 ) + ( fill_size & 0x00000000ffffffff );
-			
 			//分包处理
 			//分包策略是，id为当前包位置
 			//然后发送的数据固定8字节，高4位中数据高二位是源数据包数，数据低二位是冗余包数
 			//低4位中,数据高二位是最后一个包填充字节数,低二位保留
 			//16bit,65535个包数，够用了
-			for( uint16_t cur_nb = 0u; cur_nb < fec_encoder.get_all_pack_nb(); ++ cur_nb){
+			for( uint16_t cur_nb = 0u; cur_nb < data.size(); ++ cur_nb){
 				_send_packet_ex(session,
-								_d[cur_nb],
+								data[cur_nb].data(),
 								fec_encoder.get_symbol_size(),
 								cur_nb,
-								msg);
+								param);
 			}
 		}
 		
 	}
 	
 private:
-	void _send_packet_ex(RTPSession * session,void *d,uint32_t size,uint16_t cur_pos,uint64_t msg) noexcept{
+	void _send_packet_ex(RTPSession * session,void *d,uint32_t size,uint16_t cur_pos,fec::FECParam param) noexcept{
 		constexpr char api[] = "rtp_network::RtpSendThreadPD::_send_packet_ex";
-		auto ret = session->send_packet_ex( d, size,cur_pos,&msg,8);
+		auto ret = session->send_packet_ex( d, size,cur_pos,&param,sizeof(fec::FECParam));
 		
 		if( ret < 0 ){
 			core::Logger::Print_APP_Info(core::Result::Rtp_send_packet_failed,

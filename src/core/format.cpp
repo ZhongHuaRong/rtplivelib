@@ -80,7 +80,12 @@ bool FramePacket::is_frame() noexcept
 	else if(this->linesize[0] != 0)
 		return true;
 	else
-		return false;
+        return false;
+}
+
+bool FramePacket::is_key() noexcept
+{
+    
 }
 
 FramePacket * FramePacket::Copy(FramePacket * dst,FramePacket * src){
