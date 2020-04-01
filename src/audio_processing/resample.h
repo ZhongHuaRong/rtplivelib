@@ -3,6 +3,7 @@
 
 #include "../core/config.h"
 #include "../core/format.h"
+#include "../core/error.h"
 
 namespace rtplivelib{
 
@@ -47,20 +48,19 @@ public:
     void set_default_input_format(const int & sample_rate, const int & channels, const int & bits) noexcept;
     
     /**
-     * @brief scale
+     * @brief resample
      * 重采样
      */
-    bool resample(core::FramePacket * dst,core::FramePacket *src) noexcept;
+    core::Result resample(core::FramePacket * dst,core::FramePacket *src) noexcept;
     
     /**
-     * @brief scale
+     * @brief resample
      * 重载函数，但是参数不允许出现空指针
-     * 智能指针替换指针好麻烦
      */
-    bool resample(core::FramePacket::SharedPacket dst,core::FramePacket::SharedPacket src) noexcept;
+    core::Result resample(core::FramePacket::SharedPacket dst,core::FramePacket::SharedPacket src) noexcept;
     
     /**
-     * @brief scale
+     * @brief resample
      * 重载函数,不局限于core::FramePacket
      * 该接口不会检查格式是否正确,如果需要检查格式建议使用其他重载函数
      * @param src_data
@@ -76,9 +76,9 @@ public:
      * 返回输出音频所占用的空间大小
      * @return 
      */
-    bool resample( uint8_t *** src_data,const int &src_nb_samples,
-                   uint8_t *** dst_data,int & dst_nb_samples,
-                   int & buffer_size) noexcept;
+    core::Result resample( uint8_t *** src_data,const int &src_nb_samples,
+                           uint8_t *** dst_data,int & dst_nb_samples,
+                           int & buffer_size) noexcept;
 private:
     ResamplePrivateData * const d_ptr;
 };

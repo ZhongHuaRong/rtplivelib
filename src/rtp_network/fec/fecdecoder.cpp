@@ -40,6 +40,11 @@ core::Result FECDecoder::decode(uint16_t id, const std::vector<int8_t> &input, u
     return d_ptr->codec.decode(id,input,total_size);
 }
 
+core::Result FECDecoder::decode(RTPPacket *packet) noexcept
+{
+    
+}
+
 core::Result FECDecoder::data_recover(std::vector<int8_t> &data) noexcept
 {
     return d_ptr->codec.data_recover(data);

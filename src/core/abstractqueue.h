@@ -28,7 +28,7 @@ class RTPLIVELIBSHARED_EXPORT AbstractQueue : public AbstractThread
 public:
 	using value_type			= Packet;
 	using reference				= Packet&;
-	using const_reference			= const Packet&;
+	using const_reference		= const Packet&;
 	using pointer				= Packet*;
 	using const_pointer			= const Packet&;
 	using PacketQueue			= std::queue<Unit>;

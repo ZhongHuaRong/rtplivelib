@@ -23,6 +23,7 @@ public:
         std::lock_guard<std::recursive_mutex> lk(mutex);
         if(swr_ctx != nullptr){
             swr_free(&swr_ctx);
+            swr_ctx = nullptr;
         }
     }
     
@@ -70,7 +71,7 @@ public:
      * 返回输出音频所占用的空间大小
      * @return 
      */
-    inline bool resample(uint8_t *** src_data,const int &src_nb_samples,
+    inline core::Result resample(uint8_t *** src_data,const int &src_nb_samples,
                          uint8_t *** dst_data,int & dst_nb_samples,
                          int & buffer_size) noexcept{
         
@@ -79,7 +80,7 @@ public:
         std::lock_guard<std::recursive_mutex> lk(mutex);
         if( swr_ctx == nullptr) {
             if(init_ctx() == false)
-                return false;
+                return core::Result::SwrContext_init_failed;
         }
         
         /* 计算输出样本数 */
@@ -94,13 +95,10 @@ public:
         int ret = av_samples_alloc_array_and_samples(&data, &dst_linesize, ofmt.channels,
                                                      dst_nb_samples, get_sample_format(ofmt.bits), 0);
         if( ret < 0){
-            core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
-                                         api,
-                                         LogLevel::WARNING_LEVEL);
             core::Logger::Print_FFMPEG_Info(ret,
                                             api,
                                             LogLevel::WARNING_LEVEL);
-            return false;
+            return core::Result::FramePacket_data_alloc_failed;
         }
 
         ret = swr_convert(swr_ctx, data, dst_nb_samples, (const uint8_t **)(*src_data), src_nb_samples);
@@ -108,7 +106,7 @@ public:
             core::Logger::Print_FFMPEG_Info(ret,
                                             api,
                                             LogLevel::WARNING_LEVEL);
-            return false;
+            return core::Result::Resample_Failed;
         }
         
         buffer_size = av_samples_get_buffer_size(&dst_linesize, ofmt.channels,
@@ -117,7 +115,7 @@ public:
             core::Logger::Print_FFMPEG_Info(ret,
                                             api,
                                             LogLevel::WARNING_LEVEL);
-            return false;
+            return core::Result::Format_Error;
         }
         
         //成功后需要释放原来的数据占用
@@ -125,7 +123,7 @@ public:
             av_free(*dst_data);
         }
         *dst_data = data;
-        return true;
+        return core::Result::Success;
     }
 protected:
     /**
@@ -137,9 +135,6 @@ protected:
         release_ctx();
         swr_ctx = swr_alloc();
         if(!swr_ctx){
-            core::Logger::Print_APP_Info(core::Result::SwrContext_init_failed,
-                                         api,
-                                         LogLevel::WARNING_LEVEL);
             return false;
         }
         
@@ -154,9 +149,6 @@ protected:
         //初始化上下文
         int ret;
         if((ret = swr_init(swr_ctx)) < 0){
-            core::Logger::Print_APP_Info(core::Result::SwrContext_init_failed,
-                                         api,
-                                         LogLevel::WARNING_LEVEL);
             core::Logger::Print_FFMPEG_Info(ret,
                                             api,
                                             LogLevel::WARNING_LEVEL);
@@ -229,14 +221,14 @@ void Resample::set_default_input_format(const int &sample_rate, const int &chann
     d_ptr->release_ctx();
 }
 
-bool Resample::resample(core::FramePacket *dst, core::FramePacket *src) noexcept
+core::Result Resample::resample(core::FramePacket *dst, core::FramePacket *src) noexcept
 {
     if( dst == nullptr || src == nullptr)
-        return false;
+        return core::Result::Invalid_Parameter;
     
     std::lock_guard<std::recursive_mutex> lk(d_ptr->mutex);
     if( src->format != d_ptr->ifmt)
-        return false;
+        return core::Result::Format_Error;
     
     auto src_data = static_cast<uint8_t**>(src->data);
     uint8_t ** data{nullptr};
@@ -246,7 +238,7 @@ bool Resample::resample(core::FramePacket *dst, core::FramePacket *src) noexcept
     
     auto ret = resample(&src_data, src->size / block_size ,&data ,nb_samples,size);
     
-    if(ret == true){
+    if(ret == core::Result::Success){
         dst->reset_pointer();
         
         dst->format = d_ptr->ofmt;
@@ -254,30 +246,26 @@ bool Resample::resample(core::FramePacket *dst, core::FramePacket *src) noexcept
         dst->data[0] = data[0];
         av_free(data);
         dst->size = size;
-        return true;
     }
     
-    return false;
+    return ret;
 }
 
-bool Resample::resample(core::FramePacket::SharedPacket dst, core::FramePacket::SharedPacket src) noexcept
+core::Result Resample::resample(core::FramePacket::SharedPacket dst, core::FramePacket::SharedPacket src) noexcept
 {
-    if( dst == nullptr || src == nullptr)
-        return false;
-    
     return resample(dst.get(),src.get());
 }
 
-bool Resample::resample(uint8_t *** src_data,const int &src_nb_samples,
-                        uint8_t *** dst_data,int & dst_nb_samples,
-                        int & buffer_size) noexcept
+core::Result Resample::resample(uint8_t *** src_data,const int &src_nb_samples,
+                                uint8_t *** dst_data,int & dst_nb_samples,
+                                int & buffer_size) noexcept
 {
     //不允许输入为空且不允许src数据为空
     if(src_data == nullptr || *src_data == nullptr || dst_data == nullptr )
-        return false;
+        return core::Result::Invalid_Parameter;
     
     if( src_nb_samples == 0)
-        return true;
+        return core::Result::Success;
     
     return d_ptr->resample(src_data,src_nb_samples,dst_data,dst_nb_samples,buffer_size);
 }

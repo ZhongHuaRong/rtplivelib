@@ -47,6 +47,13 @@ public:
                                 uint32_t total_size) noexcept;
     
     /**
+     * @brief decode
+     * 重载函数
+     * @return 
+     */
+    virtual core::Result decode(RTPPacket * packet) noexcept;
+    
+    /**
      * @brief data_recover
      * 获取修复后的数据
      * @param data

@@ -106,12 +106,15 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	Format format;
 	/*用于分包，组包，表示该包是第几个分包*/
 	int pos{0};
+    /*用于表示是否为关键帧，如果需要用到则调用is_key接口*/
+    int flag{0};
 	/*这个指针请不要使用,内部代码使用*/
 	void *packet{nullptr};
 	/*这个指针请不要使用,内部代码使用*/
 	void *frame{nullptr};
 	
 	FramePacket() = default;
+    //该函数没有实际意义，所以删除
 	FramePacket(const FramePacket&) = delete;
 	
 	//析构函数，默认调用reset_pointer，所以不需要手动调用reset_pointer
@@ -122,6 +125,11 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 * 同Copy
 	 */
 	FramePacket * copy(FramePacket * src);
+    
+    FramePacket & copy(FramePacket && src);
+    
+    FramePacket & copy(SharedPacket & src);
+    
 	
 	/**
 	 * @brief reset_pointer
@@ -160,21 +168,20 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 * 深度拷贝
 	 * 将会拷贝src的数据到dst，同时分配空间
 	 * @param dst
-	 * 目标包，不能为空
-	 * 数据指针可以不为空，该函数会自动释放该部分空间
-	 * frame和packet参数将不会复制
+	 * 目标包
 	 * @param src
-	 * 源包，不能为空
+	 * 源包
 	 * @return 
 	 * 返回dst
 	 */
 	static FramePacket * Copy(FramePacket * dst,FramePacket * src);
+    static FramePacket & Copy(FramePacket & dst,FramePacket & src);
+    static FramePacket & Copy(FramePacket & dst,FramePacket && src);
+    static SharedPacket & Copy(SharedPacket & dst,SharedPacket & src);
 	
 	/**
 	 * @brief Make_packet
-	 * 先不允许栈上分配,调用该函数获取对象实例
-	 * 析构的话，可以调用delete
-	 * 也可以调用下面那个函数
+	 * 堆上分配对象
 	 * @return 
 	 */
 	static inline FramePacket * Make_Packet(){

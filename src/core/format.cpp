@@ -1,9 +1,7 @@
 
 #include "format.h"
-#include "logger.h"
 extern "C"{
 #include "libavcodec/avcodec.h"
-//#include "libavutil/mem.h"
 }
 
 namespace rtplivelib {
@@ -11,16 +9,7 @@ namespace rtplivelib {
 namespace core {
 
 FramePacket::~FramePacket(){
-//	(*packet->num) -= 1;
-//	if( *packet->num > 0)
-//		return;
 	reset_pointer();
-//	delete packet->num;
-}
-
-FramePacket *FramePacket::copy(FramePacket *src)
-{
-	return FramePacket::Copy(this,src);
 }
 
 void FramePacket::reset_pointer()
@@ -53,7 +42,7 @@ void FramePacket::reset_pointer()
 		av_frame_free(&ptr);
 		packet->frame = nullptr;
 	}
-	memset(packet->data,0,sizeof(uint8_t*) * 4);
+	memset(packet->data,0,sizeof(packet->data));
 	
 }
 
@@ -85,7 +74,28 @@ bool FramePacket::is_frame() noexcept
 
 bool FramePacket::is_key() noexcept
 {
-    
+    if( this->data[0] == nullptr )
+        return false;
+    if(is_packet()){
+        return flag & AV_PKT_FLAG_KEY;
+    } else {
+        return flag;
+    }
+}
+
+FramePacket *FramePacket::copy(FramePacket *src)
+{
+    return FramePacket::Copy(this,src);
+}
+
+FramePacket &FramePacket::copy(FramePacket &&src)
+{
+    return FramePacket::Copy(*this,std::forward<FramePacket>(src));
+}
+
+FramePacket &FramePacket::copy(FramePacket::SharedPacket &src)
+{
+    return *FramePacket::Copy(this,src.get());
 }
 
 FramePacket * FramePacket::Copy(FramePacket * dst,FramePacket * src){
@@ -93,17 +103,48 @@ FramePacket * FramePacket::Copy(FramePacket * dst,FramePacket * src){
 		return nullptr;
 	dst->reset_pointer();
 	*dst = *src;
+    //考虑是否使用ffmpeg内置的内存计数
+    //现在暂时不用
 	dst->frame = nullptr;
 	dst->packet = nullptr;
 	
-	//目前只用到第一行
-	if(src->data[0] != nullptr){
-		dst->data[0] = static_cast<uint8_t *>(av_malloc(static_cast<size_t>(dst->size)));
-		if(dst->data[0] != nullptr)
-			memcpy(dst->data[0],src->data[0],static_cast<size_t>(dst->size));
-	}
+    for(auto i = 0;i < 4;++i){
+        if(src->data[i] != nullptr){
+            dst->data[i] = static_cast<uint8_t *>(av_malloc(static_cast<size_t>(dst->size)));
+            if(dst->data[i] != nullptr)
+                memcpy(dst->data[i],src->data[i],static_cast<size_t>(dst->size));
+        }
+    }
 	
-	return dst;
+    return dst;
+}
+
+FramePacket &FramePacket::Copy(FramePacket &dst, FramePacket &src)
+{
+    FramePacket::Copy(&dst,&src);
+    return dst;
+}
+
+FramePacket &FramePacket::Copy(FramePacket &dst, FramePacket &&src)
+{
+    //直接浅拷贝
+    dst = src;
+    memset(src.data,0,sizeof(src.data));
+    src.frame = nullptr;
+    src.packet = nullptr;
+    return dst;
+}
+
+FramePacket::SharedPacket &FramePacket::Copy(FramePacket::SharedPacket &dst, FramePacket::SharedPacket &src)
+{
+    if(src == nullptr)
+        return dst;
+    if(dst == nullptr){
+        SharedPacket && p =  FramePacket::Make_Shared();
+        dst.swap(p);
+    }
+    FramePacket::Copy(dst.get(),src.get());
+    return dst;
 }
 
 } // namespace core
