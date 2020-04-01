@@ -8,9 +8,6 @@ namespace rtplivelib {
 
 namespace core {
 
-class NeedDelete{};
-class NotDelete{};
-
 /**
  * @brief The AbstractQueue class
  * 该类实现了队列的基本操作，继承于AbstractThread
@@ -18,29 +15,27 @@ class NotDelete{};
  * 但是理论上来说队列的等待资源和获取资源是异步操作的
  * 所以继承thread类，只要不调用start_thread就不是异步操作了
  * 
- * 模板第一个参数是对象类型，而第二个参数指的是队列保存的基本单位
- * 默认是保存裸指针，也可以换成智能指针
- * 第三个参数是对应第二个参数
+ * 模板第一个参数是对象类型
+ * 该模板使用智能指针作为基本对象，智能指针的类型为Type
+ * 拒绝使用裸指针作为参数
  */
-template<typename Packet,typename Unit = Packet*,typename Delete = NeedDelete >
+template<typename Type>
 class RTPLIVELIBSHARED_EXPORT AbstractQueue : public AbstractThread
 {
 public:
-	using value_type			= Packet;
-	using reference				= Packet&;
-	using const_reference		= const Packet&;
-	using pointer				= Packet*;
-	using const_pointer			= const Packet&;
-	using PacketQueue			= std::queue<Unit>;
+	using value_type			= std::shared_ptr<Type>;
+	using reference				= value_type&;
+	using const_reference		= const value_type&;
+	using pointer				= value_type*;
+	using const_pointer			= const value_type&;
+	using queue                 = std::queue<value_type>;
 public:
 	AbstractQueue():
-		_queue(new PacketQueue()),
 		_max_size(10u)
 	{	}
 	
 	virtual ~AbstractQueue() override{
 		clear();
-		delete _queue;
 	}
 	
 	/**
@@ -91,7 +86,7 @@ public:
 	 * 如果含有则返回true
 	 */
 	inline virtual bool has_data() noexcept{
-		return !_queue->empty();
+		return !_queue.empty();
 	}
 	
 	/**
@@ -100,12 +95,12 @@ public:
 	 * 该函数获取到的数据都需要调用ReleasePacket释放空间(智能指针的话不需要)
 	 * @return 
 	 */
-	inline virtual Unit get_next() noexcept{
+	inline virtual value_type get_next() noexcept{
 		std::lock_guard<std::mutex> lk(_mutex);
-		if(_queue->empty())
+		if(_queue.empty())
 			return nullptr;
-		auto ptr = _queue->front();
-		_queue->pop();
+		auto ptr = _queue.front();
+		_queue.pop();
 		return ptr;
 	}
 	
@@ -115,15 +110,15 @@ public:
 	 * @return 
 	 * 返回最新的包，如果没有则返回nullptr
 	 */
-	inline virtual Unit get_latest() noexcept{
-		if(_queue->empty())
+	inline virtual value_type get_latest() noexcept{
+		if(_queue.empty())
 			return nullptr;
-		while(_queue->size() > 1){
-			erase_first();
-		}
 		std::lock_guard<std::mutex> lk(_mutex);
-		auto ptr = _queue->front();
-		_queue->pop();
+        while(_queue.size() > 1){
+            _queue.pop();
+		}
+		auto ptr = _queue.front();
+		_queue.pop();
 		return ptr;
 	}
 	
@@ -135,12 +130,12 @@ public:
 	 * @param newPacket
 	 * 新的包
 	 */
-	inline void push_one(Unit newPacket) noexcept{
-		while(_queue->size() >= _max_size){
+	inline void push_one(value_type newPacket) noexcept{
+		while(_queue.size() >= _max_size){
 			erase_first();
 		}
 		std::lock_guard<std::mutex> lk(_mutex);
-		_queue->push(newPacket);
+		_queue.push(newPacket);
 		_queue_read_condition.notify_one();
 	}
 	
@@ -150,10 +145,8 @@ public:
 	 */
 	inline void erase_first() noexcept{
 		std::lock_guard<std::mutex> lk(_mutex);
-		if( _queue->empty())
+		if( _queue.empty())
 			return;
-		auto ptr = _queue->front();
-		_erase_first(ptr,Delete());
 		_queue->pop();
 	}
 	
@@ -162,8 +155,9 @@ public:
 	 * 清空队列
 	 */
 	inline void clear() noexcept{
+        std::lock_guard<std::mutex> lk(_mutex);
 		while(has_data()){
-			erase_first();
+            _queue.pop();
 		}
 	}
 	
@@ -173,24 +167,16 @@ public:
 	 * @param size
 	 * 队列新的长度
 	 */
-	inline void set_max_size(int size) noexcept {
+	inline void set_max_size(uint32_t size) noexcept {
 		if(size <= 0 )
 			return;
-		_max_size = static_cast<uint32_t>(size);
+		_max_size = size;
 	}
 private:
-	inline void _erase_first(Unit& ptr,NeedDelete) noexcept {
-		if(ptr != nullptr)
-			delete ptr;
-	}
-	
-	inline void _erase_first(Unit&,NotDelete) noexcept {
-	}
-private:
-	std::mutex _mutex;
-	std::condition_variable _queue_read_condition;
-	PacketQueue	* const  _queue;
-	volatile uint32_t _max_size;
+	std::mutex                  _mutex;
+	std::condition_variable     _queue_read_condition;
+	queue                       _queue;
+	volatile uint32_t           _max_size;
 };
 
 } // namespace core

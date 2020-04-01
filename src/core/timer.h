@@ -15,6 +15,7 @@ namespace core {
  * 指定一个时间，然后启动，时间到了之后会触发回调
  * 回调可以多种方式(全局函数指针，functor，lambda函数，要注意是无参的
  * 可以在回调里面运行自己的代码,要注意线程安全
+ * 注:该计时器在loop的时候设计的不太严谨，在cb运行时间长的情况下计时不准
  */
 class RTPLIVELIBSHARED_EXPORT Timer : public AbstractThread
 {
