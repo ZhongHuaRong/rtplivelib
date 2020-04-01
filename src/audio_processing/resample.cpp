@@ -251,8 +251,12 @@ core::Result Resample::resample(core::FramePacket *dst, core::FramePacket *src) 
     return ret;
 }
 
-core::Result Resample::resample(core::FramePacket::SharedPacket dst, core::FramePacket::SharedPacket src) noexcept
+core::Result Resample::resample(core::FramePacket::SharedPacket &dst, core::FramePacket::SharedPacket &src) noexcept
 {
+    if( dst == nullptr ){
+        core::FramePacket::SharedPacket && p = core::FramePacket::Make_Shared();
+        dst.swap(p);
+    }
     return resample(dst.get(),src.get());
 }
 

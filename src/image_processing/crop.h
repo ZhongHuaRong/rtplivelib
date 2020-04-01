@@ -3,6 +3,8 @@
 
 #include "../core/config.h"
 #include "../core/format.h"
+#include "../core/error.h"
+#include <string.h>
 
 namespace rtplivelib{
 
@@ -30,10 +32,7 @@ struct Rect {
 	int height{0};
 	
 	bool operator ==(const Rect &rect){
-		if( this->x == rect.x &&
-			this->y == rect.y &&
-			this->width == rect.width &&
-			this->height == rect.height)
+        if( memcmp(this,&rect,sizeof(Rect)) == 0)
 			return true;
 		else
 			return false;
@@ -107,7 +106,7 @@ public:
      * @return 
      * 裁剪成功则返回true
      */
-    bool crop(core::FramePacket * dst,core::FramePacket *src) noexcept;
+    core::Result crop(core::FramePacket * dst,core::FramePacket *src) noexcept;
     
     /**
      * @brief crop
@@ -122,7 +121,7 @@ public:
      * @return 
      * 裁剪成功则返回true
      */
-    bool crop(core::FramePacket::SharedPacket dst,core::FramePacket::SharedPacket src) noexcept;
+    core::Result crop(core::FramePacket::SharedPacket &dst,core::FramePacket::SharedPacket &src) noexcept;
     
     /**
      * @brief get_crop_rect

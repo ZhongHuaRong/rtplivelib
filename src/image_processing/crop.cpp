@@ -117,9 +117,6 @@ struct CropPrivateData{
 		avfilter_inout_free(&outputs);
 		if(ret < 0){
 			constexpr char api[] = "image_processing::CropPrivateData::init_filter";
-			core::Logger::Print_APP_Info(core::Result::Crop_filter_init_failed,
-										 api,
-										 LogLevel::WARNING_LEVEL);
 			core::Logger::Print_FFMPEG_Info(ret,
 											api,
 											LogLevel::WARNING_LEVEL);
@@ -140,6 +137,7 @@ struct CropPrivateData{
 		
 		buffersrc_ctx = nullptr;
 		buffersink_ctx = nullptr;
+        filter_graph = nullptr;
 	}
 	
 	/**
@@ -161,9 +159,7 @@ struct CropPrivateData{
 	 * @return 
 	 * 并不是返回形参的那个
 	 */
-	bool crop(core::FramePacket * dst,core::FramePacket * src){
-		if(src == nullptr || dst == nullptr)
-			return false;
+	core::Result crop(core::FramePacket * dst,core::FramePacket * src){
 		constexpr char api[] = "image_processing::CropPrivateData::crop";
 
 		if(filter_graph == nullptr){
@@ -174,7 +170,7 @@ struct CropPrivateData{
 											 crect.x,
 											 crect.y);
 			if(init_filter(descr) < 0){
-				return false;
+				return core::Result::Crop_Filter_init_failed;
 			}
 		}
 		
@@ -183,7 +179,7 @@ struct CropPrivateData{
 			crop_frame_in = av_frame_alloc();
 		}
 		if( crop_frame_in == nullptr)
-			return false;
+			return core::Result::FramePacket_alloc_failed;
 		//设置输入帧参数
 		crop_frame_in->width = ifmt.width;
 		crop_frame_in->height = ifmt.height;
@@ -200,19 +196,19 @@ struct CropPrivateData{
 				core::Logger::Print_FFMPEG_Info(ret,
 												api,
 												LogLevel::WARNING_LEVEL);
-				return dst;
+				return core::Result::Crop_Failed;
 			}
 			
 			crop_frame_out = av_frame_alloc();
 			if( crop_frame_out == nullptr)
-				return false;
+                return core::Result::FramePacket_alloc_failed;
 			//获取帧
 			ret = av_buffersink_get_frame(buffersink_ctx,crop_frame_out);
 			if(ret < 0){
 				core::Logger::Print_FFMPEG_Info(ret,
 												api,
 												LogLevel::WARNING_LEVEL);
-				return dst;
+                return core::Result::Crop_Failed;
 			}
 		}
 		
@@ -234,7 +230,7 @@ struct CropPrivateData{
 		dst->frame = crop_frame_out;
 		dst->dts = src->dts;
 		dst->pts = src->pts;
-		return dst;
+		return core::Result::Success;
 	}
 };
 
@@ -278,18 +274,22 @@ void Crop::set_default_crop_rect(const Rect &rect) noexcept
 }
 
 
-bool Crop::crop(core::FramePacket *dst, core::FramePacket *src) noexcept
+core::Result Crop::crop(core::FramePacket *dst, core::FramePacket *src) noexcept
 {
     if( dst == nullptr || src == nullptr)
-        return false;
+        return core::Result::Invalid_Parameter;
     set_default_input_format(src->format);
     return d_ptr->crop(dst,src);
 }
 
-bool Crop::crop(core::FramePacket::SharedPacket dst, core::FramePacket::SharedPacket src) noexcept
+core::Result Crop::crop(core::FramePacket::SharedPacket &dst, core::FramePacket::SharedPacket &src) noexcept
 {
-    if( dst == nullptr || src == nullptr)
-        return false;
+    if( src == nullptr )
+        return core::Result::Invalid_Parameter;
+    if( dst == nullptr ){
+        core::FramePacket::SharedPacket && p = core::FramePacket::Make_Shared();
+        dst.swap(p);
+    }
     
     return crop(dst.get(),src.get());
 }

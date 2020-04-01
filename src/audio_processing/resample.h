@@ -57,7 +57,7 @@ public:
      * @brief resample
      * 重载函数，但是参数不允许出现空指针
      */
-    core::Result resample(core::FramePacket::SharedPacket dst,core::FramePacket::SharedPacket src) noexcept;
+    core::Result resample(core::FramePacket::SharedPacket &dst,core::FramePacket::SharedPacket &src) noexcept;
     
     /**
      * @brief resample

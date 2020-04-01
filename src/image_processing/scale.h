@@ -3,6 +3,7 @@
 
 #include "../core/config.h"
 #include "../core/format.h"
+#include "../core/error.h"
 
 namespace rtplivelib{
 
@@ -50,14 +51,14 @@ public:
      * @brief scale
      * 格式转换
      */
-    bool scale(core::FramePacket * dst,core::FramePacket *src) noexcept;
+    core::Result scale(core::FramePacket * dst,core::FramePacket *src) noexcept;
     
     /**
      * @brief scale
      * 重载函数，但是参数不允许出现空指针
      * 智能指针替换指针好麻烦
      */
-    bool scale(core::FramePacket::SharedPacket dst,core::FramePacket::SharedPacket src) noexcept;
+    core::Result scale(core::FramePacket::SharedPacket &dst,core::FramePacket::SharedPacket &src) noexcept;
     
     /**
      * @brief scale
@@ -72,8 +73,8 @@ public:
      * 目标行宽
      * @return 
      */
-    bool scale( uint8_t * src_data[],int src_linesize[],
-                uint8_t * dst_data[],int dst_linesize[]) noexcept;
+    core::Result scale( uint8_t * src_data[],int src_linesize[],
+                        uint8_t * dst_data[],int dst_linesize[]) noexcept;
 private:
     ScalePrivateData * const d_ptr;
 };
