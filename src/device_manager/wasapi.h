@@ -21,7 +21,7 @@ namespace device_manager {
  * 该类操作都是线程安全
  */
 class WASAPI :
-        protected core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
+        protected core::AbstractQueue<core::FramePacket>
 {
 public:
     enum FlowType{

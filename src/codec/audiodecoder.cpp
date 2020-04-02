@@ -338,7 +338,6 @@ void AudioDecoder::on_thread_run() noexcept
         if(pack == nullptr)
             continue;
         d_ptr->deal_with_pack(*pack);
-        delete pack;
     }
 }
 

@@ -19,7 +19,7 @@ RTPUserManager * RTPUserManager::_manager = nullptr;
 volatile uint32_t RTPUserManager::_local_video_ssrc = 0;
 volatile uint32_t RTPUserManager::_local_audio_ssrc = 0;
 
-void RTPUserManager::deal_with_rtp(RTPPacket * rtp_packet) noexcept
+void RTPUserManager::deal_with_rtp(RTPPacket::SharedRTPPacket rtp_packet) noexcept
 {
 	//分析数据
 	jrtplib::RTPPacket * packet = static_cast<jrtplib::RTPPacket*>(rtp_packet->get_packet());

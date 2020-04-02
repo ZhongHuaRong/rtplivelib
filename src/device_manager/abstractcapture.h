@@ -2,6 +2,7 @@
 #pragma once
 #include "../core/abstractqueue.h"
 #include "../core/format.h"
+#include "../core/error.h"
 #include <string>
 #include <map>
 
@@ -16,7 +17,7 @@ namespace device_manager {
  * 实现捕捉设备的大致流程
  */
 class RTPLIVELIBSHARED_EXPORT AbstractCapture :
-		public core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
+		public core::AbstractQueue<core::FramePacket>
 {
 public:
 	

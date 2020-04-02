@@ -25,7 +25,7 @@ RTPUser::~RTPUser()
 {
 }
 
-void RTPUser::deal_with_packet(RTPPacket *rtp_packet) noexcept
+void RTPUser::deal_with_packet(RTPPacket::SharedRTPPacket rtp_packet) noexcept
 {
 	if(rtp_packet == nullptr)
 		return;

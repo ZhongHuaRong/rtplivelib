@@ -18,7 +18,7 @@ public:
 	AVPacket *packet{nullptr};
 };
 
-#if defined (WIN32)
+#if defined (WIN64)
 	static constexpr char format_name[] = "gdigrab";
 #elif defined (unix)
 	static constexpr char format_name[] = "fbdev";
@@ -54,7 +54,7 @@ DesktopCapture::DesktopCapture() :
 		}
 	}
 	
-#if defined (WIN32)
+#if defined (WIN64)
 	current_device_info.first = "desktop";
 	current_device_info.second = current_device_info.first;
 #endif
@@ -178,7 +178,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 									 LogLevel::WARNING_LEVEL);
 		return ptr;
 	}
-#if defined (WIN32)
+#if defined (WIN64)
 	//去掉bmp头结构54字节
 	ptr->size = d_ptr->packet->size - 54;
 #elif defined (unix)
@@ -195,7 +195,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	}
 	
 	//下面一步是为了赋值width和height，windows下面不能正确读取，需要计算
-#if defined (WIN32)
+#if defined (WIN64)
 	memcpy(ptr->data[0],d_ptr->packet->data + 54,static_cast<size_t>(ptr->size));
 	/*width在头结构地址18偏移处，详情参考BMP头结构*/
 	memcpy(&ptr->format.width,d_ptr->packet->data + 18,4);
@@ -245,7 +245,7 @@ bool DesktopCapture::open_device() noexcept
 		avformat_close_input(&d_ptr->fmtContxt);
 	}
 	constexpr char api[] = "device_manager::DesktopCapture::open_device";
-#if defined (WIN32)
+#if defined (WIN64)
 	/*暂时只考虑截取屏幕的情况，截取窗口和另外的屏幕以后再考虑*/
 	auto n = avformat_open_input(&d_ptr->fmtContxt, "desktop", d_ptr->ifmt, &options);
 #elif defined (unix)

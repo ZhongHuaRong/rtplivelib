@@ -44,7 +44,7 @@ public:
 	 * @param winId
 	 * 窗口显示ID，音频则无视该参数
 	 */
-	void set_player_object(device_manager::AbstractCapture * object,
+	void set_player_object(core::AbstractQueue<core::FramePacket> * object,
 							void * winId = nullptr) noexcept;
 	
 	/**
@@ -85,7 +85,7 @@ private:
 	 */
 	core::FramePacket::SharedPacket _get_next_packet() noexcept;
 protected:
-	device_manager::AbstractCapture * _play_object;
+	core::AbstractQueue<core::FramePacket> * _play_object;
 private:
 	int _init_result;
 	PlayFormat _fmt;

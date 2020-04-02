@@ -60,7 +60,7 @@ protected:
 	 * 注意:使用该接口将会获得rtp_packet指针的所有权
 	 * 不需要外部释放指针
 	 */
-	void deal_with_packet(RTPPacket * rtp_packet) noexcept;
+	void deal_with_packet(RTPPacket::SharedRTPPacket rtp_packet) noexcept;
 	
 	/**
 	 * @brief set_win_id

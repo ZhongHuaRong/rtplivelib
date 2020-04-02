@@ -147,7 +147,7 @@ public:
 		std::lock_guard<std::mutex> lk(_mutex);
 		if( _queue.empty())
 			return;
-		_queue->pop();
+		_queue.pop();
 	}
 	
 	/**

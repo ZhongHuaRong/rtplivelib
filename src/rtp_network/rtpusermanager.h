@@ -53,7 +53,7 @@ public:
 	 * 不需要外部释放空间
 	 * 所以，不能传栈上的对象做为参数
 	 */
-	void deal_with_rtp(RTPPacket * rtp_packet) noexcept;
+	void deal_with_rtp(RTPPacket::SharedRTPPacket rtp_packet) noexcept;
 	
 	/**
 	 * @brief deal_with_rtcp

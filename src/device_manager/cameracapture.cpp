@@ -24,7 +24,7 @@ public:
 	AVPacket *packet{nullptr};
 };
 
-#if defined (WIN32)
+#if defined (WIN64)
 	static constexpr char format_name[] = "dshow";
 #elif defined (unix)
 	static constexpr char format_name[] = "v4l2";
@@ -293,7 +293,7 @@ bool CameraCapture::open_device() noexcept
 		avformat_close_input(&d_ptr->fmtContxt);
 	}
 	constexpr char api[] = "device_manager::CameraCapture::open_device";
-#if defined (WIN32)
+#if defined (WIN64)
 	
 	auto n = avformat_open_input(&d_ptr->fmtContxt,("video=" + current_device_info.second).c_str(),d_ptr->ifmt,&options);
 //    auto n = avformat_open_input(&d_ptr->fmtContxt,"video=USB2.0 VGA UVC WebCam",d_ptr->ifmt,&options);

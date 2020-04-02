@@ -10,9 +10,7 @@ namespace player {
 class AudioPlayerPrivateData{
 public:
     //队列，用于获取音频数据
-    core::AbstractQueue<core::FramePacket::SharedPacket,
-                        core::FramePacket::SharedPacket,
-                        core::NotDelete>    audio_data_queue;
+    core::AbstractQueue<core::FramePacket>    audio_data_queue;
     //音频设备
     SDL_AudioSpec wanted_spec;
     //预留，暂时不起什么作用

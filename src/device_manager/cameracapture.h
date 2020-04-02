@@ -2,6 +2,7 @@
 #pragma once
 
 #include "abstractcapture.h"
+#include "string.h"
 
 namespace rtplivelib {
 
@@ -21,7 +22,7 @@ struct VideoSize{
     }
 
     bool operator==(const VideoSize& size){
-        if(widget == size.widget && height == size.height)
+        if(memcmp(this,&size,sizeof(VideoSize)) == 0)
             return true;
         else
             return false;

@@ -22,10 +22,10 @@ namespace codec {
  * 因为所有编码设置都是自动设置好的，不需要提供外部接口，上锁会影响效率，暂时不考虑线程安全
  */
 class RTPLIVELIBSHARED_EXPORT Encoder : 
-		public core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
+		public core::AbstractQueue<core::FramePacket>
 {
 public:
-	using Queue = core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>;
+	using Queue = core::AbstractQueue<core::FramePacket>;
 public:
 	/**
 	 * @brief VideoEncode

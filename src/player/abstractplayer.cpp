@@ -51,7 +51,7 @@ AbstractPlayer::~AbstractPlayer()
  * @param winId
  * 窗口显示ID，音频则无视该参数
  */
-void AbstractPlayer::set_player_object(rtplivelib::device_manager::AbstractCapture *object,
+void AbstractPlayer::set_player_object(core::AbstractQueue<core::FramePacket> *object,
 									   void *winId) noexcept
 {
 	if(object == nullptr && _play_object == nullptr)

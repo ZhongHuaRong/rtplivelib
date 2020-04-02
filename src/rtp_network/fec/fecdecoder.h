@@ -5,6 +5,7 @@
 #include "../../core/config.h"
 #include "../../core/format.h"
 #include "../../core/error.h"
+#include "../rtppacket.h"
 #include <vector>
 
 namespace rtplivelib {
@@ -51,7 +52,7 @@ public:
      * 重载函数
      * @return 
      */
-    virtual core::Result decode(RTPPacket * packet) noexcept;
+    virtual core::Result decode(RTPPacket::SharedRTPPacket packet) noexcept;
     
     /**
      * @brief data_recover

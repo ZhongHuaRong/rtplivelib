@@ -18,7 +18,7 @@ class ALSAPrivateData;
  * 目前在Deepin系统采集到的声音是静音，有待完善
  */
 class ALSA :
-        protected core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>
+        protected core::AbstractQueue<core::FramePacket>
 {
 public:
     enum FlowType{

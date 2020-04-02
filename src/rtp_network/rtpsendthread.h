@@ -22,7 +22,7 @@ class RtpSendThreadPrivateData;
 class RTPLIVELIBSHARED_EXPORT RTPSendThread : public core::AbstractThread
 {
 private:
-	using SendQueue = core::AbstractQueue<core::FramePacket::SharedPacket,core::FramePacket::SharedPacket,core::NotDelete>;
+	using SendQueue = core::AbstractQueue<core::FramePacket::SharedPacket>;
 public:
 	RTPSendThread();
 

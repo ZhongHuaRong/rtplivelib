@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <memory>
+
 namespace rtplivelib {
 
 namespace rtp_network {
@@ -13,6 +15,8 @@ namespace rtp_network {
 class RTPPacket
 {
 public:
+    using SharedRTPPacket = std::shared_ptr<RTPPacket>;
+public:
 	/**
 	 * @brief RTPPacket
 	 * 构造函数，将会传入一个指针作为内部使用
@@ -22,6 +26,11 @@ public:
 			  void * source_data);
 	
 	~RTPPacket();
+    
+    static inline SharedRTPPacket Make_Shared(void * packet,
+                                              void * source_data){
+		return std::make_shared<RTPPacket>(packet,source_data);
+	}
 	
 	/**
 	 * @brief get_object
