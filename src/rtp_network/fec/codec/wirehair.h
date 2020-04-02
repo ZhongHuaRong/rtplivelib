@@ -88,8 +88,10 @@ public:
      * 解码
      * @param id
      * 包的编号
-     * @param input
+     * @param data
      * 编码数据
+     * @param size
+     * 编码数据大小
      * @param total_size
      * 编码前的数据总大小
      * @return 
@@ -98,7 +100,8 @@ public:
      * Decode_Failed : 解码失败,解码失败后将会释放相关上下文，准备开始下次的解码
      */
     virtual core::Result decode(uint16_t id,
-                                const std::vector<int8_t> &input,
+                                void * data,
+                                uint32_t size,
                                 uint32_t total_size) noexcept;
     
     /**
@@ -111,6 +114,18 @@ public:
      * Need_More : 需要输入更多的包解码
      */
     virtual core::Result data_recover(std::vector<int8_t> & data) noexcept;
+    
+    /**
+     * @brief data_recover
+     * 重载函数
+     * @param data
+     * 保存解码的数据
+     * 需要注意data内存大小要大于等于decode时的total_size
+     * @return 
+     * Success : 获取数据成功,成功后将会释放相关上下文，准备开始下次的解码
+     * Need_More : 需要输入更多的包解码
+     */
+    virtual core::Result data_recover(void * data) noexcept;
     
     /**
      * @brief InitCodec

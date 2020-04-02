@@ -61,16 +61,13 @@ core::Result Wirehair::encode(uint16_t id,
     }
     
     output_size = 0;
-    void * data;
-    if(output.size() >= get_packet_size()){
-        data = output.data();
-    } else {
-        
-    }
+    if(output.size() < get_packet_size()){
+        output.resize(get_packet_size());
+    } 
     WirehairResult encodeResult = wirehair_encode(
         d_ptr->codec.get(), 
         id, 
-        data,
+        output.data(),
         get_packet_size(),
         &output_size);
 
@@ -145,9 +142,7 @@ core::Result Wirehair::encode(void * data,
     return encode(data,size,total_nb,output);
 }
 
-core::Result Wirehair::decode(uint16_t id,
-                              const std::vector<int8_t> &input,
-                              uint32_t total_size) noexcept
+core::Result Wirehair::decode(uint16_t id, void *data, uint32_t size, uint32_t total_size) noexcept
 {
     if(get_codec_type() != CodecType::Decoder){
         return core::Result::FEC_Codec_Not_Decoder;
@@ -166,8 +161,8 @@ core::Result Wirehair::decode(uint16_t id,
     WirehairResult decodeResult = wirehair_decode(
         d_ptr->codec.get(),
         id,
-        input.data(), 
-        input.size());
+        data, 
+        size);
 
     if (decodeResult == Wirehair_NeedMore) {
         return core::Result::FEC_Decode_Need_More;
@@ -184,6 +179,12 @@ core::Result Wirehair::decode(uint16_t id,
 
 core::Result Wirehair::data_recover(std::vector<int8_t> &data) noexcept
 {
+    data.resize(d_ptr->recover_data_size);
+    return data_recover(data.data());
+}
+
+core::Result Wirehair::data_recover(void *data) noexcept
+{
     if(get_codec_type() != CodecType::Decoder){
         return core::Result::FEC_Codec_Not_Decoder;
     }
@@ -192,10 +193,9 @@ core::Result Wirehair::data_recover(std::vector<int8_t> &data) noexcept
         return core::Result::FEC_Codec_Open_Failed;
     }
     
-    data.resize(d_ptr->recover_data_size);
     WirehairResult decodeResult = wirehair_recover(
         d_ptr->codec.get(),
-        data.data(),
+        data,
         d_ptr->recover_data_size);
     
     d_ptr->codec.reset();
