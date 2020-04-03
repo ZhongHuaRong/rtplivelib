@@ -263,6 +263,7 @@ public:
 			
 			//编码失败后，直接发送
             param.repair_nb = 0;
+            param.flag = 0;
 			auto src_nb = param.size / param.symbol_size;
             if(src_nb * param.symbol_size != param.size)
                 ++src_nb;

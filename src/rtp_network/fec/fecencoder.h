@@ -24,7 +24,21 @@ struct FECParam{
     /*原包总数据大小，用于喷泉吗解码*/
     int32_t size{0};
     /*一个包的大小*/
-    uint32_t symbol_size{0};
+    int32_t symbol_size{0};
+    /*用于表示是否使用了FEC编码
+     * 0:没使用
+     * 非0:使用了
+     */
+    int32_t flag{0};
+    
+    inline int32_t get_fill_size() noexcept{
+       return size -  size % symbol_size;
+    }
+    
+    inline int32_t get_src_nb() noexcept{
+        int32_t n = size / symbol_size;
+        return n * symbol_size == size?n:n + 1;
+    }
 };
 
 /**
