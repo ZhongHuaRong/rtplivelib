@@ -6,4 +6,4 @@ ADD_LIBRARY(${PROJECT_NAME} STATIC ${src_dir})
 
 file(GLOB headers "*.h")
 INSTALL(FILES ${headers}
-        DESTINATION ${HEADERS_INSTALL_DIR}/rtp_network//fec/codec)
+        DESTINATION ${HEADERS_INSTALL_DIR}/rtp_network/fec/codec)

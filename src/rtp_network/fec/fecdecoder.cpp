@@ -1,16 +1,12 @@
 #include "fecdecoder.h"
 #include "fecencoder.h"
-#include "../../core/logger.h"
 #include "codec/wirehair.h"
 #include "../rtpsession.h"
 #include "jrtplib3/rtppacket.h"
-#include "jrtplib3/rtpsourcedata.h"
-#include "jrtplib3/rtpaddress.h"
-#include "jrtplib3/rtcpcompoundpacket.h"
-#include "jrtplib3/rtcpapppacket.h"
-#include "jrtplib3/rtcpsdespacket.h"
-#include "jrtplib3/rtpipv4address.h"
 #include <map>
+extern "C"{
+#include "libavcodec/avcodec.h"
+}
 
 namespace rtplivelib {
 
@@ -21,7 +17,17 @@ namespace fec {
 class FECDecoderPrivateData{
 private:
     struct NOFec{
+        std::vector<RTPPacket::SharedRTPPacket> vector;
+        std::vector<uint8_t*> data_vector;
+        int count{0};
+        int unit_size{0};
         
+        inline void get_data(uint8_t * d) noexcept{
+            for(auto i = 0;i < vector.size();++i){
+                memcpy(d,data_vector[i],unit_size);
+                d += unit_size;
+            }
+        }
     };
 public:
     using Codec = std::shared_ptr<Wirehair>;
@@ -57,11 +63,12 @@ public:
         }
     }
     
-    inline core::Result pop(void *data, const uint64_t &len,
+    inline core::Result pop(uint8_t *data, const uint64_t &len,
                             const uint32_t &timestamp, 
                             const int32_t &src_nb,
                             const int32_t &repair_nb, 
                             const int32_t &fill_size,
+                            const int32_t &symbol_size,
                             const int32_t &total_size,
                             const int32_t &pos,
                             const int &payload_type,
@@ -74,7 +81,7 @@ public:
         auto ts = get_correct_timestamp(timestamp,pos);
         core::Result ret;
         if(flag){
-            
+            //使用了FEC的情况
             auto & ptr = fec_map[ts];
             if(ptr == nullptr){
                 Codec && c = Make_Codec();
@@ -89,7 +96,20 @@ public:
             }
             
         } else {
-
+            //没有使用FEC的情况
+            auto & ptr = nofec_map[ts];
+            if(ptr.vector.size() == 0){
+                ptr.vector.resize(src_nb);
+                ptr.count = 0;
+                ptr.unit_size = symbol_size;
+            }
+            
+            ptr.vector[pos].swap(rtp_packet);
+            ptr.data_vector[pos] = data;
+            if(++ptr.count == src_nb){
+                erase_nofec_map(ts);
+                push(total_size,static_cast<RTPSession::PayloadType>(payload_type),flag);
+            }
         }
     }
     
@@ -119,7 +139,24 @@ public:
             fec_map.erase(i);
             
         } else {
-
+            auto i = nofec_map.begin();
+            uint8_t * p = static_cast<uint8_t *>(av_malloc(static_cast<size_t>(total_size)));
+            if(p != nullptr){
+                auto ptr = core::FramePacket::Make_Shared();
+                
+                if( ptr != nullptr){
+                    i->second.get_data(p);
+                    ptr->data[0] = p;
+                    ptr->size = total_size;
+                    ptr->payload_type = payload_type;
+                    ptr->dts = ptr->pts = i->first;
+                } else  {
+                    av_free(p);
+                }
+                
+                next_pack.swap(ptr);
+            }
+            nofec_map.erase(i);
         }
     }
    
@@ -152,6 +189,7 @@ core::Result FECDecoder::decode(RTPPacket::SharedRTPPacket rtp_packet) noexcept
                          param.get_src_nb(),
                          param.repair_nb,
                          param.get_fill_size(),
+                         param.symbol_size,
                          param.size,
                          packet->GetExtensionID(),
                          packet->GetPayloadType(),
@@ -159,12 +197,13 @@ core::Result FECDecoder::decode(RTPPacket::SharedRTPPacket rtp_packet) noexcept
                          rtp_packet);
 	}
 	else
-        //没有fec的情况
+        //没有fec的情况,默认只有一个包
 		ret = d_ptr->pop(packet->GetPayloadData(),packet->GetPayloadLength(),
                          packet->GetTimestamp(),
                          1,
                          0,
                          0,
+                         packet->GetPayloadLength(),
                          packet->GetPayloadLength(),
                          0,
                          packet->GetPayloadType(),

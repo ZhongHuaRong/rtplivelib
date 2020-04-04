@@ -3,6 +3,7 @@
 #include "../../../core/config.h"
 #include "../../../core/error.h"
 #include "fecabstractcodec.h"
+#include <vector>
 
 namespace rtplivelib {
 

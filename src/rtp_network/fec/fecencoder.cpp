@@ -1,6 +1,4 @@
 #include "fecencoder.h"
-#include "../../core/logger.h"
-#include <memory>
 #include "codec/wirehair.h"
 
 namespace rtplivelib {
@@ -51,7 +49,14 @@ core::Result FECEncoder::encode(core::FramePacket::SharedPacket packet,
     if(packet == nullptr)
         return core::Result::Invalid_Parameter;
     
-    return core::Result::Success;
+    float rate;
+    if(packet->is_key())
+        rate = 0.83f;
+    else  
+        rate = 0.9f;
+    
+    auto ret = d_ptr->codec.encode(packet->data[0],packet->size,rate,output);
+    return ret;
 }
 
 } //namespace fec

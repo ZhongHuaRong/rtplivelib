@@ -6,13 +6,10 @@
 #include "../../core/format.h"
 #include "../../core/error.h"
 #include "../rtppacket.h"
-#include <vector>
 
 namespace rtplivelib {
 
 namespace rtp_network {
-
-class RTPPacket;
 
 namespace fec {
 
@@ -27,7 +24,7 @@ class RTPLIVELIBSHARED_EXPORT FECDecoder
 public:
     FECDecoder();
     
-    ~FECDecoder();
+    virtual ~FECDecoder();
     
     /**
      * @brief decode

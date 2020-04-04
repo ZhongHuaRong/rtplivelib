@@ -3,8 +3,8 @@
 
 #include "../../core/config.h"
 #include "../../core/error.h"
-#include <vector>
 #include "../../core/format.h"
+#include <vector>
 
 namespace rtplivelib {
 
@@ -50,7 +50,7 @@ class RTPLIVELIBSHARED_EXPORT FECEncoder
 public:
     FECEncoder();
     
-    ~FECEncoder();
+    virtual ~FECEncoder();
 
     /**
      * @brief set_symbol_size

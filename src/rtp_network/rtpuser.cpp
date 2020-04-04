@@ -59,13 +59,7 @@ void RTPUser::deal_with_packet(RTPPacket::SharedRTPPacket rtp_packet) noexcept
 	
 	if(fec_ptr->decode(rtp_packet) != core::Result::Success)
 		return;
-	
-    std::vector<int8_t> data;
-    
-    if(fec_ptr->data_recover(data) != core::Result::Success)
-		return;
-    
-	decoder_ptr->push_one(new codec::VideoDecoder::Packet(_pt,std::shared_ptr<core::FramePacket>(data)));
+	decoder_ptr->push_one(std::make_shared<codec::VideoDecoder::Packet>(_pt,fec_ptr->get_packet()));
 }
 
 void RTPUser::set_win_id(void *id) noexcept

@@ -3,7 +3,6 @@
 
 #include "../../../core/config.h"
 #include "../../../core/error.h"
-#include <vector>
 
 namespace rtplivelib {
 
@@ -62,7 +61,7 @@ public:
      * 设置块大小(每个包的大小)
      * @param value
      */
-    virtual void set_packet_size(uint32_t value) noexcept;
+    void set_packet_size(uint32_t value) noexcept;
     
     /**
      * @brief get_symbol_size
@@ -90,19 +89,19 @@ private:
 };
 
 
-FECAbstractCodec::~FECAbstractCodec()                                           {}
 FECAbstractCodec::FECAbstractCodec(FECAbstractCodec::CodesType codesT,
                                    FECAbstractCodec::CodecType codecT):
-    codes_type(codesT),codec_type(codecT){}
+    codes_type(codesT),codec_type(codecT)                                               {}
+FECAbstractCodec::~FECAbstractCodec()                                                   {}
 
 
-FECAbstractCodec::CodesType FECAbstractCodec::get_codes_type() noexcept          {   return codes_type;}
-FECAbstractCodec::CodecType FECAbstractCodec::get_codec_type() noexcept          {   return codec_type;}
-inline void FECAbstractCodec::set_packet_size(uint32_t value) noexcept           {   packet_size = value;}
-inline uint32_t FECAbstractCodec::get_packet_size() noexcept                     {    return packet_size;}
+inline FECAbstractCodec::CodesType FECAbstractCodec::get_codes_type() noexcept          {   return codes_type;}
+inline FECAbstractCodec::CodecType FECAbstractCodec::get_codec_type() noexcept          {   return codec_type;}
+inline void FECAbstractCodec::set_packet_size(uint32_t value) noexcept                  {   packet_size = value;}
+inline uint32_t FECAbstractCodec::get_packet_size() noexcept                            {   return packet_size;}
 
-inline void FECAbstractCodec::set_codes_type(FECAbstractCodec::CodesType type) noexcept{    codes_type = type;}
-inline void FECAbstractCodec::set_codec_type(FECAbstractCodec::CodecType type) noexcept{    codec_type = type;}
+inline void FECAbstractCodec::set_codes_type(FECAbstractCodec::CodesType type) noexcept {    codes_type = type;}
+inline void FECAbstractCodec::set_codec_type(FECAbstractCodec::CodecType type) noexcept {    codec_type = type;}
 
 
 } //namespace fec
