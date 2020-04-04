@@ -89,7 +89,7 @@ core::Result Wirehair::encode(void *data,
     if(get_codec_type() != CodecType::Encoder){
         return core::Result::FEC_Codec_Not_Encoder;
     }
-    uint32_t && packet_size = get_packet_size();
+    uint32_t packet_size = get_packet_size();
     WirehairCodec encoder = wirehair_encoder_create(nullptr, data, size, packet_size);
     if (!encoder){
         return core::Result::FEC_Codec_Open_Failed;
@@ -102,7 +102,7 @@ core::Result Wirehair::encode(void *data,
     uint32_t output_size{0};
     WirehairResult encodeResult;
     
-    output.clear();
+    output.resize(count);
     for(uint32_t id = 0;id < count;++id){
         encodeResult = wirehair_encode(
             d_ptr->codec.get(), 
@@ -120,7 +120,7 @@ core::Result Wirehair::encode(void *data,
         
         std::vector<int8_t> ret(output_size);
         memcpy(ret.data(),tmp.data(),output_size);
-        output.push_back(ret);
+        output[id] = ret;
     }
     return core::Result::Success;
 }
@@ -137,7 +137,7 @@ core::Result Wirehair::encode(void * data,
     
     uint32_t && packet_size = get_packet_size();
     auto src_nb = static_cast<float>(size) / packet_size;
-    auto total_nb = static_cast<uint32_t>(src_nb / rate) + 1;
+    auto total_nb = static_cast<uint32_t>(src_nb / rate) + 5;
 
     return encode(data,size,total_nb,output);
 }

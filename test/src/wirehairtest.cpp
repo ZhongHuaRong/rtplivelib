@@ -49,7 +49,7 @@ TEST(WirehairTest,Decode){
     Result ret{Success};
     std::vector<std::vector<int8_t>> enc_pkt;
     //+100是为了最后一个包不足size字节
-    std::vector<int8_t> data_vector(size * size + 100,7);
+    auto data_vector = read_file("config.log");
     ret = encoder.encode(data_vector.data(),data_vector.size(),0.8f,enc_pkt);
     ASSERT_EQ(ret,Success);
     
@@ -57,7 +57,7 @@ TEST(WirehairTest,Decode){
     auto pack_num_list = simulated_packet_loss(enc_pkt.size() * 0.8 + 10,enc_pkt.size() * 0.2);
     
     for(auto i = pack_num_list.begin();i != pack_num_list.end();++i){
-        ret = decoder.decode(*i,enc_pkt[*i],data_vector.size());
+        ret = decoder.decode(*i,enc_pkt[*i].data(),enc_pkt[*i].size(),data_vector.size());
         if(ret == Success){
             break;
         } else {

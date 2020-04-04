@@ -216,6 +216,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	ptr->pts = d_ptr->packet->pts;
 	ptr->dts = d_ptr->packet->dts;
 	ptr->format.frame_rate = _fps;
+    ptr->flag = d_ptr->packet->flags;
 	
 	return ptr;
 }

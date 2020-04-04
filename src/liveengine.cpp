@@ -6,7 +6,7 @@
 #include "rtp_network/rtprecvthread.h"
 #include "rtp_network/rtpusermanager.h"
 #include "core/logger.h"
-//#include "rtp_network/fec/codec/wirehair.h"
+#include "rtp_network/fec/codec/wirehair.h"
 extern "C"{
 #include "libavcodec/avcodec.h"
 }
@@ -63,7 +63,7 @@ LiveEngine::LiveEngine():
 	//初始化日志等级
 	set_log_level(LogLevel::ALLINFO_LEVEL);
     //初始化Wirehair编解码器
-//    rtp_network::fec::Wirehair::InitCodec();
+    rtp_network::fec::Wirehair::InitCodec();
 	
 	//初始化socket
 #ifdef WIN64

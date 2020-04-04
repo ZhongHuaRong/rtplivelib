@@ -56,6 +56,8 @@ core::Result FECEncoder::encode(core::FramePacket::SharedPacket packet,
         rate = 0.9f;
     
     auto ret = d_ptr->codec.encode(packet->data[0],packet->size,rate,output);
+    param.size = packet->size;
+    param.symbol_size = d_ptr->codec.get_packet_size();
     return ret;
 }
 

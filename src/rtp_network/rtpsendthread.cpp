@@ -293,7 +293,7 @@ public:
 			for( uint16_t cur_nb = 0u; cur_nb < data.size(); ++ cur_nb){
 				_send_packet_ex(session,
 								data[cur_nb].data(),
-								fec_encoder.get_symbol_size(),
+								data[cur_nb].size(),
 								cur_nb,
 								param);
 			}

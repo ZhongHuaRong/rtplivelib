@@ -256,6 +256,7 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 	ptr->pts = d_ptr->packet->pts;
 	ptr->dts = d_ptr->packet->dts;
 	ptr->format.frame_rate = _fps;
+    ptr->flag = d_ptr->packet->flags;
 	
 	//packet在close input format后就失效
 	//所以需要拷贝一份
