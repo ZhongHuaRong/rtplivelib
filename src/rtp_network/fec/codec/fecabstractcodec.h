@@ -89,12 +89,6 @@ private:
 };
 
 
-FECAbstractCodec::FECAbstractCodec(FECAbstractCodec::CodesType codesT,
-                                   FECAbstractCodec::CodecType codecT):
-    codes_type(codesT),codec_type(codecT)                                               {}
-FECAbstractCodec::~FECAbstractCodec()                                                   {}
-
-
 inline FECAbstractCodec::CodesType FECAbstractCodec::get_codes_type() noexcept          {   return codes_type;}
 inline FECAbstractCodec::CodecType FECAbstractCodec::get_codec_type() noexcept          {   return codec_type;}
 inline void FECAbstractCodec::set_packet_size(uint32_t value) noexcept                  {   packet_size = value;}

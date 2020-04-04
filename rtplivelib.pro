@@ -168,4 +168,5 @@ SOURCES += \
     src/player/audioplayer.cpp \  
     src/rtp_network/fec/codec/wirehair.cpp \ 
     src/rtp_network/fec/fecdecoder.cpp \
-    src/rtp_network/fec/fecencoder.cpp
+    src/rtp_network/fec/fecencoder.cpp \
+    src/rtp_network/fec/codec/fecabstractcodec.cpp
