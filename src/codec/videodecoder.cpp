@@ -396,7 +396,7 @@ public:
 				return;
 		}
 		
-		if(hwdevice->get_init_result() == true){
+		if(hwdevice != nullptr && hwdevice->get_init_result() == true){
 			pkt->data = pack.second->data[0];
 			pkt->size = pack.second->size;
 			//硬件加速，不需要解析

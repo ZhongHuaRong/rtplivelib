@@ -96,7 +96,7 @@ void AbstractPlayer::on_thread_run() noexcept
 	while(_play_object != nullptr){
 		auto pack = _get_next_packet();
 		if(pack == nullptr)
-			continue;
+			break;
 		this->play(pack);
 	}
 }

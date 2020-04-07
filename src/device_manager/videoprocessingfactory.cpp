@@ -31,6 +31,7 @@ public:
 	//因为该类处理视频时，只有注册回调才能获取到数据
 	//所以内部设置播放器用于播放
 	player::VideoPlayer *player{nullptr};
+    core::AbstractQueue<core::FramePacket> *player_queue{nullptr};
 	std::mutex player_mutex;
 	//转换格式用的结构体
 	core::Format scale_format_current;
@@ -48,7 +49,19 @@ public:
 	//转换格式用的上下文
 	
 	~VideoProcessingFactoryPrivateData(){
+        release_player();
 	}
+    
+    inline void release_player() noexcept{
+        if(player != nullptr) {
+			delete player;
+			player = nullptr;
+		}
+        if(player_queue != nullptr){
+            delete player_queue;
+            player_queue = nullptr;
+        }
+    }
 	
 	/**
 	 * @brief get_latest_frame
@@ -234,11 +247,14 @@ void VideoProcessingFactory::set_display_win_id(void *id) noexcept(false)
 		if(d_ptr->player == nullptr) {
 			try {
 				d_ptr->player = new player::VideoPlayer;
+                d_ptr->player_queue = new core::AbstractQueue<core::FramePacket>;
 			} catch (const std::bad_alloc& except) {
+                if(d_ptr->player != nullptr)
+                    d_ptr->release_player();
 				throw except;
 			}
 		}
-		d_ptr->player->set_win_id(id);
+        d_ptr->player->set_player_object(d_ptr->player_queue,id);
 	}
 }
 
@@ -322,7 +338,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 				GlobalCallBack::Get_CallBack()->on_video_frame_merge(merge_packet);
 			std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 			if(d_ptr->player != nullptr)
-				d_ptr->player->play(merge_packet);
+                d_ptr->player_queue->push_one(merge_packet);
 			push_one(merge_packet);
 		}
 	}
@@ -339,7 +355,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		}
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
-			d_ptr->player->play(packet);
+            d_ptr->player_queue->push_one(packet);
 		push_one(packet);
 		return;
 	}
@@ -373,7 +389,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
-			d_ptr->player->play(packet);
+            d_ptr->player_queue->push_one(packet);
 		push_one(packet);
 		return;
 	}
