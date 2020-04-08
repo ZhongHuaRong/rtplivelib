@@ -70,7 +70,8 @@ LIBS += -lWs2_32 \
 	-lAdvapi32 \
 	-lOle32 \
 	-lOleAut32 \
-	-lStrmiids 
+	-lStrmiids \
+        -lDXGI
 
 INCLUDEPATH += $$PWD/SDK/win64/include
 DEPENDPATH += $$PWD/SDK/win64/include
@@ -129,7 +130,8 @@ HEADERS += \
     src/rtp_network/fec/codec/fecabstractcodec.h \
     src/rtp_network/fec/codec/wirehair.h \ 
     src/rtp_network/fec/fecdecoder.h \
-    src/rtp_network/fec/fecencoder.h
+    src/rtp_network/fec/fecencoder.h \
+    src/device_manager/gpudevice.h
 
 SOURCES += \
     src/core/abstractthread.cpp \
@@ -169,4 +171,5 @@ SOURCES += \
     src/rtp_network/fec/codec/wirehair.cpp \ 
     src/rtp_network/fec/fecdecoder.cpp \
     src/rtp_network/fec/fecencoder.cpp \
-    src/rtp_network/fec/codec/fecabstractcodec.cpp
+    src/rtp_network/fec/codec/fecabstractcodec.cpp \
+    src/device_manager/gpudevice.cpp
