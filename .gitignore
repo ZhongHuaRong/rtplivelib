@@ -30,6 +30,7 @@
 
 # cmake build
 /build/*
-!/build/make-mingw64-Makefiles-Debug.sh
-!/build/make-mingw64-Makefiles-Release.sh
-!/build/toolChain.cmake
+!/build/linux/make-Makefiles.bash
+!/build/msys_mingw64/make-mingw64-Makefiles-Debug.sh
+!/build/msys_mingw64/make-mingw64-Makefiles-Release.sh
+!/build/msys_mingw64/toolChain.cmake
