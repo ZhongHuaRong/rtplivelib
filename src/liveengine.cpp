@@ -120,7 +120,9 @@ void LiveEngine::set_local_display_win_id(void *win_id)
 	try {
 		device->get_video_factory()->set_display_win_id(win_id);
 	} catch (const std::bad_alloc& except) {
-		core::Logger::Print(except.what(),"set_crop_rect",LogLevel::INFO_LEVEL);
+		core::Logger::Print(except.what(),
+							__PRETTY_FUNCTION__,
+							LogLevel::INFO_LEVEL);
 	}
 }
 
@@ -148,7 +150,9 @@ void LiveEngine::set_crop_rect(const image_processing::Rect &rect)noexcept
 	try {
 		device->get_video_factory()->set_crop_rect(rect);
 	} catch (const std::bad_alloc& except) {
-		core::Logger::Print(except.what(),"set_crop_rect",LogLevel::INFO_LEVEL);
+		core::Logger::Print(except.what(),
+							__PRETTY_FUNCTION__,
+							LogLevel::INFO_LEVEL);
 	}
 }
 

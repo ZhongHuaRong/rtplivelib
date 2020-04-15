@@ -41,7 +41,6 @@ public:
         if( open_flag == true)
             return true;
         
-        constexpr char api[] = "rtplivelib::player::AudioPlayer::open_device";
         wanted_spec.freq = format.sample_rate; 
         switch(format.bits){
         case 8:
@@ -68,7 +67,7 @@ public:
 
         if (SDL_OpenAudio(&wanted_spec, nullptr)<0){
             core::Logger::Print_APP_Info(core::Result::SDL_device_open_failed,
-                                         api,
+										 __PRETTY_FUNCTION__,
                                          LogLevel::ERROR_LEVEL);
             return false; 
         } 

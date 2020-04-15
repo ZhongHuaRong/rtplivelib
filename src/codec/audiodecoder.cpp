@@ -72,11 +72,9 @@ public:
 		
 		parser_ctx = av_parser_init(decoder->id);
 		
-		constexpr char api[] = "codec::VideoDecoderPD::init_parser_ctx";
-		
 		if(parser_ctx == nullptr){
 			core::Logger::Print_APP_Info(core::Result::Codec_decoder_parser_init_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			return;
 		}
@@ -129,11 +127,12 @@ public:
 	 */
 	inline void decode(bool play = true) noexcept{
 		int ret = 0;
-		constexpr char api[] = "codec::VideoDecoderPD::decode";
 		
 		ret = avcodec_send_packet(decoder_ctx,pkt);
 		if( ret < 0 ){
-			core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+			core::Logger::Print_FFMPEG_Info(ret,
+											__PRETTY_FUNCTION__,
+											LogLevel::WARNING_LEVEL);
 			return;
 		}
 		
@@ -144,11 +143,15 @@ public:
 			if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
 				return;
 			else if( ret < 0){
-				core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+				core::Logger::Print_FFMPEG_Info(ret,
+												__PRETTY_FUNCTION__,
+												LogLevel::WARNING_LEVEL);
 				return;
 			}
 			
-//			core::Logger::Print("size:{}",api,LogLevel::INFO_LEVEL,sw_frame->format);
+//			core::Logger::Print("size:{}",
+//								__PRETTY_FUNCTION__,
+//								LogLevel::INFO_LEVEL,sw_frame->format);
 		}
 	}
 	
@@ -158,10 +161,9 @@ public:
 	 */
 	inline void parse(uint8_t *data,int size,int64_t pts,int64_t pos) noexcept {
 		auto ret = 0;
-		constexpr char api[] = "codec::VideoDecoderPD::parse";
 		if(parser_ctx == nullptr || decoder_ctx == nullptr){
 			core::Logger::Print_APP_Info(core::Result::Codec_parser_or_codec_not_init,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			return;
 		}
@@ -171,7 +173,9 @@ public:
 			ret = av_parser_parse2(parser_ctx,decoder_ctx,&pkt->data,&pkt->size,
 								   data,size,pts,pts,pos);
 			if ( ret < 0 ){
-				core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+				core::Logger::Print_FFMPEG_Info(ret,
+												__PRETTY_FUNCTION__,
+												LogLevel::WARNING_LEVEL);
 				return;
 			}
 			
@@ -219,10 +223,9 @@ private:
 	 */
 	inline bool _init_decoder(const char * name) noexcept {
 		decoder = avcodec_find_decoder_by_name(name);
-		constexpr char api[] = "codec::VEPD::_init_encoder";
 		if(decoder == nullptr){
 			core::Logger::Print_APP_Info(core::Result::Codec_decoder_not_found,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL,
 										 name);
 			return false;
@@ -232,13 +235,13 @@ private:
 			decoder_ctx = avcodec_alloc_context3(decoder);
 			if(decoder_ctx == nullptr){
 				core::Logger::Print_APP_Info(core::Result::Codec_codec_context_alloc_failed,
-											 api,
+											 __PRETTY_FUNCTION__,
 											 LogLevel::WARNING_LEVEL);
 				return false;
 			}
 			
 			core::Logger::Print_APP_Info(core::Result::Codec_decoder_init_success,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::INFO_LEVEL,
 										 decoder->long_name);
 			return true;
@@ -250,8 +253,6 @@ private:
 	 * 初始化软解用的上下文
 	 */
 	inline void _init_sw_codec_ctx(PayloadType pt) noexcept {
-		
-		constexpr char api[] = "codec::VideoDecoderPD::_init_sw_codec_ctx";
 		AVCodecID id;
 		
 		switch (pt) {
@@ -275,7 +276,7 @@ private:
 		decoder = avcodec_find_decoder(id);
 		if(decoder == nullptr) {
 			core::Logger::Print_APP_Info(core::Result::Codec_decoder_not_found,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL,
 										 id);
 			//没找着格式的话，删除之前初始化过的上下文
@@ -292,7 +293,7 @@ private:
 			
 			if(decoder_ctx == nullptr){
 				core::Logger::Print_APP_Info(core::Result::Codec_codec_context_alloc_failed,
-											 api,
+											 __PRETTY_FUNCTION__,
 											 LogLevel::WARNING_LEVEL);
 				return;
 			}
@@ -300,9 +301,11 @@ private:
 			auto ret = avcodec_open2(decoder_ctx,decoder,nullptr);
 			if(ret != 0){
 				core::Logger::Print_APP_Info(core::Result::Codec_codec_open_failed,
-											 api,
+											 __PRETTY_FUNCTION__,
 											 LogLevel::WARNING_LEVEL);
-				core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+				core::Logger::Print_FFMPEG_Info(ret,
+												__PRETTY_FUNCTION__,
+												LogLevel::WARNING_LEVEL);
 			}
 		}
 	}

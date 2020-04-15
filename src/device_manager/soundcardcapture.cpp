@@ -77,7 +77,6 @@ bool SoundCardCapture::set_current_device(std::string device_id) noexcept
 	auto result = d_ptr->audio_api.set_current_device(device_id,
 													  SoundCardCapturePrivateData::FT);
 #endif
-    constexpr char api[] = "device_manager::SoundCardCapture::set_current_device";
     if(result){
         auto pair = d_ptr->audio_api.get_current_device_info();
 #if defined (WIN64)
@@ -88,12 +87,12 @@ bool SoundCardCapture::set_current_device(std::string device_id) noexcept
 	current_device_info.second = pair.second;
 #endif
 		core::Logger::Print_APP_Info(core::Result::Device_change_success,
-                                     api,
+									 __PRETTY_FUNCTION__,
                                      LogLevel::INFO_LEVEL,
 									 current_device_info.second.c_str());
     } else{
         core::Logger::Print_APP_Info(core::Result::Device_change_failed,
-                                     api,
+									 __PRETTY_FUNCTION__,
                                      LogLevel::ERROR_LEVEL,
                                      current_device_info.second.c_str());
     }

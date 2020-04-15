@@ -37,13 +37,13 @@ public:
 		if(init)
 			return;
 		spdlog::init_thread_pool(4096,2);
-	#ifdef DEBUG 
+#ifdef DEBUG 
 		auto ptr = spdlog::create_async_nb<spdlog::sinks::stdout_sink_mt>(LOGGERNAME);
 		
-	#else
+#else
 		auto ptr = spdlog::create_async_nb<spdlog::sinks::rotating_file_sink_mt>(
 					LOGGERNAME,LOGGERFILENAME,4096,3);
-	#endif
+#endif
 		init = true;
 		{
 			ptr->set_pattern(" [%C-%m-%d %H:%M:%S:%e] %v ***");
@@ -87,18 +87,18 @@ public:
 		case NOOUTPUT_LEVEL:
 			return;
 		case ERROR_LEVEL:
-			ptr->error(Insert_api_format(msg).c_str(),api,t...);
+			ptr->error(Insert_api_format(msg).c_str(),Remove_Func_Param(api),t...);
 			break;
 		case WARNING_LEVEL:
-			ptr->warn(Insert_api_format(msg).c_str(),api,t...);
+			ptr->warn(Insert_api_format(msg).c_str(),Remove_Func_Param(api),t...);
 			break;
 		case INFO_LEVEL:
-			ptr->info(Insert_api_format(msg).c_str(),api,t...);
+			ptr->info(Insert_api_format(msg).c_str(),Remove_Func_Param(api),t...);
 			break;
 		case DEBUG_LEVEL:
 		case MOREINFO_LEVEL:
 		case ALLINFO_LEVEL:
-			ptr->info(Insert_api_format(msg).c_str(),api,t...);
+			ptr->info(Insert_api_format(msg).c_str(),Remove_Func_Param(api),t...);
 			break;
 		}
 		ptr->flush();
@@ -178,9 +178,30 @@ public:
 		}
 	}
 private:
-	static inline const std::string Insert_api_format(const char * msg){
+	static inline const std::string Insert_api_format(const char * msg) noexcept{
 		std::string str("[{}] ");
 		return str.append(msg);
+	}
+	
+	static inline std::string Remove_Func_Param(const char * func) noexcept{
+		return Remove_Func_Param(std::string(func));
+	}
+	
+	static inline std::string Remove_Func_Param(std::string func) noexcept{
+		//返回的字符串+12是去掉最外层命名空间rtplivelib
+		auto first_find_pos = func.rfind('(');
+		if(first_find_pos == std::string::npos){
+			auto second_find_pos = func.rfind(' ');
+			if(second_find_pos != std::string::npos)
+				return func.substr(second_find_pos + 1 + 12);
+		} else {
+			auto second_find_pos = func.rfind(' ',first_find_pos);
+			if(second_find_pos != std::string::npos)
+				return func.substr(second_find_pos + 1 + 12,first_find_pos - second_find_pos - 1 - 12);
+			else 
+				return func.substr(12,first_find_pos - 12);
+		}
+		return func;
 	}
 private:
 	static bool init;

@@ -75,8 +75,6 @@ public:
                          uint8_t *** dst_data,int & dst_nb_samples,
                          int & buffer_size) noexcept{
         
-        constexpr char api[] = "device_manager::ResamplePrivateData::resample";
-        
         std::lock_guard<std::recursive_mutex> lk(mutex);
         if( swr_ctx == nullptr) {
             if(init_ctx() == false)
@@ -96,7 +94,7 @@ public:
                                                      dst_nb_samples, get_sample_format(ofmt.bits), 0);
         if( ret < 0){
             core::Logger::Print_FFMPEG_Info(ret,
-                                            api,
+											__PRETTY_FUNCTION__,
                                             LogLevel::WARNING_LEVEL);
             return core::Result::FramePacket_data_alloc_failed;
         }
@@ -104,7 +102,7 @@ public:
         ret = swr_convert(swr_ctx, data, dst_nb_samples, (const uint8_t **)(*src_data), src_nb_samples);
         if (ret < 0) {
             core::Logger::Print_FFMPEG_Info(ret,
-                                            api,
+											__PRETTY_FUNCTION__,
                                             LogLevel::WARNING_LEVEL);
             return core::Result::Resample_Failed;
         }
@@ -113,7 +111,7 @@ public:
                                                  ret, get_sample_format(ofmt.bits), 1);
         if (buffer_size < 0) {
             core::Logger::Print_FFMPEG_Info(ret,
-                                            api,
+											__PRETTY_FUNCTION__,
                                             LogLevel::WARNING_LEVEL);
             return core::Result::Format_Error;
         }
@@ -131,7 +129,6 @@ protected:
      * 初始化重采样上下文
      */
     bool init_ctx() noexcept{
-        constexpr char api[] = "device_manager::ResamplePrivateData::init_ctx";
         release_ctx();
         swr_ctx = swr_alloc();
         if(!swr_ctx){
@@ -150,7 +147,7 @@ protected:
         int ret;
         if((ret = swr_init(swr_ctx)) < 0){
             core::Logger::Print_FFMPEG_Info(ret,
-                                            api,
+											__PRETTY_FUNCTION__,
                                             LogLevel::WARNING_LEVEL);
             return false;
         }

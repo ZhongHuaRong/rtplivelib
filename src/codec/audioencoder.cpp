@@ -129,7 +129,6 @@ void AudioEncoder::encode(core::FramePacket *packet) noexcept
 		return;
 	
 	int ret;
-	constexpr char api[] = "codec::AEPD::encode";
 	bool free_flag{false};
 	uint8_t **dst_data = nullptr;
 	
@@ -146,7 +145,7 @@ void AudioEncoder::encode(core::FramePacket *packet) noexcept
 			
 			if( packet->format.channels == 0 || packet->format.bits == 0){
 				core::Logger::Print_APP_Info(core::Result::Format_Invalid_format,
-											 api,
+											 __PRETTY_FUNCTION__,
 											 LogLevel::WARNING_LEVEL);
 				return;
 			}
@@ -178,7 +177,9 @@ void AudioEncoder::encode(core::FramePacket *packet) noexcept
 	}
 	
 	if(ret < 0){
-		core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+		core::Logger::Print_FFMPEG_Info(ret,
+										__PRETTY_FUNCTION__,
+										LogLevel::WARNING_LEVEL);
 		if(free_flag){
 			av_free(dst_data[0]);
 			av_free(dst_data);
@@ -227,7 +228,6 @@ void AudioEncoder::set_encoder_param(const core::Format &format) noexcept
 void AudioEncoder::receive_packet() noexcept
 {
 	int ret = 0;
-	constexpr char api[] = "codec::AEPD::receive_packet";
 	AVPacket * src_packet = nullptr;
 	
 	//其实只有输入nullptr结束编码的时候循环才起作用
@@ -235,7 +235,7 @@ void AudioEncoder::receive_packet() noexcept
 		src_packet = av_packet_alloc();
 		if(src_packet == nullptr){
 			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			return;
 		}
@@ -244,14 +244,16 @@ void AudioEncoder::receive_packet() noexcept
 			break;
 		}
 		else if(ret < 0){
-			core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+			core::Logger::Print_FFMPEG_Info(ret,
+											__PRETTY_FUNCTION__,
+											LogLevel::WARNING_LEVEL);
 			break;
 		}
 		//以下操作是拷贝数据
 		auto dst_packet = core::FramePacket::Make_Shared();
 		if(dst_packet == nullptr){
 			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			break;
 		}
@@ -270,7 +272,7 @@ void AudioEncoder::receive_packet() noexcept
 		dst_packet->pts = src_packet->pts;
 		dst_packet->dts = src_packet->dts;
 		core::Logger::Print("audio size:{}",
-							api,
+							__PRETTY_FUNCTION__,
 							LogLevel::ALLINFO_LEVEL,
 							dst_packet->size);
 		
@@ -315,16 +317,15 @@ bool AudioEncoder::_open_ctx(const core::FramePacket *packet) noexcept
 			return false;
 		}
 	}
-	constexpr char api[] = "codec::AEPD::open_ctx";
 	set_encoder_param(packet->format);
 	auto ret = avcodec_open2(encoder_ctx,encoder,nullptr);
 	if(ret < 0){
 		core::Logger::Print_APP_Info(core::Result::Codec_codec_open_failed,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		core::Logger::Print_FFMPEG_Info(ret,
-									 api,
-									 LogLevel::WARNING_LEVEL);
+										__PRETTY_FUNCTION__,
+										LogLevel::WARNING_LEVEL);
 		return false;
 	}
 	ifmt = packet->format;

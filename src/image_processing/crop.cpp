@@ -116,9 +116,8 @@ struct CropPrivateData{
 		avfilter_inout_free(&inputs);
 		avfilter_inout_free(&outputs);
 		if(ret < 0){
-			constexpr char api[] = "image_processing::CropPrivateData::init_filter";
 			core::Logger::Print_FFMPEG_Info(ret,
-											api,
+											__PRETTY_FUNCTION__,
 											LogLevel::WARNING_LEVEL);
 			release_filter();
 		}
@@ -160,7 +159,6 @@ struct CropPrivateData{
 	 * 并不是返回形参的那个
 	 */
 	core::Result crop(core::FramePacket * dst,core::FramePacket * src){
-		constexpr char api[] = "image_processing::CropPrivateData::crop";
 
 		if(filter_graph == nullptr){
 			char descr[512];
@@ -194,7 +192,7 @@ struct CropPrivateData{
 			int ret = av_buffersrc_add_frame_flags(buffersrc_ctx, crop_frame_in, AV_BUFFERSRC_FLAG_PUSH);
 			if(ret < 0){
 				core::Logger::Print_FFMPEG_Info(ret,
-												api,
+												__PRETTY_FUNCTION__,
 												LogLevel::WARNING_LEVEL);
 				return core::Result::Crop_Failed;
 			}
@@ -206,7 +204,7 @@ struct CropPrivateData{
 			ret = av_buffersink_get_frame(buffersink_ctx,crop_frame_out);
 			if(ret < 0){
 				core::Logger::Print_FFMPEG_Info(ret,
-												api,
+												__PRETTY_FUNCTION__,
 												LogLevel::WARNING_LEVEL);
                 return core::Result::Crop_Failed;
 			}

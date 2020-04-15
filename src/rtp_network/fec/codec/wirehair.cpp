@@ -73,7 +73,7 @@ core::Result Wirehair::encode(uint16_t id,
 
     if (encodeResult != Wirehair_Success){
         core::Logger::Print(wirehair_result_string(encodeResult),
-                            "rtp_network::fec::Wirehair::encode",
+							__PRETTY_FUNCTION__,
                             LogLevel::WARNING_LEVEL);
         return core::Result::FEC_Encode_Failed;
     }
@@ -113,7 +113,7 @@ core::Result Wirehair::encode(void *data,
     
         if (encodeResult != Wirehair_Success){
             core::Logger::Print(wirehair_result_string(encodeResult),
-                                "rtp_network::fec::Wirehair::encode",
+								__PRETTY_FUNCTION__,
                                 LogLevel::WARNING_LEVEL);
             return core::Result::FEC_Encode_Failed;
         }
@@ -171,7 +171,7 @@ core::Result Wirehair::decode(uint16_t id, void *data, uint32_t size, uint32_t t
     } else {
         d_ptr->codec.reset();
         core::Logger::Print(wirehair_result_string(decodeResult),
-                            "rtp_network::fec::Wirehair::decode",
+							__PRETTY_FUNCTION__,
                             LogLevel::WARNING_LEVEL);
         return core::Result::FEC_Decode_Failed;
     }
@@ -201,7 +201,7 @@ core::Result Wirehair::data_recover(void *data) noexcept
     d_ptr->codec.reset();
     if (decodeResult != Wirehair_Success){
         core::Logger::Print(wirehair_result_string(decodeResult),
-                            "rtp_network::fec::Wirehair::data_recover",
+							__PRETTY_FUNCTION__,
                             LogLevel::WARNING_LEVEL);
         return core::Result::FEC_Decode_Failed;
     }
@@ -216,7 +216,7 @@ bool Wirehair::InitCodec() noexcept
     if (initResult != Wirehair_Success)
     {
         core::Logger::Print(wirehair_result_string(initResult),
-                            "rtp_network::fec::Wirehair::InitCodec",
+							__PRETTY_FUNCTION__,
                             LogLevel::WARNING_LEVEL);
         return false;
     } 

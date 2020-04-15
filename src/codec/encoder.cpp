@@ -66,12 +66,11 @@ void Encoder::set_hardware_acceleration(bool flag,HardwareDevice::HWDType hwa_ty
 
 bool Encoder::create_encoder(const char *name) noexcept
 {
-	constexpr char api[] = "codec::Encoder::creat_encoder";
 	
 	auto coder = avcodec_find_encoder_by_name(name);
 	if(coder == nullptr){
 		core::Logger::Print_APP_Info(core::Result::Codec_encoder_not_found,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL,
 									 name);
 		return false;
@@ -80,7 +79,7 @@ bool Encoder::create_encoder(const char *name) noexcept
 		auto ctx = avcodec_alloc_context3(coder);
 		if(ctx == nullptr){
 			core::Logger::Print_APP_Info(core::Result::Codec_codec_context_alloc_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			return false;
 		}
@@ -92,7 +91,7 @@ bool Encoder::create_encoder(const char *name) noexcept
 		encoder = coder;
 		encoder_ctx = ctx;
 		core::Logger::Print_APP_Info(core::Result::Codec_encoder_init_success,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::INFO_LEVEL,
 									 coder->long_name);
 		return true;
@@ -101,11 +100,10 @@ bool Encoder::create_encoder(const char *name) noexcept
 
 bool Encoder::open_encoder() noexcept
 {
-	constexpr char api[] = "codec::Encoder::open_encoder";
 //	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 	if( encoder_ctx == nullptr || encoder == nullptr){
 		core::Logger::Print_APP_Info(core::Result::Codec_codec_context_alloc_failed,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		return false;
 	}
@@ -113,11 +111,11 @@ bool Encoder::open_encoder() noexcept
 	auto ret = avcodec_open2(encoder_ctx,encoder,nullptr);
 	if(ret < 0){
 		core::Logger::Print_APP_Info(core::Result::Codec_codec_open_failed,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		core::Logger::Print_FFMPEG_Info(ret,
-									 api,
-									 LogLevel::WARNING_LEVEL);
+										__PRETTY_FUNCTION__,
+										LogLevel::WARNING_LEVEL);
 		return false;
 	}
 	

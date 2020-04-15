@@ -42,7 +42,7 @@ CameraCapture::CameraCapture() :
 	//这里应该不会出现这种情况,但是ffmpeg库的编译出问题的话，这里就会触发了
 	if(d_ptr->ifmt == nullptr){
 		core::Logger::Print_APP_Info(core::Result::InputFormat_format_not_found,
-									 "device_manager::CameraCapture::CameraCapture",
+									 __PRETTY_FUNCTION__,
 									 LogLevel::ERROR_LEVEL,
 									 format_name);
 	}
@@ -198,7 +198,7 @@ bool CameraCapture::set_current_device(std::string device_id) noexcept
 	if(!result){
 		current_device_info = temp;
 		core::Logger::Print_APP_Info(core::Result::Device_change_success,
-									 "device_manager::CameraCapture::set_current_device",
+									 __PRETTY_FUNCTION__,
 									 LogLevel::ERROR_LEVEL,
 									 current_device_info.first.c_str());
 	}
@@ -212,7 +212,6 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 			return nullptr;
 		}
 	}
-	constexpr char api[] = "device_manager::CameraCapture::on_start";
 	
 	//开始捕捉前，睡眠1ms
 	//防止刚解锁就拿到锁，其他线程饥饿
@@ -222,7 +221,7 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 		d_ptr->packet = av_packet_alloc();
 		if(d_ptr->packet == nullptr){
 			core::Logger::Print_APP_Info(core::Result::FramePacket_packet_alloc_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			return nullptr;
 		}
@@ -233,9 +232,11 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 	auto ret = av_read_frame(d_ptr->fmtContxt, d_ptr->packet);
 	if( ret < 0){
 		core::Logger::Print_APP_Info(core::Result::Device_read_frame_failed,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
-		core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
+		core::Logger::Print_RTP_Info(ret,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::WARNING_LEVEL);
 		return nullptr;
 	}
 	
@@ -244,7 +245,7 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 	auto ptr = FramePacket::Make_Shared();
 	if(ptr == nullptr){
 		core::Logger::Print_APP_Info(core::Result::FramePacket_alloc_failed,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		return ptr;
 	}
@@ -263,7 +264,7 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 	ptr->data[0] = static_cast<uint8_t*>(av_malloc(static_cast<size_t>(d_ptr->packet->size)));
 	if(ptr->data[0] == nullptr){
 		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		ptr->size = 0;
 		return ptr;
@@ -279,7 +280,7 @@ void CameraCapture::on_stop()  noexcept{
 		return;
 	avformat_close_input(&d_ptr->fmtContxt);
 	core::Logger::Print_APP_Info(core::Result::InputFormat_context_close,
-								 "device_manager::CameraCapture::on_stop",
+								 __PRETTY_FUNCTION__,
 								 LogLevel::INFO_LEVEL);
 }
 
@@ -293,7 +294,6 @@ bool CameraCapture::open_device() noexcept
 	if(d_ptr->fmtContxt != nullptr){
 		avformat_close_input(&d_ptr->fmtContxt);
 	}
-	constexpr char api[] = "device_manager::CameraCapture::open_device";
 #if defined (WIN64)
 	
 	auto n = avformat_open_input(&d_ptr->fmtContxt,("video=" + current_device_info.second).c_str(),d_ptr->ifmt,&options);
@@ -310,15 +310,15 @@ bool CameraCapture::open_device() noexcept
 #endif
 	if( n != 0 ){
 		core::Logger::Print_APP_Info(core::Result::InputFormat_context_open,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL,
 									 "false");
 		core::Logger::Print_FFMPEG_Info(n,
-									 api,
-									 LogLevel::WARNING_LEVEL);
+										__PRETTY_FUNCTION__,
+										LogLevel::WARNING_LEVEL);
 	}else {
 		core::Logger::Print_APP_Info(core::Result::InputFormat_context_open,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::INFO_LEVEL,
 									 "true");
 	}

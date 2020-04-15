@@ -84,7 +84,6 @@ public:
 			}
 		}
 		
-		constexpr char api[] = "rtp_network::RtpSendThreadPD::check_format";
 		const char *type = is_video == true?"video":"audio";
 		auto & session = is_video == true ? object->_video_session:
 											object->_audio_session;
@@ -93,17 +92,21 @@ public:
 		auto && ret = session->set_default_payload_type(pt);
 		if(ret < 0){
 			core::Logger::Print_APP_Info(core::Result::Rtp_set_payload_type_failed,
-										api,
-										LogLevel::WARNING_LEVEL,
-										type);
-			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL,
+										 type);
+			core::Logger::Print_RTP_Info(ret,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL);
 		}
 		ret = session->set_default_mark(false);
 		if(ret < 0){
 			core::Logger::Print_APP_Info(core::Result::Rtp_set_mark_failed,
-										api,
-										LogLevel::WARNING_LEVEL);
-			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL);
+			core::Logger::Print_RTP_Info(ret,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL);
 		}
 		//不知道怎么算这个数
 		if(is_video){
@@ -117,10 +120,12 @@ public:
 		}
 		if(ret < 0){
 			core::Logger::Print_APP_Info(core::Result::Rtp_set_timestamp_increment_failed,
-										api,
-										LogLevel::WARNING_LEVEL,
-										type);
-			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL,
+										 type);
+			core::Logger::Print_RTP_Info(ret,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL);
 		}
 	}
 	
@@ -141,7 +146,6 @@ public:
 					  const double & timestampUnit,
 					  bool is_video) noexcept {
 		int ret;
-		constexpr char api[] = "rtp_network::RtpSendThreadPD::init_session";
 		
 		ret = session->create(timestampUnit,port_base);
 		//设置最大发送包的大小,不过好像分包还是要自己实现
@@ -149,15 +153,17 @@ public:
 		const char* type = is_video? "video":"audio";
 		if(ret < 0){
 			core::Logger::Print_APP_Info(core::Result::Rtp_set_timestamp_increment_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL,
 										 type,
 										 port_base);
-			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
+			core::Logger::Print_RTP_Info(ret,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL);
 		}
 		else {
 			core::Logger::Print_APP_Info(core::Result::Rtp_listening_port_base_success,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::INFO_LEVEL,
 										 type,
 										 port_base);
@@ -218,20 +224,20 @@ public:
 		//先把原来的链接断掉
 		session->clear_destinations();
 		
-		constexpr char api[] = "rtp_network::RtpSendThreadPD::set_destination";
-		
 		auto && ret = session->add_destination(ip, port_base);
 		if(ret < 0){
 			core::Logger::Print_APP_Info(core::Result::Rtp_create_destination_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL,
 										 type,
 										 ip[0],ip[1],ip[2],ip[3],port_base);
-			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
+			core::Logger::Print_RTP_Info(ret,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL);
 		}
 		else
 			core::Logger::Print_APP_Info(core::Result::Rtp_create_destination_success,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::INFO_LEVEL,
 										 type,
 										 ip[0],ip[1],ip[2],ip[3],port_base);
@@ -252,13 +258,12 @@ public:
 		
 		auto & session = is_video == true ? object->_video_session:
 											object->_audio_session;
-		constexpr char api[] = "rtp_network::RtpSendThreadPD::send_packet";
 		
         std::vector<std::vector<int8_t>> data;
         fec::FECParam param;
 		if( fec_encoder.encode(packet,data,param) != core::Result::Success) {
 			core::Logger::Print_APP_Info(core::Result::FEC_Encode_Failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			
 			//编码失败后，直接发送
@@ -303,14 +308,15 @@ public:
 	
 private:
 	void _send_packet_ex(RTPSession * session,void *d,uint32_t size,uint16_t cur_pos,fec::FECParam param) noexcept{
-		constexpr char api[] = "rtp_network::RtpSendThreadPD::_send_packet_ex";
 		auto ret = session->send_packet_ex( d, size,cur_pos,&param,sizeof(fec::FECParam));
 		
 		if( ret < 0 ){
 			core::Logger::Print_APP_Info(core::Result::Rtp_send_packet_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
-			core::Logger::Print_RTP_Info(ret,api,LogLevel::WARNING_LEVEL);
+			core::Logger::Print_RTP_Info(ret,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL);
 		}
 		else 
 			bandwidth.add_value(fec_encoder.get_symbol_size());
@@ -429,11 +435,14 @@ bool RTPSendThread::set_local_name(const std::string &name) noexcept
 	if(_audio_session != nullptr){
 		ret_a = _audio_session->set_local_name(name);
 	}
-	constexpr char api[] = "rtp_network::RTPSendThread::set_local_name";
 	if(ret_v < 0)
-		core::Logger::Print_RTP_Info(ret_v,api,LogLevel::WARNING_LEVEL);
+		core::Logger::Print_RTP_Info(ret_v,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::WARNING_LEVEL);
 	if(ret_a < 0)
-		core::Logger::Print_RTP_Info(ret_a,api,LogLevel::WARNING_LEVEL);
+		core::Logger::Print_RTP_Info(ret_a,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::WARNING_LEVEL);
 	return ret_v >= 0 && ret_a >=0;
 }
 
@@ -475,11 +484,14 @@ bool RTPSendThread::set_room_name(const std::string &name) noexcept
 	if(_audio_session != nullptr){
 		ret_a = _audio_session->set_room_name(name);
 	}
-	constexpr char api[] = "rtp_network::RTPSendThread::set_room_name";
 	if(ret_v < 0)
-		core::Logger::Print_RTP_Info(ret_v,api,LogLevel::WARNING_LEVEL);
+		core::Logger::Print_RTP_Info(ret_v,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::WARNING_LEVEL);
 	if(ret_a < 0)
-		core::Logger::Print_RTP_Info(ret_a,api,LogLevel::WARNING_LEVEL);
+		core::Logger::Print_RTP_Info(ret_a,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::WARNING_LEVEL);
 	return ret_v >= 0 && ret_a >=0;
 }
 
@@ -492,11 +504,14 @@ bool RTPSendThread::set_push_flag(bool flag) noexcept
 	if(_audio_session != nullptr){
 		ret_a = _audio_session->set_push_flag(flag);
 	}
-	constexpr char api[] = "rtp_network::RTPSendThread::set_push_flag";
 	if(ret_v < 0)
-		core::Logger::Print_RTP_Info(ret_v,api,LogLevel::WARNING_LEVEL);
+		core::Logger::Print_RTP_Info(ret_v,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::WARNING_LEVEL);
 	if(ret_a < 0)
-		core::Logger::Print_RTP_Info(ret_a,api,LogLevel::WARNING_LEVEL);
+		core::Logger::Print_RTP_Info(ret_a,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::WARNING_LEVEL);
 	return ret_v >= 0 && ret_a >=0;
 }
 

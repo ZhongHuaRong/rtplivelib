@@ -35,7 +35,6 @@ VideoEncoder::~VideoEncoder()
 void VideoEncoder::encode(core::FramePacket *packet) noexcept
 {
 	int ret;
-	constexpr char api[] = "codec::VideoEncoder::encode";
 	
 	if(packet != nullptr){
 		if(use_hw_flag == true){
@@ -60,7 +59,7 @@ void VideoEncoder::encode(core::FramePacket *packet) noexcept
 			encode_sw_frame = _alloc_frame();
 		if(encode_sw_frame == nullptr){
 			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			return;
 		}
@@ -85,7 +84,7 @@ void VideoEncoder::encode(core::FramePacket *packet) noexcept
             encode_hw_frame = _alloc_hw_frame();
             if( encode_hw_frame == nullptr){
                 core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
-                                             api,
+											 __PRETTY_FUNCTION__,
                                              LogLevel::WARNING_LEVEL);
                 return;
             }
@@ -95,10 +94,12 @@ void VideoEncoder::encode(core::FramePacket *packet) noexcept
         ret = av_hwframe_transfer_data(encode_hw_frame, encode_sw_frame, 0);
         if( ret < 0){
             core::Logger::Print("av_hwframe_transfer_data error",
-                                api,
+								__PRETTY_FUNCTION__,
                                 LogLevel::MOREINFO_LEVEL);
 
-            core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::ERROR_LEVEL);
+            core::Logger::Print_FFMPEG_Info(ret,
+											__PRETTY_FUNCTION__,
+											LogLevel::ERROR_LEVEL);
             return;
         }
         ret = avcodec_send_frame(encoder_ctx,encode_hw_frame);
@@ -107,7 +108,9 @@ void VideoEncoder::encode(core::FramePacket *packet) noexcept
         ret = avcodec_send_frame(encoder_ctx,encode_sw_frame);
     
     if(ret < 0){
-        core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+        core::Logger::Print_FFMPEG_Info(ret,
+										__PRETTY_FUNCTION__,
+										LogLevel::WARNING_LEVEL);
         return;
     }
     
@@ -136,7 +139,6 @@ void VideoEncoder::set_encoder_param(const core::Format &format) noexcept
 void VideoEncoder::receive_packet() noexcept
 {
 	int ret = 0;
-	constexpr char api[] = "codec::VideoEncoder::receive_packet";
 	AVPacket * src_packet = nullptr;
 	
 	//其实只有输入nullptr结束编码的时候循环才起作用
@@ -144,7 +146,7 @@ void VideoEncoder::receive_packet() noexcept
 		src_packet = av_packet_alloc();
 		if(src_packet == nullptr){
 			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			return;
 		}
@@ -156,14 +158,16 @@ void VideoEncoder::receive_packet() noexcept
 			break;
 		}
 		else if(ret < 0){
-			core::Logger::Print_FFMPEG_Info(ret,api,LogLevel::WARNING_LEVEL);
+			core::Logger::Print_FFMPEG_Info(ret,
+											__PRETTY_FUNCTION__,
+											LogLevel::WARNING_LEVEL);
 			break;
 		}
 		//以下操作是拷贝数据
 		auto dst_packet = core::FramePacket::Make_Shared();
 		if(dst_packet == nullptr){
 			core::Logger::Print_APP_Info(core::Result::FramePacket_frame_alloc_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			break;
 		}
@@ -182,7 +186,7 @@ void VideoEncoder::receive_packet() noexcept
 		dst_packet->pts = src_packet->pts;
 		dst_packet->dts = src_packet->dts;
 		core::Logger::Print("video size:{}",
-							api,
+							__PRETTY_FUNCTION__,
 							LogLevel::ALLINFO_LEVEL,
 							dst_packet->size);
 		
@@ -255,7 +259,6 @@ bool VideoEncoder::_select_hwdevice(const core::FramePacket *packet) noexcept
 	
 	//先释放之前的编码器上下文
 	_close_ctx();
-	constexpr char api[] = "codec::VideoEncoder::init_hwdevice";
 	
 	switch(hwd_type_user){
 	case HardwareDevice::None:
@@ -292,7 +295,7 @@ bool VideoEncoder::_select_hwdevice(const core::FramePacket *packet) noexcept
 	}
 	default:
 		core::Logger::Print_APP_Info(core::Result::Function_not_implemented,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		hwd_type_cur = hwd_type_user = HardwareDevice::None;
 		return false;
@@ -308,10 +311,9 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket *packet) noexcept
 	//为了减少重启次数，先暂时不判断帧率，只判断格式
 	if(format == packet->format)
 		return;
-	constexpr char api[] = "codec::VEPD::set_encoder_ctx";
 	if(packet->format.frame_rate <= 0){
 		core::Logger::Print_APP_Info(core::Result::Codec_frame_rate_must_more_than_zero,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		return;
 	}
@@ -343,11 +345,11 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket *packet) noexcept
 	auto ret = avcodec_open2(encoder_ctx,encoder,nullptr);
 	if(ret < 0){
 		core::Logger::Print_APP_Info(core::Result::Codec_codec_open_failed,
-									 api,
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		core::Logger::Print_FFMPEG_Info(ret,
-									 api,
-									 LogLevel::WARNING_LEVEL);
+										__PRETTY_FUNCTION__,
+										LogLevel::WARNING_LEVEL);
 	}
 	
 	format = packet->format;

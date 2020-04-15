@@ -22,7 +22,7 @@ AbstractPlayer::AbstractPlayer(PlayFormat format):
 	}
 	if(_init_result != 0)
 		core::Logger::Print(SDL_GetError(),
-							"rtplivelib::core::AbstractPlayer::AbstractPlayer",
+							__PRETTY_FUNCTION__,
 							LogLevel::ERROR_LEVEL);
 }
 

@@ -33,7 +33,6 @@ struct ScalePrivateData{
 	 */
     core::Result scale(uint8_t * src_data[],int src_linesize[],
                        uint8_t * dst_data[],int dst_linesize[]) noexcept {
-        constexpr char api[] = "device_manager::VPFPrivateData::scale";
         
         const AVPixelFormat & src_fmt = static_cast<AVPixelFormat>(ifmt.pixel_format);
         const AVPixelFormat & dst_fmt = static_cast<AVPixelFormat>(ofmt.pixel_format);
@@ -62,7 +61,7 @@ struct ScalePrivateData{
 
         if(ret < 0){
             core::Logger::Print_FFMPEG_Info(ret,
-											api,
+											__PRETTY_FUNCTION__,
 											LogLevel::WARNING_LEVEL);
             return core::Result::Scale_Failed;
         }

@@ -40,25 +40,23 @@ public:
      */
     inline bool create_hwdevice_ctx(AVHWDeviceType type) noexcept {
         close_hwdevice_ctx();
-        
-        constexpr char api[] = "codec::HardwareDevicePrivateData::create_hwdevice_ctx";
-        
+          
         {
             auto ret = av_hwdevice_ctx_create(&hw_device_ctx, type,
                                              nullptr, nullptr, 0);
             if( ret < 0){
                 core::Logger::Print_APP_Info(core::Result::Codec_hardware_ctx_create_failed,
-                                             api,
+											 __PRETTY_FUNCTION__,
                                              LogLevel::WARNING_LEVEL,
                                              av_hwdevice_get_type_name(type));
                 core::Logger::Print_FFMPEG_Info(ret,
-                                                api,
+												__PRETTY_FUNCTION__,
                                                 LogLevel::WARNING_LEVEL);
                 hwdevice_type = AV_HWDEVICE_TYPE_NONE;
             }
             else {
                 core::Logger::Print_APP_Info(core::Result::Codec_hardware_ctx_create_success,
-                                             api,
+											 __PRETTY_FUNCTION__,
                                              LogLevel::INFO_LEVEL,
                                              av_hwdevice_get_type_name(type));
                 hwdevice_type = type;
@@ -83,11 +81,10 @@ public:
 		AVHWFramesContext *frames_ctx{nullptr};
 		
 		int err = 0;
-		constexpr char api[] = "codec::HardwareDevicePrivateData::set_encoder_ctx";
 	
 		if ((hw_frames_ref = av_hwframe_ctx_alloc(hw_device_ctx)) == nullptr) {
 			core::Logger::Print_APP_Info(core::Result::Codec_hard_frames_create_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL,
 										 av_hwdevice_get_type_name(hwdevice_type));
 			return false;
@@ -165,7 +162,7 @@ public:
 		
 		if ((err = av_hwframe_ctx_init(hw_frames_ref)) < 0) {
 			core::Logger::Print_FFMPEG_Info(err,
-											api,
+											__PRETTY_FUNCTION__,
 											LogLevel::WARNING_LEVEL);
 			av_buffer_unref(&hw_frames_ref);
 			return false;
@@ -174,7 +171,7 @@ public:
 		ctx->hw_frames_ctx = av_buffer_ref(hw_frames_ref);
 		if (!ctx->hw_frames_ctx)
 			core::Logger::Print_APP_Info(core::Result::Codec_set_hard_frames_ctx_failed,
-										 api,
+										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 	
 		av_buffer_unref(&hw_frames_ref);
@@ -217,7 +214,7 @@ public:
 					ret = av_hwframe_ctx_init(avctx->hw_frames_ctx);
 					if (ret < 0){
 						core::Logger::Print_FFMPEG_Info(ret,
-														"set_decoder_ctx",
+														__PRETTY_FUNCTION__,
 														LogLevel::WARNING_LEVEL);
 						return AV_PIX_FMT_NONE;
 					}
@@ -243,12 +240,11 @@ public:
 	 * @return 
 	 */
 	inline bool set_decoder_ctx2(AVCodecContext * ctx,AVCodec * codec) noexcept {
-		constexpr char api[] = "codec::HardwareDevicePrivateData::set_decoder_ctx2";
 		for (auto i = 0;; i++) {
 			const AVCodecHWConfig *config = avcodec_get_hw_config(codec, i);
 			if (!config) {
 				core::Logger::Print("Decoder {} does not support device type {}.",
-									api,
+									__PRETTY_FUNCTION__,
 									LogLevel::WARNING_LEVEL,
 									codec->name, av_hwdevice_get_type_name(hwdevice_type));
 				return false;
@@ -271,7 +267,7 @@ public:
 			}
 			
 			core::Logger::Print("Failed to get HW surface format..",
-								"get_format",
+								__PRETTY_FUNCTION__,
 								LogLevel::DEBUG_LEVEL);
 			return AV_PIX_FMT_NONE;
 		};
@@ -363,7 +359,7 @@ bool HardwareDevice::init_device(void *codec_ctx,void * codec,HardwareDevice::HW
     _init_result = (result >= 0);
     if(!_init_result)
         core::Logger::Print_FFMPEG_Info(result,
-                                        "codec::HardwareDevicePrivateData::set_encoder_ctx",
+										__PRETTY_FUNCTION__,
                                         LogLevel::WARNING_LEVEL);
     return _init_result;
 }
