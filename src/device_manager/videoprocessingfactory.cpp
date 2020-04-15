@@ -5,15 +5,15 @@
 #include "../core/time.h"
 #include "../core/logger.h"
 extern "C" {
-    #include <libavcodec/avcodec.h>
-    #include <libavformat/avformat.h>
-    #include <libavdevice/avdevice.h>
-	#include <libavutil/dict.h>
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavdevice/avdevice.h>
+#include <libavutil/dict.h>
 
-	#include <libavfilter/buffersink.h>
-	#include <libavfilter/buffersrc.h>
-	#include <libswscale/swscale.h>
-	#include <libavutil/imgutils.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
+#include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
 }
 
 namespace rtplivelib {
@@ -31,37 +31,37 @@ public:
 	//因为该类处理视频时，只有注册回调才能获取到数据
 	//所以内部设置播放器用于播放
 	player::VideoPlayer *player{nullptr};
-    core::AbstractQueue<core::FramePacket> *player_queue{nullptr};
+	core::AbstractQueue<core::FramePacket> *player_queue{nullptr};
 	std::mutex player_mutex;
 	//转换格式用的结构体
 	core::Format scale_format_current;
 	core::Format scale_format_privious;
 	//重叠用的结构体
 	//FRect overlay_rect;
-//	std::mutex overlay_mutex;
+	//	std::mutex overlay_mutex;
 	//保存上一帧
 	core::FramePacket::SharedPacket privious_camera_frame;
 	core::FramePacket::SharedPacket privious_desktop_frame;
-    //上一帧的时间戳
-    int64_t privious_ts{0};
+	//上一帧的时间戳
+	int64_t privious_ts{0};
 	
 	///////////////////////
 	//转换格式用的上下文
 	
 	~VideoProcessingFactoryPrivateData(){
-        release_player();
+		release_player();
 	}
-    
-    inline void release_player() noexcept{
-        if(player != nullptr) {
+	
+	inline void release_player() noexcept{
+		if(player != nullptr) {
 			delete player;
 			player = nullptr;
 		}
-        if(player_queue != nullptr){
-            delete player_queue;
-            player_queue = nullptr;
-        }
-    }
+		if(player_queue != nullptr){
+			delete player_queue;
+			player_queue = nullptr;
+		}
+	}
 	
 	/**
 	 * @brief get_latest_frame
@@ -96,11 +96,11 @@ public:
 				return core::FramePacket::SharedPacket(nullptr);
 			}
 			//深拷贝一份数据
-//			{
-//				core::FramePacket * new_packet{core::FramePacket::Make_Packet()};
-//				core::FramePacket::Copy(new_packet,pri_frame.get());
-//				pri_frame = std::make_shared<core::FramePacket>(new_packet);
-//			}
+			//			{
+			//				core::FramePacket * new_packet{core::FramePacket::Make_Packet()};
+			//				core::FramePacket::Copy(new_packet,pri_frame.get());
+			//				pri_frame = std::make_shared<core::FramePacket>(new_packet);
+			//			}
 			//然后修改pts和dts,为了保险起见，减6ms
 			auto time = static_cast<int64_t>(wait_time - 6);
 			//不能让time小于等于0
@@ -110,11 +110,11 @@ public:
 			return pri_frame;
 		}
 	}
-    
-    inline void on_real_time_fps(int64_t ts) noexcept{
-        core::GlobalCallBack::Get_CallBack()->on_video_real_time_fps(1000000.0f / (ts - privious_ts));
-        privious_ts = ts;
-    }
+	
+	inline void on_real_time_fps(int64_t ts) noexcept{
+		core::GlobalCallBack::Get_CallBack()->on_video_real_time_fps(1000000.0f / (ts - privious_ts));
+		privious_ts = ts;
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,9 +126,9 @@ VideoProcessingFactory::VideoProcessingFactory(
 	dc_ptr(dc),
 	d_ptr(new VideoProcessingFactoryPrivateData)
 {
-//	d_ptr->overlay_rect.x = 0.6f;
-//	d_ptr->overlay_rect.y = 0.7f;
-//	d_ptr->overlay_rect.width = 0.3f;
+	//	d_ptr->overlay_rect.x = 0.6f;
+	//	d_ptr->overlay_rect.y = 0.7f;
+	//	d_ptr->overlay_rect.width = 0.3f;
 	
 	d_ptr->scale_format_current.pixel_format = AV_PIX_FMT_YUV420P;
 	d_ptr->scale_format_current.bits = 12;
@@ -183,10 +183,10 @@ void VideoProcessingFactory::set_crop_rect(const image_processing::Rect &rect) n
 
 void VideoProcessingFactory::set_overlay_rect(const image_processing::FRect &rect) noexcept
 {
-//	if(d_ptr->overlay_rect == rect)
-//		return;
-//	std::lock_guard<std::mutex> lk(d_ptr->overlay_mutex);
-//	d_ptr->overlay_rect = rect;
+	//	if(d_ptr->overlay_rect == rect)
+	//		return;
+	//	std::lock_guard<std::mutex> lk(d_ptr->overlay_mutex);
+	//	d_ptr->overlay_rect = rect;
 }
 
 void VideoProcessingFactory::set_capture(bool camera, bool desktop) noexcept
@@ -247,14 +247,14 @@ void VideoProcessingFactory::set_display_win_id(void *id) noexcept(false)
 		if(d_ptr->player == nullptr) {
 			try {
 				d_ptr->player = new player::VideoPlayer;
-                d_ptr->player_queue = new core::AbstractQueue<core::FramePacket>;
+				d_ptr->player_queue = new core::AbstractQueue<core::FramePacket>;
 			} catch (const std::bad_alloc& except) {
-                if(d_ptr->player != nullptr)
-                    d_ptr->release_player();
+				if(d_ptr->player != nullptr)
+					d_ptr->release_player();
 				throw except;
 			}
 		}
-        d_ptr->player->set_player_object(d_ptr->player_queue,id);
+		d_ptr->player->set_player_object(d_ptr->player_queue,id);
 	}
 }
 
@@ -309,8 +309,8 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		auto before_time = Time::Now();
 		auto camera_frame = d_ptr->get_latest_frame(cc_ptr,d_ptr->privious_camera_frame,wait_time);
 		auto desktop_frame =d_ptr->get_latest_frame(dc_ptr,d_ptr->privious_desktop_frame,
-											 wait_time - 
-											 static_cast<int32_t>( (Time::Now() - before_time).to_timestamp() ));
+													wait_time - 
+													static_cast<int32_t>( (Time::Now() - before_time).to_timestamp() ));
 		
 		//裁剪的判断
 		bool is_crop;
@@ -338,7 +338,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 				GlobalCallBack::Get_CallBack()->on_video_frame_merge(merge_packet);
 			std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 			if(d_ptr->player != nullptr)
-                d_ptr->player_queue->push_one(merge_packet);
+				d_ptr->player_queue->push_one(merge_packet);
 			push_one(merge_packet);
 		}
 	}
@@ -351,11 +351,11 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		//第一时间回调
 		if(GlobalCallBack::Get_CallBack() != nullptr){
 			GlobalCallBack::Get_CallBack()->on_camera_frame(packet);
-            d_ptr->on_real_time_fps(packet->pts);
+			d_ptr->on_real_time_fps(packet->pts);
 		}
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
-            d_ptr->player_queue->push_one(packet);
+			d_ptr->player_queue->push_one(packet);
 		push_one(packet);
 		return;
 	}
@@ -384,12 +384,12 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		//裁剪后回调
 		if(GlobalCallBack::Get_CallBack() != nullptr){
 			GlobalCallBack::Get_CallBack()->on_desktop_frame(packet);
-            d_ptr->on_real_time_fps(packet->pts);
+			d_ptr->on_real_time_fps(packet->pts);
 		}
 		
 		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 		if(d_ptr->player != nullptr)
-            d_ptr->player_queue->push_one(packet);
+			d_ptr->player_queue->push_one(packet);
 		push_one(packet);
 		return;
 	}
@@ -424,7 +424,7 @@ core::FramePacket::SharedPacket VideoProcessingFactory::_merge_frame(
 		core::FramePacket::SharedPacket dp, core::FramePacket::SharedPacket cp)
 {
 	UNUSED(cp)
-	return dp;
+			return dp;
 }
 
 } // namespace device_manager

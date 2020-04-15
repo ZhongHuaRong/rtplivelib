@@ -11,26 +11,26 @@ namespace device_manager {
 class CameraCapturePrivateData;
 
 struct VideoSize{
-    int widget;
-    int height;
-
-    std::string to_string() noexcept{
-        std::string size = std::to_string(widget);
-        size += "x";
-        size += std::to_string(height);
-        return size;
-    }
-
-    bool operator==(const VideoSize& size){
-        if(memcmp(this,&size,sizeof(VideoSize)) == 0)
-            return true;
-        else
-            return false;
-    }
-
-    bool operator!=(const VideoSize& size){
-        return !this->operator==(size);
-    }
+	int widget;
+	int height;
+	
+	std::string to_string() noexcept{
+		std::string size = std::to_string(widget);
+		size += "x";
+		size += std::to_string(height);
+		return size;
+	}
+	
+	bool operator==(const VideoSize& size){
+		if(memcmp(this,&size,sizeof(VideoSize)) == 0)
+			return true;
+		else
+			return false;
+	}
+	
+	bool operator!=(const VideoSize& size){
+		return !this->operator==(size);
+	}
 };
 
 /**
@@ -61,13 +61,13 @@ public:
 	explicit CameraCapture();
 	
 	~CameraCapture() override;
-
-    /**
-     * @brief set_fps
-     * 设置帧数
-     * @param value
-     * 帧数
-     */
+	
+	/**
+	 * @brief set_fps
+	 * 设置帧数
+	 * @param value
+	 * 帧数
+	 */
 	void set_fps(int value);
 	
 	/**
@@ -75,20 +75,20 @@ public:
 	 * 获取预设的帧数
 	 */
 	int get_fps() noexcept;
-
-    /**
-     * @brief get_video_size
-     * 获取采集视频的分辨率大小
-     * @return
-     */
-    const VideoSize& get_video_size()noexcept;
-
-    /**
-     * @brief set_video_size
-     * 设置将要采集的视频分辨率
-     * @param size
-     */
-    void set_video_size(const VideoSize& size) noexcept;
+	
+	/**
+	 * @brief get_video_size
+	 * 获取采集视频的分辨率大小
+	 * @return
+	 */
+	const VideoSize& get_video_size()noexcept;
+	
+	/**
+	 * @brief set_video_size
+	 * 设置将要采集的视频分辨率
+	 * @param size
+	 */
+	void set_video_size(const VideoSize& size) noexcept;
 	
 	/**
 	 * @brief get_all_device_info
@@ -116,16 +116,16 @@ public:
 	 */
 	virtual bool set_current_device(std::string device_id) noexcept override;
 protected:
-    /**
-     * @brief on_start
-     * 开始捕捉画面后的回调
-     */
+	/**
+	 * @brief on_start
+	 * 开始捕捉画面后的回调
+	 */
 	virtual SharedPacket on_start() noexcept override;
-
-    /**
-     * @brief on_stop
-     * 结束捕捉画面后的回调
-     */
+	
+	/**
+	 * @brief on_stop
+	 * 结束捕捉画面后的回调
+	 */
 	virtual void on_stop() noexcept override;
 	
 	/**
@@ -135,13 +135,13 @@ protected:
 	 */
 	bool open_device() noexcept;
 private:
-    int _fps{30};
-    VideoSize _size{640,480};
-	CameraCapturePrivateData * const d_ptr;
+	int									_fps{30};
+	VideoSize							_size{640,480};
+	CameraCapturePrivateData * const	d_ptr;
 };
 
 inline int CameraCapture::get_fps() noexcept												{		return _fps;}
-inline const VideoSize &CameraCapture::get_video_size() noexcept                            {       return _size;}
+inline const VideoSize &CameraCapture::get_video_size() noexcept							{		return _size;}
 
 }//namespace device_manager
 

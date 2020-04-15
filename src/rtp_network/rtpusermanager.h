@@ -175,44 +175,44 @@ protected:
 	 */
 	void set_active(bool flag) noexcept;
 private:
-	static RTPUserManager * _manager;
-	static volatile uint32_t _local_video_ssrc;
-	static volatile uint32_t _local_audio_ssrc;
-	std::list<User> _user_list;
-	std::mutex _mutex;
+	static RTPUserManager			*_manager;
+	static volatile uint32_t		_local_video_ssrc;
+	static volatile uint32_t		_local_audio_ssrc;
+	std::list<User>					_user_list;
+	std::mutex						_mutex;
 	//判断自己是否进入房间
-	volatile bool _active;
+	volatile bool					_active;
 	
 	friend class RTPSendThread;
 	friend class RtpSendThreadPrivateData;
 };
 
-inline RTPUserManager * RTPUserManager::Get_user_manager() noexcept									{
+inline RTPUserManager * RTPUserManager::Get_user_manager() noexcept				{
 	if(_manager == nullptr){
 		_manager = new RTPUserManager;
 	}
 	return _manager;
 }
-inline void RTPUserManager::Release() noexcept														{
+inline void RTPUserManager::Release() noexcept									{
 	if(_manager != nullptr){
 		delete _manager;
 		_manager = nullptr;
 	}
 }
-inline size_t RTPUserManager::get_user_count() noexcept												{
+inline size_t RTPUserManager::get_user_count() noexcept							{
 	return _user_list.size();
 }
-inline uint32_t RTPUserManager::get_local_video_ssrc() noexcept								{
+inline uint32_t RTPUserManager::get_local_video_ssrc() noexcept					{
 	return _local_video_ssrc;
 }
-inline uint32_t RTPUserManager::get_local_audio_ssrc() noexcept								{
+inline uint32_t RTPUserManager::get_local_audio_ssrc() noexcept					{
 	return _local_audio_ssrc;
 }
-inline void RTPUserManager::clear_all() noexcept													{
+inline void RTPUserManager::clear_all() noexcept								{
 	std::lock_guard<std::mutex> lk(_mutex);
 	_user_list.clear();
 }
-inline void RTPUserManager::set_active(bool flag) noexcept											{
+inline void RTPUserManager::set_active(bool flag) noexcept						{
 	_active = flag;
 	if(flag == false)
 		clear_all();

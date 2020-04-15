@@ -54,7 +54,7 @@ SoundCardCapture::~SoundCardCapture()
 std::map<std::string, std::string> SoundCardCapture::get_all_device_info()  noexcept(false)
 {
 	std::map<std::string,std::string> info_map;
-
+	
 	auto list_info = d_ptr->audio_api.get_all_device_info(SoundCardCapturePrivateData::FT);
 	for(auto i = list_info.begin(); i != list_info.end(); ++i){
 #if defined (WIN64)
@@ -77,31 +77,31 @@ bool SoundCardCapture::set_current_device(std::string device_id) noexcept
 	auto result = d_ptr->audio_api.set_current_device(device_id,
 													  SoundCardCapturePrivateData::FT);
 #endif
-    if(result){
-        auto pair = d_ptr->audio_api.get_current_device_info();
+	if(result){
+		auto pair = d_ptr->audio_api.get_current_device_info();
 #if defined (WIN64)
-	current_device_info.first = core::StringFormat::WString2String(pair.first);
-	current_device_info.second = core::StringFormat::WString2String(pair.second);
+		current_device_info.first = core::StringFormat::WString2String(pair.first);
+		current_device_info.second = core::StringFormat::WString2String(pair.second);
 #elif defined(unix)
-	current_device_info.first = pair.first;
-	current_device_info.second = pair.second;
+		current_device_info.first = pair.first;
+		current_device_info.second = pair.second;
 #endif
 		core::Logger::Print_APP_Info(core::Result::Device_change_success,
 									 __PRETTY_FUNCTION__,
-                                     LogLevel::INFO_LEVEL,
+									 LogLevel::INFO_LEVEL,
 									 current_device_info.second.c_str());
-    } else{
-        core::Logger::Print_APP_Info(core::Result::Device_change_failed,
+	} else{
+		core::Logger::Print_APP_Info(core::Result::Device_change_failed,
 									 __PRETTY_FUNCTION__,
-                                     LogLevel::ERROR_LEVEL,
-                                     current_device_info.second.c_str());
-    }
-    return result;
+									 LogLevel::ERROR_LEVEL,
+									 current_device_info.second.c_str());
+	}
+	return result;
 }
 
 bool SoundCardCapture::set_default_device() noexcept
 {
-    return d_ptr->audio_api.set_default_device(SoundCardCapturePrivateData::FT);
+	return d_ptr->audio_api.set_default_device(SoundCardCapturePrivateData::FT);
 }
 
 /**
@@ -126,7 +126,7 @@ AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
  */
 void SoundCardCapture::on_stop() noexcept
 {
-    d_ptr->audio_api.stop();
+	d_ptr->audio_api.stop();
 }
 
 bool SoundCardCapture::open_device() noexcept

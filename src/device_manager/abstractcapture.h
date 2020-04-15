@@ -21,15 +21,15 @@ class RTPLIVELIBSHARED_EXPORT AbstractCapture :
 {
 public:
 	
-    /**
-     * @brief The CaptureType enum
-     * 表示该类捕捉的数据类型
-     * Unknown:表示未知数据类型
-     * Desktop:表示捕捉桌面画面
-     * Camera:表示捕捉摄像头画面
-     * Microphone:表示捕捉麦克风声音
-     * Soundcard:表示捕捉声卡声音
-     */
+	/**
+	 * @brief The CaptureType enum
+	 * 表示该类捕捉的数据类型
+	 * Unknown:表示未知数据类型
+	 * Desktop:表示捕捉桌面画面
+	 * Camera:表示捕捉摄像头画面
+	 * Microphone:表示捕捉麦克风声音
+	 * Soundcard:表示捕捉声卡声音
+	 */
 	enum struct CaptureType {
 		Unknown = 0x00,
 		Desktop = 0x01,
@@ -42,42 +42,42 @@ public:
 	using SharedPacket = core::FramePacket::SharedPacket;
 	using device_info = std::pair<std::string,std::string>;
 public:
-    /**
-     * @def AbstractCapture
-     * @brief
-     * 生成线程，并将自己移到该线程，该类的子类所有slot都是异步的
-     * @param type
-     * 捕捉数据的类型，在子类的构造函数中输入
-     */
+	/**
+	 * @def AbstractCapture
+	 * @brief
+	 * 生成线程，并将自己移到该线程，该类的子类所有slot都是异步的
+	 * @param type
+	 * 捕捉数据的类型，在子类的构造函数中输入
+	 */
 	AbstractCapture(CaptureType type = CaptureType::Unknown) noexcept;
-
-    /**
-     * @brief ~AbstractCapture
-     * 终止线程和资源释放
-     */
+	
+	/**
+	 * @brief ~AbstractCapture
+	 * 终止线程和资源释放
+	 */
 	virtual ~AbstractCapture() override;
-
-    /**
-     * @brief is_running
-     * 返回设备是否正在运行的标志，如果正在运行则返回true
-     * @return
-     */
+	
+	/**
+	 * @brief is_running
+	 * 返回设备是否正在运行的标志，如果正在运行则返回true
+	 * @return
+	 */
 	virtual bool is_running() noexcept;
-
-    /**
-     * @brief start_capture
-     * 开始捕捉数据
-     * @param enable
-     * 用于标志，便于子类实现全局控制的功能
-     * true:正常操作，如果已经开启则不操作，否则开启
-     * false:如果未开启则不操作，已经开启了则关闭（类似全局静音的效果）
-     */
+	
+	/**
+	 * @brief start_capture
+	 * 开始捕捉数据
+	 * @param enable
+	 * 用于标志，便于子类实现全局控制的功能
+	 * true:正常操作，如果已经开启则不操作，否则开启
+	 * false:如果未开启则不操作，已经开启了则关闭（类似全局静音的效果）
+	 */
 	virtual void start_capture(bool enable = true) noexcept;
-
-    /**
-     * @brief stopCapture
-     * 停止捕捉数据
-     */
+	
+	/**
+	 * @brief stopCapture
+	 * 停止捕捉数据
+	 */
 	virtual void stop_capture() noexcept;
 	
 	/**
@@ -119,26 +119,26 @@ public:
 	 * @see get_all_device_info
 	 */
 	virtual bool set_current_device(std::string device_id) noexcept = 0;
-
-    /**
-     * @brief get_type
-     * 获取捕捉数据的类型
-     * @return
-     * 返回类型，参考CaptureType
-     */
+	
+	/**
+	 * @brief get_type
+	 * 获取捕捉数据的类型
+	 * @return
+	 * 返回类型，参考CaptureType
+	 */
 	virtual CaptureType get_type() noexcept;
 protected:
-    /**
-     * @brief on_start
-     * 纯虚，子类实现其功能，异步操作，用于捕捉数据
-     * 其实可以不设置为纯虚，但是我不希望这个类可以实例化，所以设置一个纯虚函数
-     */
+	/**
+	 * @brief on_start
+	 * 纯虚，子类实现其功能，异步操作，用于捕捉数据
+	 * 其实可以不设置为纯虚，但是我不希望这个类可以实例化，所以设置一个纯虚函数
+	 */
 	virtual SharedPacket on_start() noexcept = 0;
-
-    /**
-     * @brief on_stop
-     * 子类实现其功能，异步操作，用于停止捕捉数据后的操作
-     */
+	
+	/**
+	 * @brief on_stop
+	 * 子类实现其功能，异步操作，用于停止捕捉数据后的操作
+	 */
 	virtual void on_stop() noexcept;
 	
 	/**
@@ -152,7 +152,7 @@ protected:
 	 * 默认是返回true，线程启动即睡眠
 	 */
 	virtual bool get_thread_pause_condition() noexcept override;
-
+	
 	/**
 	 * @brief on_frame_data
 	 * 获取到数据后的回调，此操作在推进资源队列前
@@ -189,8 +189,8 @@ protected:
 	 */
 	uint32_t current_device_value;
 private:
-	CaptureType _type;
-	volatile bool _is_running_flag;
+	CaptureType			_type;
+	volatile bool		_is_running_flag;
 };
 
 inline bool AbstractCapture::is_running() noexcept											{		return _is_running_flag;}

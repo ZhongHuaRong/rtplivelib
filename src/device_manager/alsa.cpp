@@ -79,21 +79,21 @@ ALSA::device_info ALSA::get_current_device_info() noexcept
 bool ALSA::set_current_device(uint64_t num, ALSA::FlowType ft) noexcept
 {
 	try {
-        auto list = get_all_device_info(ft);
-        if( list.size() <= num )
-            return false;
-        
-        return set_current_device(list[num].first,ft);
-    } catch (...) {
-        return false;
-    }
-    return false;
+		auto list = get_all_device_info(ft);
+		if( list.size() <= num )
+			return false;
+		
+		return set_current_device(list[num].first,ft);
+	} catch (...) {
+		return false;
+	}
+	return false;
 }
 
 bool ALSA::set_current_device(const std::string &name, ALSA::FlowType ft) noexcept
 {
 	UNUSED(ft)
-	stop();
+			stop();
 	std::lock_guard<decltype(d_ptr->mutex)> lk(d_ptr->mutex);
 	d_ptr->current_name = name;
 	return true;
@@ -117,15 +117,14 @@ const core::Format ALSA::get_format() noexcept
 
 bool ALSA::start() noexcept
 {
-	constexpr char api[] = "device_manager::ALSA::start";
 	std::lock_guard<decltype(d_ptr->mutex)> lk(d_ptr->mutex);
 	if(d_ptr->handle != nullptr)
 		stop();
 	int rc = snd_pcm_open(&d_ptr->handle, d_ptr->current_name.c_str(),
-						SND_PCM_STREAM_CAPTURE, 0);
+						  SND_PCM_STREAM_CAPTURE, 0);
 	if (rc < 0) {
 		core::Logger::Print("unable to open pcm device:{}",
-							api,
+							__PRETTY_FUNCTION__,
 							LogLevel::WARNING_LEVEL,
 							snd_strerror(rc));
 		return false;
@@ -136,19 +135,19 @@ bool ALSA::start() noexcept
 			return false;
 		}
 	}
-
+	
 	/* 填充默认参数 */
 	rc = snd_pcm_hw_params_any(d_ptr->handle, d_ptr->params);
 	if (rc < 0) {
 		core::Logger::Print("{}",
-							api,
+							__PRETTY_FUNCTION__,
 							LogLevel::WARNING_LEVEL,
 							snd_strerror(rc));
 		return false;
 	}
-
+	
 	/* 将使用默认参数， */
-
+	
 	/* Interleaved mode */
 	snd_pcm_hw_params_set_access(d_ptr->handle, d_ptr->params,
 								 SND_PCM_ACCESS_RW_INTERLEAVED);
@@ -160,31 +159,31 @@ bool ALSA::start() noexcept
 		switch (d_ptr->format.bits) {
 		case 8:
 			snd_pcm_hw_params_set_format(d_ptr->handle, d_ptr->params,
-										  SND_PCM_FORMAT_S8);
+										 SND_PCM_FORMAT_S8);
 			break;
 		case 16:
 			snd_pcm_hw_params_set_format(d_ptr->handle, d_ptr->params,
-										  SND_PCM_FORMAT_S16_LE);
+										 SND_PCM_FORMAT_S16_LE);
 			break;
 		case 32:
 			snd_pcm_hw_params_set_format(d_ptr->handle, d_ptr->params,
-										  SND_PCM_FORMAT_FLOAT_LE);
+										 SND_PCM_FORMAT_FLOAT_LE);
 			break;
 		case 64:
 			snd_pcm_hw_params_set_format(d_ptr->handle, d_ptr->params,
-										  SND_PCM_FORMAT_FLOAT64_LE);
+										 SND_PCM_FORMAT_FLOAT64_LE);
 			break;
 		}
 		snd_pcm_hw_params_set_channels(d_ptr->handle, d_ptr->params, d_ptr->format.channels);
 		uint val = d_ptr->format.sample_rate;
 		snd_pcm_hw_params_set_rate_near(d_ptr->handle, d_ptr->params,&val, &dir);
 	}
-
+	
 	/* Set period size */
 	d_ptr->frames = 512;
 	snd_pcm_hw_params_set_period_size_near(d_ptr->handle, d_ptr->params,
 										   &d_ptr->frames, &dir);
-
+	
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(d_ptr->handle, d_ptr->params);
 	if (rc < 0) {
@@ -274,7 +273,7 @@ void ALSA::on_thread_run() noexcept
 	auto buffer = static_cast<uint8_t*>(malloc(d_ptr->buffer_size));
 	if( buffer == nullptr){
 		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
-									 "ALSA::on_thread_run",
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		return;
 	}
@@ -285,7 +284,7 @@ void ALSA::on_thread_run() noexcept
 		snd_pcm_prepare(d_ptr->handle);
 	} else if (rc < 0) {
 		core::Logger::Print("error from read:{}",
-							"ALSA::on_thread_run",
+							__PRETTY_FUNCTION__,
 							LogLevel::WARNING_LEVEL,
 							snd_strerror(rc));
 		return ;
@@ -294,7 +293,7 @@ void ALSA::on_thread_run() noexcept
 	auto packet = core::FramePacket::Make_Shared();
 	if(packet == nullptr){
 		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
-									 "ALSA::on_thread_run",
+									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		free(buffer);
 		return;

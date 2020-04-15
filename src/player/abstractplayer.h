@@ -87,9 +87,9 @@ private:
 protected:
 	core::AbstractQueue<core::FramePacket> * _play_object;
 private:
-	int _init_result;
-	PlayFormat _fmt;
-	std::mutex _object_mutex;
+	int				_init_result;
+	PlayFormat		_fmt;
+	std::mutex		_object_mutex;
 };
 
 inline bool AbstractPlayer::get_init_result() noexcept									{		return _init_result;}

@@ -14,22 +14,22 @@ public:
 	LiveEngine();
 	
 	virtual ~LiveEngine();
-
-    /**
-     * @brief set_local_microphone_audio
-     * 播放本地的麦克风音频
-     * @param flag
-     * true则是开启,false则是关闭
-     * @see AudioProcessingFactory::play_microphone_audio
-     */
-    void set_local_microphone_audio(bool flag) noexcept;
+	
+	/**
+	 * @brief set_local_microphone_audio
+	 * 播放本地的麦克风音频
+	 * @param flag
+	 * true则是开启,false则是关闭
+	 * @see AudioProcessingFactory::play_microphone_audio
+	 */
+	void set_local_microphone_audio(bool flag) noexcept;
 	
 	/**
 	 * @brief set_local_display_win_id
 	 * 设置本地视频显示窗口的ｉｄ
 	 * @param win_id
-     * 需要显示的窗口id
-     * @see VideoProcessingFactory::set_display_win_id
+	 * 需要显示的窗口id
+	 * @see VideoProcessingFactory::set_display_win_id
 	 */
 	void set_local_display_win_id(void* win_id);
 	
@@ -123,20 +123,20 @@ public:
 	 * 如果字符串为空，则可以确认是没有加入房间的
 	 */
 	const std::string& get_room_name() noexcept;
-    
-    /**
-     * @brief get_audio_encoder
-     * 获取音频编码器
-     * @return 
-     */
-    void * get_audio_encoder() noexcept;
-    
-    /**
-     * @brief get_video_encoder
-     * 获取视频编码器
-     * @return 
-     */
-    void * get_video_encoder() noexcept;
+	
+	/**
+	 * @brief get_audio_encoder
+	 * 获取音频编码器
+	 * @return 
+	 */
+	void * get_audio_encoder() noexcept;
+	
+	/**
+	 * @brief get_video_encoder
+	 * 获取视频编码器
+	 * @return 
+	 */
+	void * get_video_encoder() noexcept;
 	
 	/**
 	 * @brief set_log_level
@@ -152,12 +152,12 @@ public:
 	 * 获取设备管理
 	 * @return 
 	 */
-	device_manager::DeviceManager * get_device_manager() noexcept;
+	device_manager::DeviceManager		*get_device_manager() noexcept;
 private:
 	device_manager::DeviceManager  * const device;
 	LiveEnginePrivateData  * const d_ptr;
 };
 
-inline device_manager::DeviceManager * LiveEngine::get_device_manager() noexcept					{	return device;		}
+inline device_manager::DeviceManager * LiveEngine::get_device_manager() noexcept			{	return device;		}
 }
 

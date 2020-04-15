@@ -84,7 +84,7 @@ public:
 	 * false:不捕捉
 	 */
 	void set_capture(bool camera,bool desktop) noexcept;
-
+	
 	/**
 	 * @brief notify_capture
 	 * 外部调用start_capture接口捕捉的，需要调用此函数
@@ -92,11 +92,11 @@ public:
 	void notify_capture() noexcept;
 	
 	/**
-     * @brief set_fps
-     * 统一设置帧数,为了能够正确编码，最好使用该接口设置帧数
-     * @param value
-     * 帧数
-     */
+	 * @brief set_fps
+	 * 统一设置帧数,为了能够正确编码，最好使用该接口设置帧数
+	 * @param value
+	 * 帧数
+	 */
 	void set_fps(int value) noexcept;
 	
 	/**
@@ -165,10 +165,10 @@ private:
 	core::FramePacket::SharedPacket _merge_frame(core::FramePacket::SharedPacket dp,
 												 core::FramePacket::SharedPacket cp);
 private:
-	device_manager::CameraCapture *cc_ptr{nullptr};
-	device_manager::DesktopCapture *dc_ptr{nullptr};
+	device_manager::CameraCapture			*cc_ptr{nullptr};
+	device_manager::DesktopCapture			*dc_ptr{nullptr};
 	//裁剪
-	image_processing::Crop *crop{nullptr};
+	image_processing::Crop					*crop{nullptr};
 	VideoProcessingFactoryPrivateData * const d_ptr;
 };
 

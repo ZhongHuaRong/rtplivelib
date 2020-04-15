@@ -14,15 +14,15 @@ public:
 	using PayloadType = codec::AudioDecoder::Packet::first_type;
 	using Packet = codec::AudioDecoder::Packet::second_type;
 public:
-	AVCodec* decoder{nullptr};
-	AVCodecContext * decoder_ctx{nullptr};
-	AVCodecParserContext *parser_ctx{nullptr};
-	PayloadType cur_pt{PayloadType::RTP_PT_NONE};
-	core::Format cur_fmt;
-	player::AbstractPlayer *player{nullptr};
-	AVPacket * pkt{nullptr};
-	AVFrame * frame{nullptr};
-	AVFrame * sw_frame{nullptr};
+	AVCodec					*decoder{nullptr};
+	AVCodecContext			*decoder_ctx{nullptr};
+	AVCodecParserContext	*parser_ctx{nullptr};
+	PayloadType				cur_pt{PayloadType::RTP_PT_NONE};
+	core::Format			cur_fmt;
+	player::AbstractPlayer	*player{nullptr};
+	AVPacket				*pkt{nullptr};
+	AVFrame					*frame{nullptr};
+	AVFrame					*sw_frame{nullptr};
 	
 	
 	AudioDecoderPrivateData(){
@@ -107,13 +107,13 @@ public:
 	 * @brief check_pt
 	 * 检查包的有效载荷类型，如果发现更换了，得及时调整编码上下文
 	 */
-    inline void check_pt(const PayloadType pt,
-                         const Packet & pack) noexcept {
-        UNUSED(pack)
-		//软解的初始化
-		//这里需要注意一下，判断hwd_type_cur是为了防止硬解转为软解的时候的误判
-		if( pt == cur_pt && parser_ctx != nullptr && decoder_ctx != nullptr )
-			return;
+	inline void check_pt(const PayloadType pt,
+						 const Packet & pack) noexcept {
+		UNUSED(pack)
+				//软解的初始化
+				//这里需要注意一下，判断hwd_type_cur是为了防止硬解转为软解的时候的误判
+				if( pt == cur_pt && parser_ctx != nullptr && decoder_ctx != nullptr )
+				return;
 		
 		cur_pt = pt;
 		
@@ -149,9 +149,9 @@ public:
 				return;
 			}
 			
-//			core::Logger::Print("size:{}",
-//								__PRETTY_FUNCTION__,
-//								LogLevel::INFO_LEVEL,sw_frame->format);
+			//			core::Logger::Print("size:{}",
+			//								__PRETTY_FUNCTION__,
+			//								LogLevel::INFO_LEVEL,sw_frame->format);
 		}
 	}
 	
@@ -314,34 +314,34 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 
 codec::AudioDecoder::AudioDecoder():
-    d_ptr(new AudioDecoderPrivateData)
+	d_ptr(new AudioDecoderPrivateData)
 {
-    start_thread();
+	start_thread();
 }
 
 codec::AudioDecoder::~AudioDecoder()
 {
-    exit_thread();
-    delete d_ptr;
+	exit_thread();
+	delete d_ptr;
 }
 
 void AudioDecoder::set_player_object(player::AbstractPlayer *player) noexcept
 {
-    d_ptr->player = player;
+	d_ptr->player = player;
 }
 
 void AudioDecoder::on_thread_run() noexcept
 {
-    //等待资源到来
-    //100ms检查一次
-    this->wait_for_resource_push(100);
-
-    while(has_data()){
-        auto pack = get_next();
-        if(pack == nullptr)
-            continue;
-        d_ptr->deal_with_pack(*pack);
-    }
+	//等待资源到来
+	//100ms检查一次
+	this->wait_for_resource_push(100);
+	
+	while(has_data()){
+		auto pack = get_next();
+		if(pack == nullptr)
+			continue;
+		d_ptr->deal_with_pack(*pack);
+	}
 }
 
 } // namespace codec

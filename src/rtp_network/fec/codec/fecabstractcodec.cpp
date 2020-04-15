@@ -9,9 +9,9 @@ namespace fec {
 
 
 FECAbstractCodec::FECAbstractCodec(FECAbstractCodec::CodesType codesT,
-                                   FECAbstractCodec::CodecType codecT):
-    codes_type(codesT),codec_type(codecT)                                               {}
-FECAbstractCodec::~FECAbstractCodec()                                                   {}
+								   FECAbstractCodec::CodecType codecT):
+	codes_type(codesT),codec_type(codecT)												{}
+FECAbstractCodec::~FECAbstractCodec()													{}
 
 
 } //namespace fec

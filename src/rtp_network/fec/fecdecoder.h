@@ -22,25 +22,25 @@ class FECDecoderPrivateData;
 class RTPLIVELIBSHARED_EXPORT FECDecoder
 {
 public:
-    FECDecoder();
-    
-    virtual ~FECDecoder();
-    
-    /**
-     * @brief decode
-     * 解码
-     * @return 
-     */
-    virtual core::Result decode(RTPPacket::SharedRTPPacket packet) noexcept;
-    
-    /**
-     * @brief get_packet
-     * 当解码成功后，调用该接口获取数据
-     * @return 
-     */
-    virtual core::FramePacket::SharedPacket get_packet() noexcept;
+	FECDecoder();
+	
+	virtual ~FECDecoder();
+	
+	/**
+	 * @brief decode
+	 * 解码
+	 * @return 
+	 */
+	virtual core::Result decode(RTPPacket::SharedRTPPacket packet) noexcept;
+	
+	/**
+	 * @brief get_packet
+	 * 当解码成功后，调用该接口获取数据
+	 * @return 
+	 */
+	virtual core::FramePacket::SharedPacket get_packet() noexcept;
 private:
-    FECDecoderPrivateData * const d_ptr;
+	FECDecoderPrivateData * const d_ptr;
 };
 
 

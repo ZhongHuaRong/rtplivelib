@@ -19,9 +19,9 @@ AudioProcessingFactory::~AudioProcessingFactory()
 {
 	set_capture(false,false);
 	exit_thread();
-
-    if(player != nullptr)
-        delete player;
+	
+	if(player != nullptr)
+		delete player;
 }
 
 bool AudioProcessingFactory::set_microphone_capture_object(
@@ -78,12 +78,12 @@ void AudioProcessingFactory::set_capture(bool microphone,bool soundcard) noexcep
 	
 	/*唤醒线程*/
 	/*这里不需要检查条件，因为在唤醒的时候会自己检查条件*/
-    notify_thread();
+	notify_thread();
 }
 
 void AudioProcessingFactory::play_microphone_audio(bool flag) noexcept
 {
-    play_flag = flag;
+	play_flag = flag;
 }
 
 void AudioProcessingFactory::on_thread_run() noexcept
@@ -106,20 +106,20 @@ void AudioProcessingFactory::on_thread_run() noexcept
 		//第一时间回调
 		if(GlobalCallBack::Get_CallBack() != nullptr){
 			GlobalCallBack::Get_CallBack()->on_microphone_packet(packet);
-        }
-
-        if(play_flag == true){
-            try {
-                if(player == nullptr){
-                    player = new player::AudioPlayer;
-                }
-            } catch (const std::bad_alloc&) {
-                push_one(packet);
-                return;
-            }
-
-            player->play(packet);
-        }
+		}
+		
+		if(play_flag == true){
+			try {
+				if(player == nullptr){
+					player = new player::AudioPlayer;
+				}
+			} catch (const std::bad_alloc&) {
+				push_one(packet);
+				return;
+			}
+			
+			player->play(packet);
+		}
 		push_one(packet);
 		return;
 	}

@@ -28,7 +28,7 @@ public:
 	using const_reference		= const value_type&;
 	using pointer				= value_type*;
 	using const_pointer			= const value_type&;
-	using queue                 = std::queue<value_type>;
+	using queue					= std::queue<value_type>;
 public:
 	AbstractQueue():
 		_max_size(10u)
@@ -64,10 +64,10 @@ public:
 		if(has_data())
 			return true;
 		std::unique_lock<std::mutex> lk(_mutex);
-//		auto flag = _queue_read_condition.wait_for(lk,std::chrono::milliseconds(millisecond));
+		//		auto flag = _queue_read_condition.wait_for(lk,std::chrono::milliseconds(millisecond));
 		auto flag = _queue_read_condition.wait_until(lk,
-							     std::chrono::system_clock::now() + 
-							     std::chrono::milliseconds(millisecond));
+													 std::chrono::system_clock::now() + 
+													 std::chrono::milliseconds(millisecond));
 		return flag != std::cv_status::timeout;
 	}
 	
@@ -114,8 +114,8 @@ public:
 		if(_queue.empty())
 			return nullptr;
 		std::lock_guard<std::mutex> lk(_mutex);
-        while(_queue.size() > 1){
-            _queue.pop();
+		while(_queue.size() > 1){
+			_queue.pop();
 		}
 		auto ptr = _queue.front();
 		_queue.pop();
@@ -155,9 +155,9 @@ public:
 	 * 清空队列
 	 */
 	inline void clear() noexcept{
-        std::lock_guard<std::mutex> lk(_mutex);
+		std::lock_guard<std::mutex> lk(_mutex);
 		while(has_data()){
-            _queue.pop();
+			_queue.pop();
 		}
 	}
 	
@@ -173,10 +173,10 @@ public:
 		_max_size = size;
 	}
 private:
-	std::mutex                  _mutex;
-	std::condition_variable     _queue_read_condition;
-	queue                       _queue;
-	volatile uint32_t           _max_size;
+	std::mutex					_mutex;
+	std::condition_variable		_queue_read_condition;
+	queue						_queue;
+	volatile uint32_t			_max_size;
 };
 
 } // namespace core

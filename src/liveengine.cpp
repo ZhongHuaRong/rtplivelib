@@ -62,8 +62,8 @@ LiveEngine::LiveEngine():
 {
 	//初始化日志等级
 	set_log_level(LogLevel::ALLINFO_LEVEL);
-    //初始化Wirehair编解码器
-    rtp_network::fec::Wirehair::InitCodec();
+	//初始化Wirehair编解码器
+	rtp_network::fec::Wirehair::InitCodec();
 	
 	//初始化socket
 #ifdef WIN64
@@ -91,7 +91,7 @@ LiveEngine::LiveEngine():
 	d_ptr->rtp_send->set_video_send_queue(d_ptr->video_encoder);
 	//音频设置
 	d_ptr->rtp_send->set_audio_session(d_ptr->audio_session);
-    d_ptr->rtp_send->set_audio_send_queue(d_ptr->audio_encoder);
+	d_ptr->rtp_send->set_audio_send_queue(d_ptr->audio_encoder);
 	
 	//AbstractQueue是线程安全的，所以只需要一个接收线程处理即可
 	d_ptr->video_session->set_rtp_recv_object(d_ptr->rtp_recv);
@@ -107,12 +107,12 @@ LiveEngine::~LiveEngine()
 	delete d_ptr;
 	
 	//在这里清除全局的日志模块
-    core::Logger::Clear_all();
+	core::Logger::Clear_all();
 }
 
 void LiveEngine::set_local_microphone_audio(bool flag) noexcept
 {
-    device->get_audio_factory()->play_microphone_audio(flag);
+	device->get_audio_factory()->play_microphone_audio(flag);
 }
 
 void LiveEngine::set_local_display_win_id(void *win_id)
@@ -196,17 +196,17 @@ bool LiveEngine::enabled_push(bool enabled) noexcept
 
 const std::string& LiveEngine::get_room_name() noexcept
 {
-    return d_ptr->video_session->get_room_name();
+	return d_ptr->video_session->get_room_name();
 }
 
 void *LiveEngine::get_audio_encoder() noexcept
 {
-    return d_ptr->audio_encoder;
+	return d_ptr->audio_encoder;
 }
 
 void *LiveEngine::get_video_encoder() noexcept
 {
-    return d_ptr->video_encoder;
+	return d_ptr->video_encoder;
 }
 
 void LiveEngine::set_log_level(LogLevel level) noexcept

@@ -3,9 +3,9 @@
 #include "../core/logger.h"
 #include "../core/except.h"
 extern "C" {
-    #include <libavformat/avformat.h>
-    #include <libavdevice/avdevice.h>
-	#include <libavutil/dict.h>
+#include <libavformat/avformat.h>
+#include <libavdevice/avdevice.h>
+#include <libavutil/dict.h>
 }
 #if defined (WIN64)
 #include <dshow.h>
@@ -25,9 +25,9 @@ public:
 };
 
 #if defined (WIN64)
-	static constexpr char format_name[] = "dshow";
+static constexpr char format_name[] = "dshow";
 #elif defined (unix)
-	static constexpr char format_name[] = "v4l2";
+static constexpr char format_name[] = "v4l2";
 #endif
 
 CameraCapture::CameraCapture() :
@@ -67,17 +67,17 @@ void CameraCapture::set_fps(int value) {
 	_fps = value;
 	//开启的时候更换设置才重新打开设备
 	if(is_running())
-        open_device();
+		open_device();
 }
 
 void CameraCapture::set_video_size(const VideoSize &size) noexcept
 {
-    if(_size == size)
-        return;
-    _size = size;
-    //开启的时候更换设置才重新打开设备
-    if(is_running())
-        open_device();
+	if(_size == size)
+		return;
+	_size = size;
+	//开启的时候更换设置才重新打开设备
+	if(is_running())
+		open_device();
 }
 
 std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(false)
@@ -104,84 +104,84 @@ std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(
 		throw core::func_not_implemented_error(core::MessageString[int(core::MessageNum::Device_info_failed)]);
 	}
 #elif defined (WIN64)
-    ICreateDevEnum *pDevEnum{nullptr};
-    IEnumMoniker *pEnum {nullptr};
-    HRESULT hr = 0;
-    hr = CoCreateInstance(CLSID_SystemDeviceEnum,
-                          nullptr,
-                          CLSCTX_INPROC_SERVER,
-                          IID_ICreateDevEnum,
-                          reinterpret_cast<void**>(&pDevEnum));
-    if (SUCCEEDED(hr))
-    {
-        hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,&pEnum,0);
-        if (hr == S_OK)
-        {
-            //使用IEnumMoniker接口枚举所有的设备标识
-            IMoniker *pMoniker{nullptr};
-            ULONG cFetched{0};
-            std::map<std::string,std::string> info_map;
-            
-            while (pEnum->Next(1, &pMoniker, &cFetched) == S_OK)
-            {
-                IPropertyBag* pPropBag{nullptr};
-                hr = pMoniker->BindToStorage(nullptr, 
-                                             nullptr, 
-                                             IID_IPropertyBag,
-                                             reinterpret_cast<void**>(&pPropBag));
-                if(SUCCEEDED(hr)){
-                    BSTR devicePath{nullptr};
-                    std::pair<std::string,std::string> pair;
-                    
-                    hr = pMoniker->GetDisplayName(nullptr, nullptr, &devicePath);
-                    if(SUCCEEDED(hr)){
-                        //获取设备唯一ID
-                        //由于ffmpeg是根据设备名字更换设备的，所以这里不是最主要的
-                        pair.first = core::StringFormat::WString2String(devicePath);
-                    }
-                    
-                    VARIANT varName;
-                    varName.vt = VT_BSTR;
-                    VariantInit(&varName);
-                    hr = pPropBag->Read(L"FriendlyName", &varName, nullptr);
-                    if (SUCCEEDED(hr)){
-                        //获取设备友好名字
-                        pair.second = core::StringFormat::WString2String(varName.bstrVal);
-                        info_map.insert(pair);
-                    }
-                    VariantClear(&varName);
-                    pPropBag->Release();
-                }
-                pMoniker->Release();
-            }
-            pDevEnum->Release();
-            return info_map;
-        }
-        pDevEnum->Release();
-    } 
-    throw std::runtime_error("Unknown");
+	ICreateDevEnum *pDevEnum{nullptr};
+	IEnumMoniker *pEnum {nullptr};
+	HRESULT hr = 0;
+	hr = CoCreateInstance(CLSID_SystemDeviceEnum,
+						  nullptr,
+						  CLSCTX_INPROC_SERVER,
+						  IID_ICreateDevEnum,
+						  reinterpret_cast<void**>(&pDevEnum));
+	if (SUCCEEDED(hr))
+	{
+		hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,&pEnum,0);
+		if (hr == S_OK)
+		{
+			//使用IEnumMoniker接口枚举所有的设备标识
+			IMoniker *pMoniker{nullptr};
+			ULONG cFetched{0};
+			std::map<std::string,std::string> info_map;
+			
+			while (pEnum->Next(1, &pMoniker, &cFetched) == S_OK)
+			{
+				IPropertyBag* pPropBag{nullptr};
+				hr = pMoniker->BindToStorage(nullptr, 
+											 nullptr, 
+											 IID_IPropertyBag,
+											 reinterpret_cast<void**>(&pPropBag));
+				if(SUCCEEDED(hr)){
+					BSTR devicePath{nullptr};
+					std::pair<std::string,std::string> pair;
+					
+					hr = pMoniker->GetDisplayName(nullptr, nullptr, &devicePath);
+					if(SUCCEEDED(hr)){
+						//获取设备唯一ID
+						//由于ffmpeg是根据设备名字更换设备的，所以这里不是最主要的
+						pair.first = core::StringFormat::WString2String(devicePath);
+					}
+					
+					VARIANT varName;
+					varName.vt = VT_BSTR;
+					VariantInit(&varName);
+					hr = pPropBag->Read(L"FriendlyName", &varName, nullptr);
+					if (SUCCEEDED(hr)){
+						//获取设备友好名字
+						pair.second = core::StringFormat::WString2String(varName.bstrVal);
+						info_map.insert(pair);
+					}
+					VariantClear(&varName);
+					pPropBag->Release();
+				}
+				pMoniker->Release();
+			}
+			pDevEnum->Release();
+			return info_map;
+		}
+		pDevEnum->Release();
+	} 
+	throw std::runtime_error("Unknown");
 #endif
 }
 
 bool CameraCapture::set_default_device() noexcept
 {
 	//说是设置成默认设备，其实是选择第一个设备
-    try {
-        auto list = get_all_device_info();
-        if(list.size() == 0){
-            current_device_info.first.clear();
-            current_device_info.second.clear();
-            return false;
-        }
-        auto first = list.begin();
-        current_device_info.first = first->first;
-        current_device_info.second = first->second;
-    } catch (...) {
-        current_device_info.first.clear();
-        current_device_info.second.clear();
-        return false;
-    }
-
+	try {
+		auto list = get_all_device_info();
+		if(list.size() == 0){
+			current_device_info.first.clear();
+			current_device_info.second.clear();
+			return false;
+		}
+		auto first = list.begin();
+		current_device_info.first = first->first;
+		current_device_info.second = first->second;
+	} catch (...) {
+		current_device_info.first.clear();
+		current_device_info.second.clear();
+		return false;
+	}
+	
 	return true;
 }
 
@@ -257,7 +257,7 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 	ptr->pts = d_ptr->packet->pts;
 	ptr->dts = d_ptr->packet->dts;
 	ptr->format.frame_rate = _fps;
-    ptr->flag = d_ptr->packet->flags;
+	ptr->flag = d_ptr->packet->flags;
 	
 	//packet在close input format后就失效
 	//所以需要拷贝一份
@@ -288,7 +288,7 @@ bool CameraCapture::open_device() noexcept
 {
 	AVDictionary *options = nullptr;
 	av_dict_set(&options,"framerate",std::to_string(_fps).c_str(),0);
-    av_dict_set(&options,"video_size",_size.to_string().c_str(),0);
+	av_dict_set(&options,"video_size",_size.to_string().c_str(),0);
 	
 	std::lock_guard<std::mutex> lk(d_ptr->fmt_ctx_mutex);
 	if(d_ptr->fmtContxt != nullptr){
@@ -297,7 +297,7 @@ bool CameraCapture::open_device() noexcept
 #if defined (WIN64)
 	
 	auto n = avformat_open_input(&d_ptr->fmtContxt,("video=" + current_device_info.second).c_str(),d_ptr->ifmt,&options);
-//    auto n = avformat_open_input(&d_ptr->fmtContxt,"video=USB2.0 VGA UVC WebCam",d_ptr->ifmt,&options);
+	//    auto n = avformat_open_input(&d_ptr->fmtContxt,"video=USB2.0 VGA UVC WebCam",d_ptr->ifmt,&options);
 #elif defined (unix)
 	bool n;
 	try {

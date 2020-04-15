@@ -19,8 +19,8 @@ class RTPLIVELIBSHARED_EXPORT SoundCardCapture :public AbstractCapture
 {
 public:
 	SoundCardCapture();
-
-    ~SoundCardCapture() override;
+	
+	~SoundCardCapture() override;
 	
 	/**
 	 * @brief get_all_device_info
@@ -31,7 +31,7 @@ public:
 	 * 返回一个map
 	 */
 	virtual std::map<std::string,std::string> get_all_device_info()  noexcept(false) override;
-
+	
 	/**
 	 * @brief set_current_device
 	 * 通过设备id更换当前设备
@@ -40,7 +40,7 @@ public:
 	 * @see get_all_device_info
 	 */
 	virtual bool set_current_device(std::string device_id) noexcept override;
-
+	
 	
 	/**
 	 * @brief set_default_device
@@ -49,16 +49,16 @@ public:
 	 */
 	virtual bool set_default_device() noexcept override;
 protected:
-    /**
-     * @brief OnStart
-     * 开始捕捉音频后的回调
-     */
+	/**
+	 * @brief OnStart
+	 * 开始捕捉音频后的回调
+	 */
 	virtual AbstractCapture::SharedPacket on_start() noexcept override;
-
-    /**
-     * @brief OnStart
-     * 结束捕捉音频后的回调
-     */
+	
+	/**
+	 * @brief OnStart
+	 * 结束捕捉音频后的回调
+	 */
 	virtual void on_stop() noexcept override;
 	
 	/**

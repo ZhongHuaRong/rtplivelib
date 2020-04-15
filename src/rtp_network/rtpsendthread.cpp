@@ -8,7 +8,7 @@
 #include "jrtplib3/rtpudpv4transmitter.h"
 #include "jrtplib3/rtpsessionparams.h"
 extern "C" {
-    #include <libavformat/avformat.h>
+#include <libavformat/avformat.h>
 }
 
 namespace rtplivelib{
@@ -87,7 +87,7 @@ public:
 		const char *type = is_video == true?"video":"audio";
 		auto & session = is_video == true ? object->_video_session:
 											object->_audio_session;
-
+		
 		auto && pt = static_cast<RTPSession::PayloadType>(payload_type);
 		auto && ret = session->set_default_payload_type(pt);
 		if(ret < 0){
@@ -110,7 +110,7 @@ public:
 		}
 		//不知道怎么算这个数
 		if(is_video){
-//			auto fps = format.frame_rate == 0 ? 15u : static_cast<uint32_t>(format.frame_rate);
+			//			auto fps = format.frame_rate == 0 ? 15u : static_cast<uint32_t>(format.frame_rate);
 			ret = session->set_default_timestamp_increment( 1 );
 		}
 		else {
@@ -220,7 +220,7 @@ public:
 						 const uint16_t &port_base,
 						 RTPSession *session,
 						 const char *type) noexcept{
-	
+		
 		//先把原来的链接断掉
 		session->clear_destinations();
 		
@@ -259,19 +259,19 @@ public:
 		auto & session = is_video == true ? object->_video_session:
 											object->_audio_session;
 		
-        std::vector<std::vector<int8_t>> data;
-        fec::FECParam param;
+		std::vector<std::vector<int8_t>> data;
+		fec::FECParam param;
 		if( fec_encoder.encode(packet,data,param) != core::Result::Success) {
 			core::Logger::Print_APP_Info(core::Result::FEC_Encode_Failed,
 										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			
 			//编码失败后，直接发送
-            param.repair_nb = 0;
-            param.flag = 0;
+			param.repair_nb = 0;
+			param.flag = 0;
 			auto src_nb = param.size / param.symbol_size;
-            if(src_nb * param.symbol_size != param.size)
-                ++src_nb;
+			if(src_nb * param.symbol_size != param.size)
+				++src_nb;
 			auto _d = packet->data[0];
 			uint16_t cur_pos = 0u;
 			
@@ -461,9 +461,9 @@ bool RTPSendThread::set_room_name(const std::string &name) noexcept
 	}
 	//加入房间
 	else {
-	//使用服务器的时候就是随机端口
-	//如果是从一个房间换到另一个房间，这里也不会出现问题
-	//因为会话在创建的时候会关闭之前的会话
+		//使用服务器的时候就是随机端口
+		//如果是从一个房间换到另一个房间，这里也不会出现问题
+		//因为会话在创建的时候会关闭之前的会话
 		
 		if(_video_session != nullptr)
 			d_ptr->init_session(_video_session,

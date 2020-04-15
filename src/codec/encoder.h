@@ -55,8 +55,8 @@ public:
 	
 	/**
 	 * @brief set_codec_id
-     * 不推荐外部调用该接口
-     * 设置编码器
+	 * 不推荐外部调用该接口
+	 * 设置编码器
 	 * 不允许在编码的时候调用该接口
 	 * @param codec_name
 	 * 这个是编码器名字
@@ -196,8 +196,8 @@ protected:
 	//编码器同步锁
 	std::recursive_mutex encoder_mutex;
 private:
-	Queue * _queue;
-	std::mutex _queue_mutex;
+	Queue			*_queue;
+	std::mutex		_queue_mutex;
 };
 
 inline void Encoder::set_input_queue(Encoder::Queue * input_queue) noexcept	{

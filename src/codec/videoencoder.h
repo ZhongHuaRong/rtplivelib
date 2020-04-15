@@ -138,17 +138,17 @@ private:
 	bool _set_frame_data(AVFrame * frame,core::FramePacket *packet) noexcept;
 private:
 	//硬件加速类
-	HardwareDevice * hwdevice{nullptr};
+	HardwareDevice				* hwdevice{nullptr};
 	//保存上一次正确编码时的输入格式
-	core::Format format;
+	core::Format				format;
 	//目前正在使用的类型,用于判断用户是否修改硬件加速方案
-	HardwareDevice::HWDType hwd_type_cur{HardwareDevice::None};
+	HardwareDevice::HWDType		hwd_type_cur{HardwareDevice::None};
 	//用于格式转换
-	image_processing::Scale * scale_ctx{new image_processing::Scale};
+	image_processing::Scale		* scale_ctx{new image_processing::Scale};
 	//用来编码的数据结构，只在设置format的时候分配一次
 	//随着格式的改变和上下文一起重新分配
-	AVFrame * encode_sw_frame{nullptr};
-	AVFrame * encode_hw_frame{nullptr};
+	AVFrame						* encode_sw_frame{nullptr};
+	AVFrame						* encode_hw_frame{nullptr};
 };
 
 } // namespace codec

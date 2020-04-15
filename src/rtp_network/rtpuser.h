@@ -31,7 +31,7 @@ struct RTPLIVELIBSHARED_EXPORT RTPUser
 		ONLY_PULL,
 		PULL_AND_PUSH
 	};
-
+	
 	/*自己的会话ssrc*/
 	uint32_t ssrc{0};
 	/*与自己配套(音频和视频)的另一个会话ssrc*/
@@ -72,11 +72,11 @@ protected:
 	void set_display_screen_size(const int &win_w,const int & win_h,
 								 const int & frame_w,const int & frame_h) noexcept;
 private:
-	codec::VideoDecoder _vdecoder;
-    codec::AudioDecoder _adecoder;
-	player::VideoPlayer _vplay;
-	fec::FECDecoder _afecdecoder;
-	fec::FECDecoder _vfecdecoder;
+	codec::VideoDecoder			_vdecoder;
+	codec::AudioDecoder			_adecoder;
+	player::VideoPlayer			_vplay;
+	fec::FECDecoder				_afecdecoder;
+	fec::FECDecoder				_vfecdecoder;
 	
 	friend class RTPUserManager;
 };

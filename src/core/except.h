@@ -16,21 +16,21 @@ namespace core {
  */
 class uninitialized_error : public std::runtime_error {
 public:
-    explicit uninitialized_error(const char * struct_name);
-    
-    explicit uninitialized_error(const std::string& struct_name);
-    
-    virtual ~uninitialized_error() = default;
-    
+	explicit uninitialized_error(const char * struct_name);
+	
+	explicit uninitialized_error(const std::string& struct_name);
+	
+	virtual ~uninitialized_error() = default;
+	
 };
 
 class func_not_implemented_error : public std::runtime_error {
 public:
-    explicit func_not_implemented_error(const char * struct_name);
-    
-    explicit func_not_implemented_error(const std::string& struct_name);
-    
-    virtual ~func_not_implemented_error() = default;
+	explicit func_not_implemented_error(const char * struct_name);
+	
+	explicit func_not_implemented_error(const std::string& struct_name);
+	
+	virtual ~func_not_implemented_error() = default;
 };
 
 } // namespace core

@@ -15,7 +15,7 @@ namespace rtp_network {
 class RTPPacket
 {
 public:
-    using SharedRTPPacket = std::shared_ptr<RTPPacket>;
+	using SharedRTPPacket = std::shared_ptr<RTPPacket>;
 public:
 	/**
 	 * @brief RTPPacket
@@ -26,9 +26,9 @@ public:
 			  void * source_data);
 	
 	~RTPPacket();
-    
-    static inline SharedRTPPacket Make_Shared(void * packet,
-                                              void * source_data){
+	
+	static inline SharedRTPPacket Make_Shared(void * packet,
+											  void * source_data){
 		return std::make_shared<RTPPacket>(packet,source_data);
 	}
 	

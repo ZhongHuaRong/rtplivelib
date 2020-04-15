@@ -141,13 +141,13 @@ private:
 protected:
 	
 private:
-	volatile bool _thread_exit_flag;
-	std::thread *_thread;
-	std::mutex _mutex;
-	std::condition_variable _therad_run_condition_variable;
+	volatile bool				_thread_exit_flag;
+	std::thread					*_thread;
+	std::mutex					_mutex;
+	std::condition_variable		_therad_run_condition_variable;
 };
 
-inline uint64_t AbstractThread::thread_id() noexcept									{
+inline uint64_t AbstractThread::thread_id() noexcept						{
 	std::thread::id id = _thread->get_id();
 	//std::thread::native_handle_type value;
 	uint64_t value;
@@ -155,23 +155,23 @@ inline uint64_t AbstractThread::thread_id() noexcept									{
 	//return static_cast<uint64_t>(value);
 	return value;
 }
-inline std::thread::id AbstractThread::get_thread_id() noexcept							{
+inline std::thread::id AbstractThread::get_thread_id() noexcept				{
 	return _thread->get_id();
 }
-inline void AbstractThread::sleep(int milliseconds) noexcept							{
+inline void AbstractThread::sleep(int milliseconds) noexcept				{
 	if(get_exit_flag())
 		return;
 	std::chrono::milliseconds dura(milliseconds);
-    std::this_thread::sleep_for(dura);
+	std::this_thread::sleep_for(dura);
 }
-inline void AbstractThread::on_thread_run()noexcept										{		}
-inline void AbstractThread::on_thread_pause()noexcept									{		}
-inline bool AbstractThread::get_exit_flag() noexcept									{		return _thread_exit_flag;}
-inline bool AbstractThread::get_thread_pause_condition() noexcept						{		return true;}
-inline void AbstractThread::notify_thread() noexcept									{
+inline void AbstractThread::on_thread_run()noexcept							{		}
+inline void AbstractThread::on_thread_pause()noexcept						{		}
+inline bool AbstractThread::get_exit_flag() noexcept						{		return _thread_exit_flag;}
+inline bool AbstractThread::get_thread_pause_condition() noexcept			{		return true;}
+inline void AbstractThread::notify_thread() noexcept						{
 	_therad_run_condition_variable.notify_one();
 }
-inline void AbstractThread::_set_exit_flag(bool flag) noexcept							{		_thread_exit_flag = flag;}
+inline void AbstractThread::_set_exit_flag(bool flag) noexcept				{		_thread_exit_flag = flag;}
 
 } // namespace core
 

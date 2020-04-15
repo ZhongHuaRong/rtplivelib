@@ -34,7 +34,7 @@ public:
 	 * @param frame
 	 */
 	virtual void on_desktop_frame(core::FramePacket::SharedPacket frame);
-
+	
 	/**
 	 * @brief on_video_frame_merge
 	 * 桌面以及摄像头画面合成后的图像帧回调
@@ -55,13 +55,13 @@ public:
 	 * @param packet
 	 */
 	virtual void on_soundcard_packet(core::FramePacket::SharedPacket packet);
-    
-    /**
-     * @brief on_video_real_time_fps
-     * 获取实时的帧/秒
-     * @param fps
-     */
-    virtual void on_video_real_time_fps(float fps);
+	
+	/**
+	 * @brief on_video_real_time_fps
+	 * 获取实时的帧/秒
+	 * @param fps
+	 */
+	virtual void on_video_real_time_fps(float fps);
 	
 	/*以下回调继承的时候业务不要写的太复杂，会干扰rtp包或者rtcp包的接收和处理*/
 	
@@ -134,7 +134,7 @@ inline void GlobalCallBack::on_soundcard_packet(core::FramePacket::SharedPacket 
 inline void GlobalCallBack::on_video_real_time_fps(float)                                           {}
 inline void GlobalCallBack::on_new_user_join(const std::string& )									{}
 inline void GlobalCallBack::on_user_exit(const std::string& ,
-											const void *, const uint64_t& )							{}
+										 const void *, const uint64_t& )							{}
 inline void GlobalCallBack::on_upload_bandwidth(uint64_t ,uint64_t)									{}
 inline void GlobalCallBack::on_download_bandwidth(uint64_t,uint64_t)								{}
 inline void GlobalCallBack::on_local_network_information(uint32_t ,float,uint32_t  )				{}

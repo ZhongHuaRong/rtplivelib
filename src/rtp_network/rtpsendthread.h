@@ -146,11 +146,11 @@ protected:
 	virtual bool get_thread_pause_condition() noexcept override;
 	
 private:
-	SendQueue *_video_queue;
-	SendQueue *_audio_queue;
-	RTPSession * _video_session;
-	RTPSession * _audio_session;
-	std::recursive_mutex _mutex;
+	SendQueue						*_video_queue;
+	SendQueue						*_audio_queue;
+	RTPSession						*_video_session;
+	RTPSession						*_audio_session;
+	std::recursive_mutex			_mutex;
 	RtpSendThreadPrivateData * const d_ptr;
 	
 	friend class RtpSendThreadPrivateData;

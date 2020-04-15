@@ -15,9 +15,9 @@ namespace core {
 class RTPLIVELIBSHARED_EXPORT StringFormat
 {
 public:
-    static std::wstring String2WString(const std::string& str) noexcept;
-    
-    static std::string WString2String(const std::wstring& str) noexcept;
+	static std::wstring String2WString(const std::string& str) noexcept;
+	
+	static std::string WString2String(const std::wstring& str) noexcept;
 };
 
 } // namespace core

@@ -12,15 +12,15 @@ namespace player {
 
 class VideoPlayerPrivateData{
 public:
-	rtplivelib::core::Format show_format;
-	void * show_id{nullptr};
-	SDL_Window *show_screen{nullptr};
-	SDL_Renderer* renderer{nullptr};
-	SDL_Texture* texture{nullptr};
-	std::mutex show_mutex;
-	SDL_Rect *show_rect{new SDL_Rect()};
-	int frame_w{0};
-	int frame_h{0};
+	rtplivelib::core::Format		show_format;
+	void							* show_id{nullptr};
+	SDL_Window						*show_screen{nullptr};
+	SDL_Renderer					* renderer{nullptr};
+	SDL_Texture						* texture{nullptr};
+	std::mutex						show_mutex;
+	SDL_Rect						*show_rect{new SDL_Rect()};
+	int								frame_w{0};
+	int								frame_h{0};
 	
 	VideoPlayerPrivateData(){}
 	
@@ -270,18 +270,18 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 			return false;
 		SDL_UpdateYUVTexture( d_ptr->texture, nullptr,
 							  data[0],linesize[0],
-							  data[1],linesize[1],
-							  data[2],linesize[2]);
+				data[1],linesize[1],
+				data[2],linesize[2]);
 		break;
 	case AV_PIX_FMT_QSV:
 	case AV_PIX_FMT_NV12:
 		if( data[0] == nullptr || data[1] == nullptr)
 			return false;
 		SDL_UpdateTexture( d_ptr->texture, nullptr, data[0], linesize[0]); 
-//		SDL_UpdateYUVTexture( d_ptr->texture, nullptr,
-//							  data[0],linesize[0],
-//							  data[1],linesize[1],
-//							  data[2],linesize[2] );
+		//		SDL_UpdateYUVTexture( d_ptr->texture, nullptr,
+		//							  data[0],linesize[0],
+		//							  data[1],linesize[1],
+		//							  data[2],linesize[2] );
 		break;
 	default:
 		return false;
@@ -303,8 +303,8 @@ void VideoPlayer::_set_horizontal_black_border(const int & win_w,const int & win
 											   const int & frame_w,const int & frame_h)
 {
 	auto w = static_cast<double>(frame_w) / 
-			 static_cast<double>(frame_h) * static_cast<double>(win_h);
-    d_ptr->show_rect->x = static_cast<int>((win_w - w) / 2);
+			static_cast<double>(frame_h) * static_cast<double>(win_h);
+	d_ptr->show_rect->x = static_cast<int>((win_w - w) / 2);
 	d_ptr->show_rect->y = 0;
 	d_ptr->show_rect->w = static_cast<int>(w);
 	d_ptr->show_rect->h = win_h;
@@ -316,7 +316,7 @@ void VideoPlayer::_set_vertical_black_border(const int & win_w,const int & win_h
 											 const int & frame_w,const int & frame_h)
 {
 	auto h = static_cast<double>(frame_h) / 
-			 static_cast<double>(frame_w) * win_w;
+			static_cast<double>(frame_w) * win_w;
 	d_ptr->show_rect->x = 0;
 	d_ptr->show_rect->y = static_cast<int>((win_h - h) / 2);
 	d_ptr->show_rect->w = win_w;

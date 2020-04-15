@@ -34,30 +34,30 @@ public:
 	DesktopCapture();
 	
 	~DesktopCapture() override;
-
-    /**
-     * @brief set_fps
-     * 设置帧数，每秒捕捉多少张图片
-     * 该fps将会和camera的fps统一
-     * 以较小值为标准
-     * 这个函数会重新启动设备
-     * @param value
-     * 每秒帧数
-     */
+	
+	/**
+	 * @brief set_fps
+	 * 设置帧数，每秒捕捉多少张图片
+	 * 该fps将会和camera的fps统一
+	 * 以较小值为标准
+	 * 这个函数会重新启动设备
+	 * @param value
+	 * 每秒帧数
+	 */
 	void set_fps(int value) noexcept;
-
+	
 	/**
 	 * @brief get_fps
 	 * 获取预设的帧数
 	 */
 	int get_fps() noexcept;
 	
-    /**
-     * @brief set_window
-     * 设置将要捕捉的窗口(暂未实现)
-     * @param id
-     * 窗口句柄，0为桌面
-     */
+	/**
+	 * @brief set_window
+	 * 设置将要捕捉的窗口(暂未实现)
+	 * @param id
+	 * 窗口句柄，0为桌面
+	 */
 	void set_window(const uint64_t & id) noexcept;
 	
 	/**
@@ -86,19 +86,19 @@ public:
 	 * @return 
 	 */
 	virtual bool set_default_device() noexcept override;
-
+	
 protected:
-    /**
-     * @brief on_start
-     * 开始捕捉画面后的回调,实际开始捕捉数据的函数
-     */
+	/**
+	 * @brief on_start
+	 * 开始捕捉画面后的回调,实际开始捕捉数据的函数
+	 */
 	virtual SharedPacket on_start() noexcept override;
-
-    /**
-     * @brief on_stop
-     * 结束捕捉画面后的回调，用于stop_capture后回收工作的函数
-     * 可以通过重写该函数来处理暂停后的事情
-     */
+	
+	/**
+	 * @brief on_stop
+	 * 结束捕捉画面后的回调，用于stop_capture后回收工作的函数
+	 * 可以通过重写该函数来处理暂停后的事情
+	 */
 	virtual void on_stop() noexcept override;
 	
 	/**
@@ -108,12 +108,12 @@ protected:
 	 */
 	bool open_device() noexcept;
 private:
-	int _fps;
-	uint64_t _wid;
-	DesktopCapturePrivateData * const d_ptr;
+	int									_fps;
+	uint64_t							_wid;
+	DesktopCapturePrivateData * const	d_ptr;
 };
 
-inline int DesktopCapture::get_fps() noexcept												{		return _fps;}
+inline int DesktopCapture::get_fps() noexcept									{		return _fps;}
 
 } // namespace device_manager
 

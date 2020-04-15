@@ -204,8 +204,8 @@ private:
 		return func;
 	}
 private:
-	static bool init;
-	static LogLevel _level;
+	static bool			init;
+	static LogLevel		_level;
 };
 
 } // namespace core

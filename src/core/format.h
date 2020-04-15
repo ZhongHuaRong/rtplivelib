@@ -50,9 +50,9 @@ struct Format{
 		if(this->width == 0 && format.width == 0){
 			//应该是音频
 			if( this->sample_rate == format.sample_rate &&
-				this->bits == format.bits &&
-				this->channels == format.channels &&
-				this->pixel_format == format.pixel_format)
+					this->bits == format.bits &&
+					this->channels == format.channels &&
+					this->pixel_format == format.pixel_format)
 				return true;
 			else
 				return false;
@@ -60,9 +60,9 @@ struct Format{
 		else{
 			//应该是视频
 			if( this->width == format.width && 
-				this->height == format.height &&
-				this->bits == format.bits &&
-				this->pixel_format == format.pixel_format)
+					this->height == format.height &&
+					this->bits == format.bits &&
+					this->pixel_format == format.pixel_format)
 				return true;
 			else
 				return false;
@@ -91,30 +91,30 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	using SharedPacket = std::shared_ptr<FramePacket>;
 	/*保存数据的指针,rgb和yuyv422只需要用到0*/
 	/*这里可以通过判断第二位之后的指针，来知道数据结构是不是Ｐ*/
-	uint8_t * data[4]{nullptr,nullptr,nullptr,nullptr};
+	uint8_t				* data[4]{nullptr,nullptr,nullptr,nullptr};
 	/*行大小,有时候会因为要数据对齐，一般大于等于width*/
-	int linesize[4]{0,0,0,0};
+	int					linesize[4]{0,0,0,0};
 	/*数据长度,只有在data用到第一位的时候有效,如果data用到了多位，则为0*/
-	int size{0};
+	int					size{0};
 	/*压缩格式,也可以说是rtp协议的有效负载类型pt,设置该字段是为了解码方便,未压缩的数据将会是0*/
-	int payload_type{0};
+	int					payload_type{0};
 	/*显示时间戳*/
-	int64_t pts{0};
+	int64_t				pts{0};
 	/*解压缩时间戳*/
-	int64_t dts{0};
+	int64_t				dts{0};
 	/*数据格式*/
-	Format format;
+	Format				format;
 	/*用于分包，组包，表示该包是第几个分包*/
-	int pos{0};
-    /*用于表示是否为关键帧，如果需要用到则调用is_key接口*/
-    int flag{0};
+	int					pos{0};
+	/*用于表示是否为关键帧，如果需要用到则调用is_key接口*/
+	int					flag{0};
 	/*这个指针请不要使用,内部代码使用*/
-	void *packet{nullptr};
+	void				*packet{nullptr};
 	/*这个指针请不要使用,内部代码使用*/
-	void *frame{nullptr};
+	void				*frame{nullptr};
 	
 	FramePacket() = default;
-    //该函数没有实际意义，所以删除
+	//该函数没有实际意义，所以删除
 	FramePacket(const FramePacket&) = delete;
 	
 	//析构函数，默认调用reset_pointer，所以不需要手动调用reset_pointer
@@ -125,11 +125,11 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 * 同Copy
 	 */
 	FramePacket * copy(FramePacket * src);
-    
-    FramePacket & copy(FramePacket && src);
-    
-    FramePacket & copy(SharedPacket & src);
-    
+	
+	FramePacket & copy(FramePacket && src);
+	
+	FramePacket & copy(SharedPacket & src);
+	
 	
 	/**
 	 * @brief reset_pointer
@@ -155,13 +155,13 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 * 如果没有数据则一定是false
 	 */
 	bool is_frame() noexcept;
-    
-    /**
-     * @brief is_key
-     * 判断该包是否含有关键帧
-     * @return 
-     */
-    bool is_key() noexcept;
+	
+	/**
+	 * @brief is_key
+	 * 判断该包是否含有关键帧
+	 * @return 
+	 */
+	bool is_key() noexcept;
 	
 	/**
 	 * @brief Copy
@@ -175,9 +175,9 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 * 返回dst
 	 */
 	static FramePacket * Copy(FramePacket * dst,FramePacket * src);
-    static FramePacket & Copy(FramePacket & dst,FramePacket & src);
-    static FramePacket & Copy(FramePacket & dst,FramePacket && src);
-    static SharedPacket & Copy(SharedPacket & dst,SharedPacket & src);
+	static FramePacket & Copy(FramePacket & dst,FramePacket & src);
+	static FramePacket & Copy(FramePacket & dst,FramePacket && src);
+	static SharedPacket & Copy(SharedPacket & dst,SharedPacket & src);
 	
 	/**
 	 * @brief Make_packet

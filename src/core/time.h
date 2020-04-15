@@ -25,9 +25,9 @@ public:
 	int minutes() noexcept;
 	
 	int seconds() noexcept;
-
+	
 	int milliseconds() noexcept;
-
+	
 	int64_t to_timestamp() noexcept;
 	
 	std::string to_string() ;

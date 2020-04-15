@@ -47,27 +47,27 @@ WASAPI::WASAPI()
 
 WASAPI::~WASAPI()
 {
-    if(is_start()){
-        stop();
-    }
-    exit_wait_resource();
-    exit_thread();
-    SafeRelease()(&pEnumerator);
-    SafeRelease()(&pDevice);
-    SafeRelease()(&pAudioClient);
-    SafeRelease()(&pCaptureClient);
-    TaskMemFree()(&pwfx);
-    if (event)
+	if(is_start()){
+		stop();
+	}
+	exit_wait_resource();
+	exit_thread();
+	SafeRelease()(&pEnumerator);
+	SafeRelease()(&pDevice);
+	SafeRelease()(&pAudioClient);
+	SafeRelease()(&pCaptureClient);
+	TaskMemFree()(&pwfx);
+	if (event)
 		CloseHandle(event);
 }
 
 std::vector<WASAPI::device_info> WASAPI::get_all_device_info(WASAPI::FlowType ft) noexcept(false)
 {
-    if( _init_enumerator() == false){
-        throw core::uninitialized_error("IMMDeviceEnumerator");
-    }
-    
-    IMMDeviceCollection * collenction{nullptr};
+	if( _init_enumerator() == false){
+		throw core::uninitialized_error("IMMDeviceEnumerator");
+	}
+	
+	IMMDeviceCollection * collenction{nullptr};
 	auto hr = pEnumerator->EnumAudioEndpoints((EDataFlow)ft,DEVICE_STATE_ACTIVE,&collenction);
 	if (FAILED(hr)) {
 		throw core::uninitialized_error("IMMDeviceEnumerator");
@@ -110,52 +110,52 @@ WASAPI::device_info WASAPI::get_current_device_info() noexcept
 
 bool WASAPI::set_current_device(uint64_t num, WASAPI::FlowType ft) noexcept
 {
-    if( _init_enumerator() == false){
-        return false;
-    }
-    try {
-        auto list = get_all_device_info(ft);
-        if( list.size() <= num )
-            return false;
-        
-        return set_current_device(list[num].first,ft);
-    } catch (...) {
-        return false;
-    }
-    return false;
+	if( _init_enumerator() == false){
+		return false;
+	}
+	try {
+		auto list = get_all_device_info(ft);
+		if( list.size() <= num )
+			return false;
+		
+		return set_current_device(list[num].first,ft);
+	} catch (...) {
+		return false;
+	}
+	return false;
 }
 
 bool WASAPI::set_current_device(const std::wstring &id, WASAPI::FlowType ft) noexcept
 {
-    UNUSED(ft)
-    if( _init_enumerator() == false){
-        return false;
-    }
-    IMMDevice *pDevice{nullptr};
-    auto hr = pEnumerator->GetDevice(id.c_str(),&pDevice);
-    if (FAILED(hr)) {
-        return false;
-    }
-    
-    mutex.lock();
-    //成功了再释放以前的设备
-    auto flag = _is_running_flag;
-    stop();
-    SafeRelease()(&this->pDevice);
-    this->pDevice = pDevice;
-    current_flow_type = ft;
-    mutex.unlock();
-    if( flag == true)
-        start();
-    return true;
+	UNUSED(ft)
+			if( _init_enumerator() == false){
+		return false;
+	}
+	IMMDevice *pDevice{nullptr};
+	auto hr = pEnumerator->GetDevice(id.c_str(),&pDevice);
+	if (FAILED(hr)) {
+		return false;
+	}
+	
+	mutex.lock();
+	//成功了再释放以前的设备
+	auto flag = _is_running_flag;
+	stop();
+	SafeRelease()(&this->pDevice);
+	this->pDevice = pDevice;
+	current_flow_type = ft;
+	mutex.unlock();
+	if( flag == true)
+		start();
+	return true;
 }
 
 bool WASAPI::set_default_device(WASAPI::FlowType ft) noexcept
 {
 	if( _init_enumerator() == false){
-        return false;
-    }
-    IMMDevice *pDevice{nullptr};
+		return false;
+	}
+	IMMDevice *pDevice{nullptr};
 	auto hr = pEnumerator->GetDefaultAudioEndpoint((EDataFlow)ft, eConsole, &pDevice);
 	if (FAILED(hr)) {
 		return false;
@@ -166,12 +166,12 @@ bool WASAPI::set_default_device(WASAPI::FlowType ft) noexcept
 	auto flag = _is_running_flag;
 	stop();
 	SafeRelease()(&this->pDevice);
-    this->pDevice = pDevice;
-    current_flow_type = ft;
-    mutex.unlock();
-    if( flag == true)
-        start();
-    return true;
+	this->pDevice = pDevice;
+	current_flow_type = ft;
+	mutex.unlock();
+	if( flag == true)
+		start();
+	return true;
 }
 
 const core::Format WASAPI::get_format() noexcept
@@ -222,26 +222,26 @@ bool WASAPI::start() noexcept
 		SafeRelease()(&pAudioClient);
 		return false;
 	}
-
+	
 	nFrameSize = (pwfx->wBitsPerSample / 8) * pwfx->nChannels;
-
+	
 	//不考虑第三种
 	if(current_flow_type == FlowType::RENDER){
 		hr = pAudioClient->Initialize(
-			AUDCLNT_SHAREMODE_SHARED,
-			AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK,
-			50 * 10000, // 100纳秒为基本单位
-			0,
-			pwfx,
-			nullptr);
+					AUDCLNT_SHAREMODE_SHARED,
+					AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK,
+					50 * 10000, // 100纳秒为基本单位
+					0,
+					pwfx,
+					nullptr);
 	} else if(current_flow_type == FlowType::CAPTURE){
 		hr = pAudioClient->Initialize(
-			AUDCLNT_SHAREMODE_SHARED,
-			AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
-            10 * 10000, // 100纳秒为基本单位
-			0,
-			pwfx,
-			nullptr);
+					AUDCLNT_SHAREMODE_SHARED,
+					AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+					10 * 10000, // 100纳秒为基本单位
+					0,
+					pwfx,
+					nullptr);
 	} else
 		return false;
 	
@@ -252,7 +252,7 @@ bool WASAPI::start() noexcept
 	}
 	
 	pAudioClient->SetEventHandle(event);
-
+	
 	hr = pAudioClient->GetService(IID_IAudioCaptureClient, (void**)&pCaptureClient);
 	if (FAILED(hr)) {
 		SafeRelease()(&pAudioClient);
@@ -279,22 +279,22 @@ bool WASAPI::stop() noexcept
 		return true;
 	pAudioClient->Stop();
 	
-//	/*释放掉剩余没有提取的音频数据*/
-//	uint32_t packetLength;
-//	unsigned char * pData;
-//	uint32_t numFramesAvailable;
-//	DWORD  flags;
+	//	/*释放掉剩余没有提取的音频数据*/
+	//	uint32_t packetLength;
+	//	unsigned char * pData;
+	//	uint32_t numFramesAvailable;
+	//	DWORD  flags;
 	
-//	pCaptureClient->GetNextPacketSize(&packetLength);
-
-//	//循环读取所有包,然后release
-//	while (packetLength) {
-//		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
-		
-//		pCaptureClient->ReleaseBuffer(numFramesAvailable);
-
-//		pCaptureClient->GetNextPacketSize(&packetLength);
-//	}
+	//	pCaptureClient->GetNextPacketSize(&packetLength);
+	
+	//	//循环读取所有包,然后release
+	//	while (packetLength) {
+	//		pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, nullptr, nullptr);
+	
+	//		pCaptureClient->ReleaseBuffer(numFramesAvailable);
+	
+	//		pCaptureClient->GetNextPacketSize(&packetLength);
+	//	}
 	
 	SafeRelease()(&pCaptureClient);
 	SafeRelease()(&pAudioClient);
@@ -356,7 +356,7 @@ void WASAPI::on_thread_run() noexcept
 	
 	uint32_t packetLength;
 	pCaptureClient->GetNextPacketSize(&packetLength);
-
+	
 	if (packetLength) {
 		unsigned char * pData;
 		uint32_t numFramesAvailable;
@@ -412,20 +412,20 @@ void WASAPI::on_thread_pause() noexcept
 
 bool WASAPI::_init_enumerator() noexcept
 {
-    if(pEnumerator)
-        return true;
-    
-    auto hr = CoCreateInstance(CLSID_MMDeviceEnumerator,
-                               nullptr,
-                               CLSCTX_ALL,
-                               IID_IMMDeviceEnumerator,
-                               (void**)&pEnumerator);
-    
-    if(hr == 0)
-        return true;
-    else {
-        return false;
-    }
+	if(pEnumerator)
+		return true;
+	
+	auto hr = CoCreateInstance(CLSID_MMDeviceEnumerator,
+							   nullptr,
+							   CLSCTX_ALL,
+							   IID_IMMDeviceEnumerator,
+							   (void**)&pEnumerator);
+	
+	if(hr == 0)
+		return true;
+	else {
+		return false;
+	}
 }
 
 }//namespace device_manager

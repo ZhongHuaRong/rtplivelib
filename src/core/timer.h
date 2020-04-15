@@ -90,12 +90,12 @@ protected:
 		return _wait_time <= 0 || _start_flag == false;
 	}
 private:
-	std::function<void ()> _cb;
-	std::condition_variable _wait_cond_var;
-	std::mutex _mutex;
-	volatile int _wait_time{0};
-	volatile bool _loop_flag{false};
-	volatile bool _start_flag{false};
+	std::function<void ()>			_cb;
+	std::condition_variable			_wait_cond_var;
+	std::mutex						_mutex;
+	volatile int					_wait_time{0};
+	volatile bool					_loop_flag{false};
+	volatile bool					_start_flag{false};
 };
 
 } // namespace rtp_network

@@ -20,24 +20,24 @@ public:
 	using PayloadType = codec::VideoDecoder::Packet::first_type;
 	using Packet = codec::VideoDecoder::Packet::second_type;
 public:
-	AVCodec* decoder{nullptr};
-	AVCodecContext * decoder_ctx{nullptr};
-	AVCodecParserContext *parser_ctx{nullptr};
-	PayloadType cur_pt{PayloadType::RTP_PT_NONE};
-	core::Format cur_fmt;
-	player::VideoPlayer *player{nullptr};
-	AVPacket * pkt{nullptr};
-	AVFrame * frame{nullptr};
-	AVFrame * sw_frame{nullptr};
+	AVCodec						*decoder{nullptr};
+	AVCodecContext				*decoder_ctx{nullptr};
+	AVCodecParserContext		*parser_ctx{nullptr};
+	PayloadType					cur_pt{PayloadType::RTP_PT_NONE};
+	core::Format				cur_fmt;
+	player::VideoPlayer			*player{nullptr};
+	AVPacket					*pkt{nullptr};
+	AVFrame						*frame{nullptr};
+	AVFrame						*sw_frame{nullptr};
 	
 	//以下参数用于硬件加速
-	HardwareDevice * hwdevice{nullptr};
+	HardwareDevice				*hwdevice{nullptr};
 	//下面几个参数，预设，以后提供外部设置硬件解码方案
 	//用于用户设置
-	HardwareDevice::HWDType hwd_type_user{HardwareDevice::Auto};
+	HardwareDevice::HWDType		hwd_type_user{HardwareDevice::Auto};
 	//目前正在使用的类型,用于判断用户是否修改硬件加速方案
-	HardwareDevice::HWDType hwd_type_cur{HardwareDevice::None};
-	bool use_hw_flag{true};
+	HardwareDevice::HWDType		hwd_type_cur{HardwareDevice::None};
+	bool						use_hw_flag{true};
 	
 	
 	VideoDecoderPrivateData(){

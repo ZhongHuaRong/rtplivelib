@@ -27,8 +27,8 @@ class RTPLIVELIBSHARED_EXPORT MicrophoneCapture :public AbstractCapture
 {
 public:
 	MicrophoneCapture();
-
-    ~MicrophoneCapture() override;
+	
+	~MicrophoneCapture() override;
 	
 	/**
 	 * @brief get_all_device_info
@@ -56,16 +56,16 @@ public:
 	 */
 	virtual bool set_default_device() noexcept override;
 protected:
-    /**
-     * @brief on_start
-     * 开始捕捉音频后的回调
-     */
+	/**
+	 * @brief on_start
+	 * 开始捕捉音频后的回调
+	 */
 	virtual AbstractCapture::SharedPacket on_start() noexcept override;
-
-    /**
-     * @brief on_stop
-     * 结束捕捉音频后的回调
-     */
+	
+	/**
+	 * @brief on_stop
+	 * 结束捕捉音频后的回调
+	 */
 	virtual void on_stop() noexcept override;
 	
 	/**

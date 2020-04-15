@@ -34,12 +34,12 @@ public:
 	 * 释放资源
 	 */
 	virtual ~AudioEncoder() override;
-
-    /**
-     * @brief set_hardware_acceleration
-     * 音频编码不需要硬件加速
-     */
-    void set_hardware_acceleration(bool flag,HardwareDevice::HWDType hwa_type = HardwareDevice::Auto) noexcept = delete;
+	
+	/**
+	 * @brief set_hardware_acceleration
+	 * 音频编码不需要硬件加速
+	 */
+	void set_hardware_acceleration(bool flag,HardwareDevice::HWDType hwa_type = HardwareDevice::Auto) noexcept = delete;
 protected:
 	/**
 	 * @brief encode
@@ -86,15 +86,15 @@ private:
 private:
 	//用于保存上一次输入时的音频格式，通过前后对比来重新设置编码器参数
 	//现在改为格式不一致则进行重采样(本意是不想通过重采样来处理的,但是好像只有S16是可以成功打开编码器)
-	core::Format ifmt;
+	core::Format						ifmt;
 	//用于重采样的默认格式
-	const core::Format default_resample_format{0,0,0,44100,2,16};
+	const core::Format					default_resample_format{0,0,0,44100,2,16};
 	//用于判断是否给frame设置参数
-	bool reassignment{false};
+	bool								reassignment{false};
 	//实际用去编码的数据结构
-	AVFrame * encode_frame{nullptr};
+	AVFrame								*encode_frame{nullptr};
 	//当输入格式不符合编码格式时则需要重采样
-	audio_processing::Resample * resample{nullptr};
+	audio_processing::Resample			*resample{nullptr};
 };
 
 } // namespace codec

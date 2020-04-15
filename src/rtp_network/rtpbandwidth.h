@@ -46,9 +46,9 @@ public:
 		_speed = 0;
 	}
 private:
-	volatile uint64_t _speed{0};
-	volatile uint64_t _total_flow{0};
-	core::Timer timer;
+	volatile uint64_t	_speed{0};
+	volatile uint64_t	_total_flow{0};
+	core::Timer			timer;
 };
 
 } // namespace rtp_network

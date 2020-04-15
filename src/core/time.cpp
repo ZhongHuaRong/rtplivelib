@@ -18,7 +18,7 @@ Time::Time(int hours,int minutes,int seconds,int milliseconds) noexcept
 	std::chrono::seconds s(seconds);
 	std::chrono::milliseconds M(milliseconds);
 	
-	time = std::chrono::duration_cast<std::chrono::milliseconds>(h) + 
+	time =	std::chrono::duration_cast<std::chrono::milliseconds>(h) + 
 			std::chrono::duration_cast<std::chrono::milliseconds>(m) + 
 			std::chrono::duration_cast<std::chrono::milliseconds>(s) + 
 			M;
@@ -62,9 +62,9 @@ std::string Time::to_string()
 Time Time::Now() noexcept 
 {
 	constexpr auto h = 8 * 60 * 60 * 1000;
-	return Time::FromTimeStamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+	return Time::FromTimeStamp(	std::chrono::duration_cast<std::chrono::milliseconds>(
 								std::chrono::system_clock::now().time_since_epoch()) +
-							   std::chrono::milliseconds(h));
+								std::chrono::milliseconds(h));
 }
 
 Time Time::FromTimeStamp(int64_t time_stamp) noexcept
