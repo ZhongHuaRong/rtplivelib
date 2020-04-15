@@ -62,8 +62,7 @@ if(UNIX)
                           SDL2
                           jrtp
                           jthread
-                          openfec
-                          wirehair)
+                          openfec)
     INSTALL(TARGETS ${PROJECT_NAME}
             RUNTIME DESTINATION bin
             LIBRARY DESTINATION lib
@@ -81,7 +80,6 @@ elseif(WIN64)
                           SDL2
                           libjrtp
                           libopenfec
-                          wirehair
                           Ws2_32
                           Advapi32
                           Ole32

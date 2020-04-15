@@ -27,3 +27,9 @@
 *.exe
 *.out
 *.app
+
+# cmake build
+/build/*
+!/build/make-mingw64-Makefiles-Debug.sh
+!/build/make-mingw64-Makefiles-Release.sh
+!/build/toolChain.cmake
