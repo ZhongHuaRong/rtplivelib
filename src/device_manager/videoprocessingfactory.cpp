@@ -42,8 +42,9 @@ public:
 	//保存上一帧
 	core::FramePacket::SharedPacket privious_camera_frame;
 	core::FramePacket::SharedPacket privious_desktop_frame;
-	//上一帧的时间戳
+	//上一秒的时间戳，采用1秒多少张图片来判断每秒帧数
 	int64_t privious_ts{0};
+	uint8_t count{0};
 	
 	///////////////////////
 	//转换格式用的上下文
@@ -112,8 +113,13 @@ public:
 	}
 	
 	inline void on_real_time_fps(int64_t ts) noexcept{
-		core::GlobalCallBack::Get_CallBack()->on_video_real_time_fps(1000000.0f / (ts - privious_ts));
-		privious_ts = ts;
+		if( ts - privious_ts >= 1000000){
+			privious_ts = ts;
+			core::GlobalCallBack::Get_CallBack()->on_video_real_time_fps(count + 1);
+			count = 0;
+		} else {
+			count += 1;
+		}
 	}
 };
 
