@@ -113,10 +113,10 @@ public:
 	}
 	
 	inline void on_real_time_fps(int64_t ts) noexcept{
-		if( ts - privious_ts >= 1000000){
+		if( ts - privious_ts > 1000000){
 			privious_ts = ts;
-			core::GlobalCallBack::Get_CallBack()->on_video_real_time_fps(count + 1);
-			count = 0;
+			core::GlobalCallBack::Get_CallBack()->on_video_real_time_fps(count);
+			count = 1;
 		} else {
 			count += 1;
 		}
