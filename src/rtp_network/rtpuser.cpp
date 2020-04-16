@@ -67,6 +67,16 @@ void RTPUser::set_win_id(void *id) noexcept
 	_vplay.set_win_id(id);
 }
 
+void RTPUser::set_video_hwd_type(codec::HardwareDevice::HWDType type) noexcept
+{
+	_vdecoder.set_hwd_type(type);
+}
+
+codec::HardwareDevice::HWDType RTPUser::get_video_hwd_type() noexcept
+{
+	return _vdecoder.get_hwd_type();
+}
+
 void RTPUser::set_display_screen_size(const int &win_w, const int &win_h,
 									  const int &frame_w, const int &frame_h) noexcept
 {

@@ -3,11 +3,13 @@
 
 #include "../core/config.h"
 #include "../core/globalcallback.h"
+#include "../codec/hardwaredevice.h"
 #include "rtpsendthread.h"
 #include "rtpuser.h"
 #include "rtppacket.h"
 #include <mutex>
 #include <list>
+//#include <unordered_set>
 #include <memory>
 
 namespace rtplivelib{
@@ -79,6 +81,10 @@ public:
 	 * @brief get_user
 	 * 根据用户名获取user
 	 * 返回true标示找到了
+	 * @param user
+	 * user将会使用内部的内存(shared_ptr)
+	 * 所以只需要传入空的user，减少内存开销
+	 * User user(nullptr);
 	 */
 	bool get_user(const std::string & name,User & user) noexcept;
 	
@@ -89,8 +95,55 @@ public:
 	static uint32_t get_local_audio_ssrc() noexcept;
 	
 	/**
+	 * @brief set_decoder_hwd_type
+	 * 根据名字设置该用户的解码器的硬解类型，None表示软解
+	 * @param name
+	 * 用户名字
+	 * @param type
+	 * 硬解方案
+	 */
+	void set_decoder_hwd_type(const std::string & name,
+							  codec::HardwareDevice::HWDType type) noexcept;
+	
+	/**
+	 * @brief set_decoder_hwd_type
+	 * 修改所有用户的硬解方案，新加入的用户也将采用这个方案
+	 * @param type
+	 * 硬解方案
+	 */
+	void set_decoder_hwd_type(codec::HardwareDevice::HWDType type) noexcept;
+	
+	/**
+	 * @brief get_decoder_hwd_type
+	 * 获取所有解码器的硬解方案
+	 * @return 
+	 * 返回map
+	 * key:用户名
+	 * value:硬解方案
+	 */
+	std::map<std::string,codec::HardwareDevice::HWDType> 
+	get_decoder_hwd_type() noexcept;
+	
+	/**
+	 * @brief get_global_hwd_type
+	 * 获取全局的硬解类型
+	 * @return 
+	 */
+	codec::HardwareDevice::HWDType get_global_hwd_type() noexcept;
+	
+	/**
+	 * @brief get_decoder_hwd_type
+	 * 获取该用户名的解码器的硬解方案
+	 * @param name
+	 * 用户名字
+	 * @return 
+	 * 返回硬解方案,如果失败则固定返回None
+	 */
+	codec::HardwareDevice::HWDType get_decoder_hwd_type(const std::string &name) noexcept;
+	
+	/**
 	 * @brief set_show_win_id
-	 * 设置需要显示的id
+	 * 设置需要视频显示的窗口id
 	 */
 	void set_show_win_id(void * id,const std::string & name) noexcept;
 	
@@ -178,10 +231,13 @@ private:
 	static RTPUserManager			*_manager;
 	static volatile uint32_t		_local_video_ssrc;
 	static volatile uint32_t		_local_audio_ssrc;
+	//考虑使用unordered_set,查找比list更快速
 	std::list<User>					_user_list;
 	std::mutex						_mutex;
 	//判断自己是否进入房间
 	volatile bool					_active;
+	//全局的硬解方案
+	codec::HardwareDevice::HWDType	_type{codec::HardwareDevice::Auto};
 	
 	friend class RTPSendThread;
 	friend class RtpSendThreadPrivateData;
@@ -207,6 +263,11 @@ inline uint32_t RTPUserManager::get_local_video_ssrc() noexcept					{
 }
 inline uint32_t RTPUserManager::get_local_audio_ssrc() noexcept					{
 	return _local_audio_ssrc;
+}
+
+inline codec::HardwareDevice::HWDType 
+RTPUserManager::get_global_hwd_type() noexcept									{
+	return _type;
 }
 inline void RTPUserManager::clear_all() noexcept								{
 	std::lock_guard<std::mutex> lk(_mutex);

@@ -5,6 +5,7 @@
 #include "../core/format.h"
 #include "../rtp_network/rtpsession.h"
 #include "../player/videoplayer.h"
+#include "hardwaredevice.h"
 #include <memory>
 
 namespace rtplivelib {
@@ -36,6 +37,20 @@ public:
 	 * 临时接口，用于设置播放器
 	 */
 	void set_player_object(player::VideoPlayer * player) noexcept;
+	
+	/**
+	 * @brief set_hwd_type
+	 * 设置硬件加速类型，默认设置为Auto，加速方案启动失败则会设置为None
+	 */
+	void set_hwd_type(HardwareDevice::HWDType type) noexcept;
+	
+	/**
+	 * @brief get_hwd_type
+	 * 获取该解码器的实际使用的硬解加速方案，而不是预设方案
+	 * 如果没有使用加速方案，则是返回None
+	 * @return 
+	 */
+	HardwareDevice::HWDType get_hwd_type() noexcept;
 protected:
 	/**
 	 * @brief on_thread_run

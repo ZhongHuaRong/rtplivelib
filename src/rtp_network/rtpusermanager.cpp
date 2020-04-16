@@ -32,7 +32,7 @@ void RTPUserManager::deal_with_rtp(RTPPacket::SharedRTPPacket rtp_packet) noexce
 	}
 	auto && SSRC = packet->GetSSRC();
 	
-	User user;
+	User user(nullptr);
 	
 	if( get_user(SSRC,user) ){
 		user->deal_with_packet(rtp_packet);
@@ -141,6 +141,46 @@ bool RTPUserManager::get_user(const std::string &name, RTPUserManager::User &use
 	return false;
 }
 
+void RTPUserManager::set_decoder_hwd_type(const std::string &name,
+										  codec::HardwareDevice::HWDType type) noexcept
+{
+	User user(nullptr);
+	if(get_user(name,user) == false)
+		return;
+	
+	user->set_video_hwd_type(type);
+}
+
+void RTPUserManager::set_decoder_hwd_type(codec::HardwareDevice::HWDType type) noexcept
+{
+	_type = type;
+	for(auto i:_user_list){
+		i->set_video_hwd_type(type);
+	}
+}
+
+std::map<std::string, codec::HardwareDevice::HWDType> 
+RTPUserManager::get_decoder_hwd_type() noexcept
+{
+	std::map<std::string, codec::HardwareDevice::HWDType> map;
+	
+	for(auto i:_user_list){
+		map[i->name] = i->_vdecoder.get_hwd_type();
+	}
+	
+	return map;
+}
+
+codec::HardwareDevice::HWDType
+RTPUserManager::get_decoder_hwd_type(const std::string &name) noexcept
+{
+	User user(nullptr);
+	if(get_user(name,user) == true)
+		return user->_vdecoder.get_hwd_type();
+	
+	return codec::HardwareDevice::None;
+}
+
 void RTPUserManager::set_show_win_id(void *id, const std::string &name) noexcept
 {
 	//没进入房间不处理
@@ -152,7 +192,7 @@ void RTPUserManager::set_show_win_id(void *id, const std::string &name) noexcept
 		return;
 
 	//尝试搜索是否已经存在该用户名
-	User user;
+	User user(nullptr);
 	if(get_user(name,user) == true){
 		user->set_win_id(id);
 	}
@@ -171,7 +211,7 @@ void RTPUserManager::set_screen_size(const std::string &name,
 		return;
 
 	//尝试搜索是否已经存在该用户名
-	User user;
+	User user(nullptr);
 	if(get_user(name,user) == true){
 		user->set_display_screen_size(win_w,win_h,frame_w,frame_h);
 	}
@@ -200,6 +240,8 @@ bool RTPUserManager::insert(uint32_t ssrc, const std::string &name) noexcept
 	std::lock_guard<std::mutex> lk(_mutex);
 	//尝试搜索是否已经存在该用户名
 	auto && user = find(name);
+	//提前设置硬解方案
+	user->set_video_hwd_type(_type);
 	//开始检查ssrc
 	//这个是已经存在的用户了，不继续处理了
 	if( ssrc == user->ssrc || ssrc == user->another_ssrc)

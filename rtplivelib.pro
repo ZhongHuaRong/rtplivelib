@@ -64,14 +64,14 @@ LIBS += -L$$PWD/SDK/win64/bin/ -lavdevice-58 \
 	-L$$PWD/SDK/win64/bin/ -lSDL2 \
 	-L$$PWD/SDK/win64/bin/ -llibjrtp \
 	-L$$PWD/SDK/win64/bin/ -llibopenfec \
-        -L$$PWD/SDK/win64/lib/ -lwirehair
+	-L$$PWD/SDK/win64/lib/ -lwirehair
 
 LIBS += -lWs2_32 \
 	-lAdvapi32 \
 	-lOle32 \
 	-lOleAut32 \
 	-lStrmiids \
-        -lDXGI
+	-lDXGI
 
 INCLUDEPATH += $$PWD/SDK/win64/include
 DEPENDPATH += $$PWD/SDK/win64/include

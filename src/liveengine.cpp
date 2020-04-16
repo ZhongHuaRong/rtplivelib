@@ -199,6 +199,16 @@ const std::string& LiveEngine::get_room_name() noexcept
 	return d_ptr->video_session->get_room_name();
 }
 
+void LiveEngine::set_decoder_hwd_type(codec::HardwareDevice::HWDType type) noexcept
+{
+	d_ptr->rtp_user->set_decoder_hwd_type(type);
+}
+
+codec::HardwareDevice::HWDType LiveEngine::get_decoder_hwd_type() noexcept
+{
+	return d_ptr->rtp_user->get_global_hwd_type();
+}
+
 void *LiveEngine::get_audio_encoder() noexcept
 {
 	return d_ptr->audio_encoder;

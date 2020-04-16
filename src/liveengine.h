@@ -3,6 +3,7 @@
 
 #include "core/config.h"
 #include "device_manager/devicemanager.h"
+#include "codec/hardwaredevice.h"
 
 namespace rtplivelib{
 
@@ -123,6 +124,28 @@ public:
 	 * 如果字符串为空，则可以确认是没有加入房间的
 	 */
 	const std::string& get_room_name() noexcept;
+	
+	/// 下面提供两个解码器解码方案相关的接口，可以设定解码方案
+	/// 编码器的接口就不提供了，可以通过get_video_encoder
+	/// 来获取编码器对象来设置编码方案，
+	/// audio则不需要该类型接口，固定软压AAC
+	/**
+	 * @brief set_decoder_hwd_type
+	 * 修改所有用户的硬解方案，新加入的用户也将采用这个方案
+	 * @param type
+	 * 硬解方案
+	 */
+	void set_decoder_hwd_type(codec::HardwareDevice::HWDType type) noexcept;
+	
+	/**
+	 * @brief get_decoder_hwd_type
+	 * 获取所有解码器的硬解方案
+	 * @return 
+	 * 返回map
+	 * key:用户名
+	 * value:硬解方案
+	 */
+	codec::HardwareDevice::HWDType get_decoder_hwd_type() noexcept;
 	
 	/**
 	 * @brief get_audio_encoder

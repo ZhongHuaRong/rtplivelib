@@ -20,24 +20,23 @@ public:
 	using PayloadType = codec::VideoDecoder::Packet::first_type;
 	using Packet = codec::VideoDecoder::Packet::second_type;
 public:
-	AVCodec						*decoder{nullptr};
-	AVCodecContext				*decoder_ctx{nullptr};
-	AVCodecParserContext		*parser_ctx{nullptr};
-	PayloadType					cur_pt{PayloadType::RTP_PT_NONE};
-	core::Format				cur_fmt;
-	player::VideoPlayer			*player{nullptr};
-	AVPacket					*pkt{nullptr};
-	AVFrame						*frame{nullptr};
-	AVFrame						*sw_frame{nullptr};
+	AVCodec								*decoder{nullptr};
+	AVCodecContext						*decoder_ctx{nullptr};
+	AVCodecParserContext				*parser_ctx{nullptr};
+	PayloadType							cur_pt{PayloadType::RTP_PT_NONE};
+	core::Format						cur_fmt;
+	player::VideoPlayer					*player{nullptr};
+	AVPacket							*pkt{nullptr};
+	AVFrame								*frame{nullptr};
+	AVFrame								*sw_frame{nullptr};
 	
 	//以下参数用于硬件加速
-	HardwareDevice				*hwdevice{nullptr};
-	//下面几个参数，预设，以后提供外部设置硬件解码方案
+	HardwareDevice						*hwdevice{nullptr};
 	//用于用户设置
-	HardwareDevice::HWDType		hwd_type_user{HardwareDevice::Auto};
+	volatile HardwareDevice::HWDType	hwd_type_user{HardwareDevice::Auto};
 	//目前正在使用的类型,用于判断用户是否修改硬件加速方案
-	HardwareDevice::HWDType		hwd_type_cur{HardwareDevice::None};
-	bool						use_hw_flag{true};
+	HardwareDevice::HWDType				hwd_type_cur{HardwareDevice::None};
+	bool								use_hw_flag{true};
 	
 	
 	VideoDecoderPrivateData(){
@@ -63,7 +62,7 @@ public:
 				//清空缓存
 				pkt->data = nullptr;
 				pkt->size = 0;
-				decode(false);
+				decode();
 			}
 			avcodec_free_context(&decoder_ctx);
 		}
@@ -132,7 +131,7 @@ public:
 			//硬解的初始化
 			if( pt == cur_pt ){
 				if( hwd_type_user == HardwareDevice::Auto && hwd_type_cur != HardwareDevice::None)
-					//负载一样和使用了自动硬解的话，则不判断返回
+					//负载一样和使用了自动硬解的话，则不判断直接返回
 					return;
 				else if( hwd_type_user == hwd_type_cur )
 					return;
@@ -232,7 +231,7 @@ public:
 	 * 解码操作
 	 * 在这里就不判断各种上下文了，直接开始解码
 	 */
-	inline void decode(bool play = true) noexcept{
+	inline void decode() noexcept{
 		int ret = 0;
 		
 		ret = avcodec_send_packet(decoder_ctx,pkt);
@@ -264,8 +263,6 @@ public:
 			}
 			
 //			core::Logger::Print("size:{}",api,LogLevel::INFO_LEVEL,sw_frame->format);
-			if(play)
-				display();
 		}
 	}
 	
@@ -296,8 +293,10 @@ public:
 			data += ret;
 			size -= ret;
 			
-			if( pkt->size )
+			if( pkt->size ){
 				decode();
+				display();
+			}
 		}
 	}
 	
@@ -363,7 +362,9 @@ public:
 			cur_fmt.height = frame->height;
 			cur_fmt.pixel_format = frame->format;
 		}
-		player->play(cur_fmt,data,linesize);
+		if( player != nullptr)
+			//这里是解码后立即渲染，可否考虑异步渲染?
+			player->play(cur_fmt,data,linesize);
 		
 		//释放本次分配的空间
 		if(is_alloc){
@@ -400,6 +401,7 @@ public:
 			pkt->size = pack.second->size;
 			//硬件加速，不需要解析
 			decode();
+			display();
 		} else {
 			//解析并解码
 			parse(pack.second->data[0],pack.second->size,pack.second->pts,pack.second->pos);
@@ -563,6 +565,16 @@ codec::VideoDecoder::~VideoDecoder()
 void VideoDecoder::set_player_object(player::VideoPlayer *player) noexcept
 {
 	d_ptr->player = player;
+}
+
+void VideoDecoder::set_hwd_type(HardwareDevice::HWDType type) noexcept
+{
+	d_ptr->hwd_type_user = type;
+}
+
+HardwareDevice::HWDType VideoDecoder::get_hwd_type() noexcept
+{
+	return d_ptr->hwd_type_cur;
 }
 
 void VideoDecoder::on_thread_run() noexcept

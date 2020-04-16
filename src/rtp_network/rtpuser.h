@@ -4,6 +4,7 @@
 #include "../core/config.h"
 #include "../codec/videodecoder.h"
 #include "../codec/audiodecoder.h"
+#include "../codec/hardwaredevice.h"
 #include "../player/videoplayer.h"
 #include "rtpsession.h"
 #include "rtppacket.h"
@@ -68,6 +69,20 @@ protected:
 	 * @param id
 	 */
 	void set_win_id(void *id) noexcept;
+	
+	/**
+	 * @brief set_hwd_type
+	 * 设置视频解码硬件加速类型，默认设置为Auto，加速方案启动失败则会设置为None
+	 */
+	void set_video_hwd_type(codec::HardwareDevice::HWDType type) noexcept;
+	
+	/**
+	 * @brief get_video_hwd_type
+	 * 获取视频解码器的实际使用的硬解加速方案，而不是预设方案
+	 * 如果没有使用加速方案，则是返回None
+	 * @return 
+	 */
+	codec::HardwareDevice::HWDType get_video_hwd_type() noexcept;
 	
 	void set_display_screen_size(const int &win_w,const int & win_h,
 								 const int & frame_w,const int & frame_h) noexcept;
