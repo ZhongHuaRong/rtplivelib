@@ -62,6 +62,7 @@ public:
 	 * 这个是编码器名字
 	 * @return 
 	 * 是否设置成功
+	 * @warning 该接口目前外部调用无效，需要进一步改进
 	 */
 	bool set_encoder_name(const char * codec_name) noexcept;
 	
