@@ -10,7 +10,7 @@
 
 * Windows<br>
 1.[msys2](http://www.msys2.org/) + mingw64<br>
-2.cmake<br>
+2.cmake(使用pacman安装的cmake不支持Mingw)<br>
 3.nasm<br>
 4.yasm<br>
 5.pkg-config
@@ -40,6 +40,9 @@ set(CMAKE_CXX_COMPILER "g++")<br>
 然后从控制台进入到根目录输入下面的命令<br>
 * cmake -G "MinGW Makefiles" -DDEBUG:STRING=OFF<br>
 生成makefile后直接make就可以了，不过没有make install，需要手动copy
+
+# wirehair
+[下载地址](https://github.com/catid/wirehair)<br>，配置好cmake就可以用cmake编译了
 
 # mfx
 [下载地址](https://github.com/lu-zero/mfx_dispatch)，没有这个库编译的时候将会提示缺少头文件
