@@ -80,7 +80,8 @@ void CameraCapture::set_video_size(const VideoSize &size) noexcept
 		open_device();
 }
 
-std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(false)
+std::map<CameraCapture::device_id,CameraCapture::device_name>
+CameraCapture::get_all_device_info() noexcept(false)
 {
 #if defined (unix)
 	if(d_ptr->ifmt == nullptr){
@@ -120,7 +121,7 @@ std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(
 			//使用IEnumMoniker接口枚举所有的设备标识
 			IMoniker *pMoniker{nullptr};
 			ULONG cFetched{0};
-			std::map<std::string,std::string> info_map;
+			std::map<CameraCapture::device_id,CameraCapture::device_name> info_map;
 			
 			while (pEnum->Next(1, &pMoniker, &cFetched) == S_OK)
 			{
@@ -131,7 +132,7 @@ std::map<std::string,std::string> CameraCapture::get_all_device_info() noexcept(
 											 reinterpret_cast<void**>(&pPropBag));
 				if(SUCCEEDED(hr)){
 					BSTR devicePath{nullptr};
-					std::pair<std::string,std::string> pair;
+					std::pair<CameraCapture::device_id,CameraCapture::device_name> pair;
 					
 					hr = pMoniker->GetDisplayName(nullptr, nullptr, &devicePath);
 					if(SUCCEEDED(hr)){
@@ -185,7 +186,7 @@ bool CameraCapture::set_default_device() noexcept
 	return true;
 }
 
-bool CameraCapture::set_current_device(std::string device_id) noexcept
+bool CameraCapture::set_current_device(CameraCapture::device_id device_id) noexcept
 {
 	//只区分设备id，不区分设备名字
 	if(device_id.compare(current_device_info.second) == 0){

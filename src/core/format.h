@@ -42,7 +42,8 @@ struct Format{
 	 */
 	int bits{0};
 	
-	/*指保存数据的格式*/
+	/*指保存数据的格式,这里的格式太多了，先不列出来，内部使用，
+		可以查看avutil/pixfmt.h文件查看AVPixelFormat结构*/
 	int pixel_format{-1};
 	
 	bool operator == (const Format& format){

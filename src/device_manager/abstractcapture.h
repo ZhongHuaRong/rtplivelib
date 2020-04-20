@@ -10,7 +10,6 @@ namespace rtplivelib {
 
 namespace device_manager {
 
-
 /**
  * @brief The AbstractCapture class
  * 虚拟捕捉类
@@ -40,7 +39,9 @@ public:
 	
 	using FramePacket = core::FramePacket;
 	using SharedPacket = core::FramePacket::SharedPacket;
-	using device_info = std::pair<std::string,std::string>;
+	using device_name = std::string;
+	using device_id = std::string;
+	using device_info = std::pair<device_id,device_name>;
 public:
 	/**
 	 * @def AbstractCapture
@@ -103,7 +104,7 @@ public:
 	 * @return 
 	 * 返回一个map
 	 */
-	virtual std::map<std::string,std::string> get_all_device_info() noexcept(false) = 0;
+	virtual std::map<device_id,device_name> get_all_device_info() noexcept(false) = 0;
 	
 	/**
 	 * @brief set_default_device
@@ -118,7 +119,7 @@ public:
 	 * 如果失败则返回false
 	 * @see get_all_device_info
 	 */
-	virtual bool set_current_device(std::string device_id) noexcept = 0;
+	virtual bool set_current_device(device_id device_id) noexcept = 0;
 	
 	/**
 	 * @brief get_type

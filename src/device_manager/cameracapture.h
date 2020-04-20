@@ -98,7 +98,7 @@ public:
 	 * @return 
 	 * 返回一个map
 	 */
-	virtual std::map<std::string,std::string> get_all_device_info()  noexcept(false) override;
+	virtual std::map<device_id,device_name> get_all_device_info()  noexcept(false) override;
 	
 	/**
 	 * @brief set_default_device
@@ -114,7 +114,7 @@ public:
 	 * 如果失败则返回false
 	 * @see get_all_device_info
 	 */
-	virtual bool set_current_device(std::string device_id) noexcept override;
+	virtual bool set_current_device(device_id device_id) noexcept override;
 protected:
 	/**
 	 * @brief on_start

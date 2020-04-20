@@ -82,7 +82,7 @@ void DesktopCapture::set_window(const uint64_t & id)  noexcept{
 	_wid = id;
 }
 
-std::map<std::string,std::string> DesktopCapture::get_all_device_info() noexcept(false)
+std::map<DesktopCapture::device_id,DesktopCapture::device_name> DesktopCapture::get_all_device_info() noexcept(false)
 {
 	if(d_ptr->ifmt == nullptr){
 		throw core::uninitialized_error("AVInputFormat(ifmt)");
@@ -91,9 +91,9 @@ std::map<std::string,std::string> DesktopCapture::get_all_device_info() noexcept
 	AVDeviceInfoList *info_list = nullptr;
 	avdevice_list_input_sources(d_ptr->ifmt,nullptr,nullptr,&info_list);
 	if(info_list){
-		std::map<std::string,std::string> info_map;
+		std::map<device_id,device_name> info_map;
 		for(auto index = 0;index < info_list->nb_devices;++index){
-			std::pair<std::string,std::string> pair;
+			std::pair<device_id,device_name> pair;
 			pair.first = info_list->devices[index]->device_description;
 			pair.second = info_list->devices[index]->device_name;
 			info_map.insert(pair);
@@ -106,7 +106,7 @@ std::map<std::string,std::string> DesktopCapture::get_all_device_info() noexcept
 	}
 }
 
-bool DesktopCapture::set_current_device(std::string device_id) noexcept
+bool DesktopCapture::set_current_device(device_id device_id) noexcept
 {
 	//只区分设备id，不区分设备名字
 	if(device_id.compare(current_device_info.second) == 0){
@@ -217,7 +217,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	ptr->pts = d_ptr->packet->pts;
 	ptr->dts = d_ptr->packet->dts;
 	ptr->format.frame_rate = _fps;
-    ptr->flag = d_ptr->packet->flags;
+	ptr->flag = d_ptr->packet->flags;
 	
 	return ptr;
 }

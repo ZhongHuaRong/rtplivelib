@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       -=  gui
+QT  -=  gui
 QT	-= core
 
 TARGET = rtplive
@@ -77,10 +77,12 @@ INCLUDEPATH += $$PWD/SDK/win64/include
 DEPENDPATH += $$PWD/SDK/win64/include
 
 HEADERS += \
-	src/device_manager/wasapi.h
+	src/device_manager/wasapi.h \
+    src/device_manager/dxgicapture.h
 	
 SOURCES += \
-	src/device_manager/wasapi.cpp
+	src/device_manager/wasapi.cpp \
+    src/device_manager/dxgicapture.cpp
 }
 
 INCLUDEPATH += $$PWD/SDK/include

@@ -1,47 +1,36 @@
-
 #pragma once
 
-#include "../core/config.h"
-#include "../core/abstractqueue.h"
-#include "../core/format.h"
-#define WIN32_LEAN_AND_MEAN
-#include <mmdeviceapi.h>
-#include <audioclient.h>
-#include <map>
-#include <vector>
+#include "abstractcapture.h"
+#include <dxgi.h>
+#include <dxgi1_2.h>
+#include <dxgi1_5.h>
+#include <d3d11.h>
 
 namespace rtplivelib {
 
 namespace device_manager {
 
 /**
- * @brief The SoundCardCapture class
- * Windows系统下的声音采集，分capture和render
- * 采用系统的WASAPI，不适用于XP系统，限于win7以上的系统
+ * @brief The DXGICapture class
+ * Windows系统下的桌面采集
+ * 限于Win8以上系统，效率有待测试，应该比GDI好一点
+ * 在Win8系统下捕捉到的图像格式是BGRA8888
+ * Win10的话有可能是其他格式
  * 该类操作都是线程安全
  */
-class WASAPI :
+class DXGICapture :
 		protected core::AbstractQueue<core::FramePacket>
 {
 public:
-	enum FlowType{
-		RENDER = 0,
-		CAPTURE = 1,
-		ALL = 2
-	};
-	
 	//first:设备id
 	//second:设备名字
 	using device_id = std::wstring;
 	using device_name = std::wstring;
 	using device_info = std::pair<device_id,device_name>;
 public:
-	/**
-	 * @brief WASAPI
-	 */
-	WASAPI();
+	DXGICapture();
 	
-	virtual ~WASAPI() override;
+	virtual ~DXGICapture() override;
 	
 	/**
 	 * @brief get_device_info
@@ -53,7 +42,7 @@ public:
 	 * @return 
 	 * 返回
 	 */
-	std::vector<device_info> get_all_device_info(FlowType ft = ALL) noexcept(false);
+	std::vector<device_info> get_all_device_info() noexcept(false);
 	
 	/**
 	 * @brief get_current_device_info
@@ -72,7 +61,7 @@ public:
 	 * 设备类型
 	 * @return 
 	 */
-	bool set_current_device(uint64_t num,FlowType ft = ALL) noexcept;
+	bool set_current_device(uint64_t num) noexcept;
 	
 	/**
 	 * @brief set_current_device
@@ -84,7 +73,7 @@ public:
 	 * 设备类型
 	 * @return 
 	 */
-	bool set_current_device(const device_id& id,FlowType ft = ALL) noexcept;
+	bool set_current_device(const device_id& id) noexcept;
 	
 	/**
 	 * @brief set_default_device
@@ -93,7 +82,7 @@ public:
 	 * 设备类型,CARTURE或者RENDER
 	 * @return 
 	 */
-	bool set_default_device(FlowType ft = RENDER) noexcept;
+	bool set_default_device() noexcept;
 	
 	/**
 	 * @brief get_format
@@ -132,8 +121,6 @@ public:
 	 */
 	core::FramePacket::SharedPacket read_packet() noexcept;
 protected:
-	device_info get_device_info(IMMDevice * device) noexcept;
-	
 	/**
 	 * @brief on_thread_run
 	 */
@@ -149,36 +136,8 @@ protected:
 	 * @return 
 	 */
 	virtual bool get_thread_pause_condition() noexcept override final;
-private:
-	/**
-	 * @brief _init_enumerator
-	 * 初始化枚举器
-	 * @return 
-	 */
-	bool _init_enumerator() noexcept;
-private:
-	const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
-	const IID   IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
-	const IID   IID_IAudioClient = __uuidof(IAudioClient);
-	const IID   IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
-	
-	IMMDeviceEnumerator		*pEnumerator{nullptr};
-	IMMDevice				*pDevice{nullptr};
-	IAudioClient			*pAudioClient{nullptr};
-	IAudioCaptureClient		*pCaptureClient{nullptr};
-	WAVEFORMATEX			*pwfx{nullptr};
-	HANDLE					event_handle{nullptr};
-	uint32_t				nFrameSize{0u};
-	PROPERTYKEY				key;
-	HANDLE					event{nullptr};
-	std::recursive_mutex	mutex;
-	FlowType				current_flow_type{FlowType::RENDER};
-	
-	volatile bool _is_running_flag{false};
 };
 
-inline bool WASAPI::get_thread_pause_condition() noexcept									{	return !_is_running_flag;}
+} // namespace device_manager
 
-}//namespace device_manager
-
-}//namespace rtplivelib
+} // namespace rtplivelib

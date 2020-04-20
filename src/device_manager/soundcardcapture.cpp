@@ -51,9 +51,10 @@ SoundCardCapture::~SoundCardCapture()
 	delete d_ptr;
 }
 
-std::map<std::string, std::string> SoundCardCapture::get_all_device_info()  noexcept(false)
+std::map<SoundCardCapture::device_id, SoundCardCapture::device_name> 
+SoundCardCapture::get_all_device_info()  noexcept(false)
 {
-	std::map<std::string,std::string> info_map;
+	std::map<device_id,device_name> info_map;
 	
 	auto list_info = d_ptr->audio_api.get_all_device_info(SoundCardCapturePrivateData::FT);
 	for(auto i = list_info.begin(); i != list_info.end(); ++i){
@@ -66,7 +67,7 @@ std::map<std::string, std::string> SoundCardCapture::get_all_device_info()  noex
 	return info_map;
 }
 
-bool SoundCardCapture::set_current_device(std::string device_id) noexcept
+bool SoundCardCapture::set_current_device(device_id device_id) noexcept
 {
 	if(device_id.compare(current_device_info.first) == 0)
 		return true;

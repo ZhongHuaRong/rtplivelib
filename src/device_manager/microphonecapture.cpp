@@ -52,9 +52,10 @@ MicrophoneCapture::~MicrophoneCapture()
 	delete d_ptr;
 }
 
-std::map<std::string,std::string> MicrophoneCapture::get_all_device_info() noexcept(false)
+std::map<MicrophoneCapture::device_id,MicrophoneCapture::device_name>
+MicrophoneCapture::get_all_device_info() noexcept(false)
 {
-	std::map<std::string,std::string> info_map;
+	std::map<device_id,device_name> info_map;
 	
 	auto list_info = d_ptr->audio_api.get_all_device_info(MicrophoneCapturePrivateData::FT);
 	for(auto i = list_info.begin(); i != list_info.end(); ++i){
@@ -67,7 +68,7 @@ std::map<std::string,std::string> MicrophoneCapture::get_all_device_info() noexc
 	return info_map;
 }
 
-bool MicrophoneCapture::set_current_device(std::string device_id) noexcept
+bool MicrophoneCapture::set_current_device(device_id device_id) noexcept
 {
 	if(device_id.compare(current_device_info.first) == 0)
 		return true;

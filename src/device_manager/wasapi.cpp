@@ -125,7 +125,7 @@ bool WASAPI::set_current_device(uint64_t num, WASAPI::FlowType ft) noexcept
 	return false;
 }
 
-bool WASAPI::set_current_device(const std::wstring &id, WASAPI::FlowType ft) noexcept
+bool WASAPI::set_current_device(const device_id &id, WASAPI::FlowType ft) noexcept
 {
 	UNUSED(ft)
 			if( _init_enumerator() == false){
