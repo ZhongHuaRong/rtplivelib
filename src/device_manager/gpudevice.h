@@ -20,11 +20,20 @@ struct GPUInfo{
 	std::vector<std::string>		screen_list;
 };
 
+/**
+ * @brief The GPUIdentify class
+ * 该类用于检测显卡和显示器的信息
+ * 需要和desktop capture类搭配使用
+ * desktop capture的设备枚举接口固定抛出函数未实现的异常
+ * desktop capture目前只能采集默认显卡上的显示器图像
+ * 显示器信息可以通过该类接口枚举
+ * 
+ */
 class RTPLIVELIBSHARED_EXPORT GPUIdentify{
 public:
 	/**
 	 * @brief Get_All_GPU_Info
-	 * 获取所有显卡信息
+	 * 获取所有显卡和显示器信息
 	 * @return 
 	 */
 	static std::vector<GPUInfo> Get_All_GPU_Info() noexcept;

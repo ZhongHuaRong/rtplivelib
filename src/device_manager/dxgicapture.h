@@ -10,6 +10,7 @@ namespace rtplivelib {
 
 namespace device_manager {
 
+
 /**
  * @brief The DXGICapture class
  * Windows系统下的桌面采集
@@ -34,9 +35,7 @@ public:
 	
 	/**
 	 * @brief get_device_info
-	 * 获取相应设备信息
-	 * 这个接口在我测试的时候发现有一些设备名字无法获取
-	 * 建议直接使用默认的设备
+	 * 获取相应设备信息(GPU信息)
 	 * @param ft
 	 * 设备类型
 	 * @return 

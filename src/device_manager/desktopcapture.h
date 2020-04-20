@@ -27,6 +27,10 @@ class DesktopCapturePrivateData;
  * 如果需要用该类自己处理数据，则可以考虑继承该类，然后重写on_frame_data接口来前处理数据
  * 然后返回false，也可以用wait_resource_push()和get_next()来获取队列的数据
  * 也可以通过实例化DeviceCapture类来捕捉，该类已经封装好其他四个类了，然后关闭其他三个的捕捉
+ * 
+ * 目前对于Windows桌面采集，实现了DXGI的捕捉方式，考虑到设备采集不仅限于显示器，还要考虑显卡的情况
+ * 该类的设备枚举接口暂时不使用，全部抛出函数未实现的异常，使用gpudevice类来枚举接口
+ * 不过目前DXGI只支持采集默认显卡上的屏幕图像，只支持Win8以上的系统，Win7将采用GDI
  */
 class RTPLIVELIBSHARED_EXPORT DesktopCapture :public AbstractCapture
 {
