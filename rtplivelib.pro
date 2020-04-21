@@ -71,7 +71,8 @@ LIBS += -lWs2_32 \
 	-lOle32 \
 	-lOleAut32 \
 	-lStrmiids \
-	-lDXGI
+	-lDXGI \
+	-lD3D11
 
 INCLUDEPATH += $$PWD/SDK/win64/include
 DEPENDPATH += $$PWD/SDK/win64/include

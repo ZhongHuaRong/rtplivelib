@@ -21,6 +21,11 @@ struct ObjectRelease{
 	}
 };
 
+//Win10下可支持输出图像格式,先只支持BGRA32，以后有空加入更多格式支持
+constexpr static DXGI_FORMAT Formats[] = { 
+	DXGI_FORMAT_B8G8R8A8_UNORM
+};
+
 class DXGIPrivate{
 public:
 	using PIDXGIAdapter1				= std::shared_ptr<IDXGIAdapter1>;
@@ -29,12 +34,7 @@ public:
 	using PID3D11DeviceContext			= std::shared_ptr<ID3D11DeviceContext>;
 	using PIDXGIOutputDuplication		= std::shared_ptr<IDXGIOutputDuplication>;
 	using PID3D11Texture2D				= std::shared_ptr<ID3D11Texture2D>;
-	
-	//Win10下可支持输出图像格式,先只支持BGRA32，以后有空加入更多格式支持
-	constexpr static DXGI_FORMAT Formats[] = { 
-		DXGI_FORMAT_B8G8R8A8_UNORM
-	};
-	
+
 	int									cur_gpu_index{0};
 	int									cur_screen_index{0};
 private:
