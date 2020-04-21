@@ -23,10 +23,7 @@ struct GPUInfo{
 /**
  * @brief The GPUIdentify class
  * 该类用于检测显卡和显示器的信息
- * 需要和desktop capture类搭配使用
- * desktop capture的设备枚举接口固定抛出函数未实现的异常
- * desktop capture目前只能采集默认显卡上的显示器图像
- * 显示器信息可以通过该类接口枚举
+ * 该类内部使用，外部如果需要知道显卡信息可以通过DesktopCapture来获取
  * 
  */
 class RTPLIVELIBSHARED_EXPORT GPUIdentify{
