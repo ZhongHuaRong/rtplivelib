@@ -35,17 +35,35 @@ public:
 	/**
 	 * @brief get_device_info
 	 * 获取所有设备信息(GPU信息和对应的显示器信息)
+	 * @param latest_flag
+	 * 该标志用于表示是否获取最新的设备信息
+	 * 为了更有效率获取设备信息，这里不会动态更新信息
+	 * 当设备变更的时候需要传入true来获取更新后的设备信息
 	 * @return 
 	 * 返回
 	 */
-	device_list get_all_device_info() noexcept(false);
+	device_list get_all_device_info(bool latest_flag = false) noexcept;
 	
 	/**
 	 * @brief get_current_device_info
 	 * 获取当前设备信息
+	 * @param latest_falg
+	 * see get_all_device_info
 	 * @return 
+	 * 该接口返回的只有一个GPU信息和对应的显示器信息
+	 * 而不是输出所有显示器信息
 	 */
-	GPUInfo get_current_device_info() noexcept;
+	GPUInfo get_current_device_info(bool latest_flag = false) noexcept;
+	
+	/**
+	 * @brief get_current_index
+	 * 获取当前设置的GPU索引和显示器索引
+	 * 配合get_all_device_info可以获取到当前设备信息
+	 * @return 
+	 * first:GPU index
+	 * second:screen index
+	 */
+	std::pair<int,int> get_current_index() noexcept;
 	
 	/**
 	 * @brief set_current_device
@@ -56,7 +74,7 @@ public:
 	 * 显示器索引
 	 * @return 
 	 */
-	bool set_current_device(uint64_t gpu_num,uint64_t screen_num) noexcept;
+	bool set_current_device(int gpu_num,int screen_num) noexcept;
 	
 	/**
 	 * @brief set_default_device
@@ -68,6 +86,7 @@ public:
 	/**
 	 * @brief get_packet
 	 * 获取数据
+	 * 数据包的时间戳没设置，外部调用根据自己的时间间隔来设置时间戳
 	 */
 	core::FramePacket::SharedPacket read_packet() noexcept;
 private:

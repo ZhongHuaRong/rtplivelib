@@ -128,7 +128,7 @@ bool WASAPI::set_current_device(uint64_t num, WASAPI::FlowType ft) noexcept
 bool WASAPI::set_current_device(const device_id &id, WASAPI::FlowType ft) noexcept
 {
 	UNUSED(ft)
-			if( _init_enumerator() == false){
+	if( _init_enumerator() == false){
 		return false;
 	}
 	IMMDevice *pDevice{nullptr};
