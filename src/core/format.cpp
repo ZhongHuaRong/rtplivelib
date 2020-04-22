@@ -11,11 +11,11 @@ namespace core {
 DataBuffer::DataBuffer(void *packet, void *frame)
 {
 	if(packet != nullptr){
-		_set_packet(packet);
+		_set_packet(static_cast<AVPacket*>(packet));
 	}
 	
 	if(frame != nullptr){
-		_set_frame(frame);
+		_set_frame(static_cast<AVFrame*>(frame));
 	}
 }
 
@@ -27,6 +27,65 @@ DataBuffer::~DataBuffer()
 uint8_t *&DataBuffer::operator[](const int &n) noexcept
 {
 	return data[n];
+}
+
+DataBuffer &DataBuffer::copy_data(DataBuffer &buf) noexcept
+{
+	std::lock_guard<decltype (mutex)> lg(mutex);
+	std::lock_guard<decltype (mutex)> lg2(buf.mutex);
+	clear();
+	
+	if(buf.packet == nullptr && buf.frame == nullptr){
+		for(auto i = 0;i < 4;++i){
+			if(buf[i] != nullptr){
+				data[i] = static_cast<uint8_t *>(av_malloc(size));
+				if(data[i] != nullptr)
+					memcpy(data[i],buf[i],size);
+			}
+		}
+	}
+	
+	if(buf.packet != nullptr){
+		AVPacket * dst = av_packet_alloc();
+		if(dst == nullptr)
+			return *this;
+		AVPacket * src = static_cast<AVPacket*>(buf.packet);
+		av_packet_ref(dst,src);
+		_set_packet(dst);
+	}
+	
+	if(buf.frame != nullptr){
+		AVFrame * dst = av_frame_alloc();
+		if(dst == nullptr)
+			return *this;
+		AVFrame * src = static_cast<AVFrame*>(buf.frame);
+		av_frame_ref(dst,src);
+		_set_frame(dst);
+	}
+	size = buf.size;
+	memcpy(this->linesize,buf.linesize,sizeof(this->linesize));
+	return *this;
+}
+
+DataBuffer &DataBuffer::copy_data(DataBuffer &&buf) noexcept
+{
+	{
+		std::lock_guard<decltype (mutex)> lg(mutex);
+		clear();
+		
+		memcpy(data,buf.data,sizeof(data));
+		memcpy(linesize,buf.linesize,sizeof(linesize));
+		packet = buf.packet;
+		frame = buf.frame;
+		size = buf.size;
+	}
+	memset(buf.data,0,sizeof(data));
+	memset(buf.linesize,0,sizeof(linesize));
+	buf.packet = nullptr;
+	buf.frame = nullptr;
+	buf.size = 0;
+	
+	return *this;
 }
 
 DataBuffer::SharedBuffer &DataBuffer::SetData(DataBuffer::SharedBuffer &dst, uint8_t **src, size_t size) noexcept
@@ -49,6 +108,30 @@ DataBuffer &DataBuffer::SetData(DataBuffer &dst, uint8_t **src, size_t size) noe
 	dst.clear();
 	
 	memcpy(dst.data,src,sizeof(dst.data));
+	dst.size = size;
+	return dst;
+}
+
+DataBuffer::SharedBuffer &DataBuffer::SetData(DataBuffer::SharedBuffer &dst, uint8_t *src, size_t size) noexcept
+{
+	if(dst == nullptr){
+		auto ptr = std::make_shared<DataBuffer>();
+		dst.swap(ptr);
+	}
+	std::lock_guard<decltype (dst->mutex)> lg(dst->mutex);
+	dst->clear();
+	
+	dst->data[0] = src;
+	dst->size = size;
+	return dst;
+}
+
+DataBuffer &DataBuffer::SetData(DataBuffer &dst, uint8_t *src, size_t size) noexcept
+{
+	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
+	dst.clear();
+	
+	dst.data[0] = src;
 	dst.size = size;
 	return dst;
 }
@@ -89,6 +172,50 @@ DataBuffer &DataBuffer::CopyData(DataBuffer &dst, uint8_t **src, size_t size) no
 	return dst;
 }
 
+DataBuffer::SharedBuffer &DataBuffer::CopyData(DataBuffer::SharedBuffer &dst, uint8_t *src, size_t size) noexcept
+{
+	if(dst == nullptr){
+		auto ptr = std::make_shared<DataBuffer>();
+		dst.swap(ptr);
+	}
+	std::lock_guard<decltype (dst->mutex)> lg(dst->mutex);
+	dst->clear();
+	
+	if(src != nullptr){
+		dst->data[0] = static_cast<uint8_t *>(av_malloc(size));
+		if(dst->data[0] != nullptr)
+			memcpy(dst->data[0],src,size);
+	}
+	dst->size = size;
+	return dst;
+}
+
+DataBuffer &DataBuffer::CopyData(DataBuffer &dst, uint8_t *src, size_t size) noexcept
+{
+	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
+	dst.clear();
+	
+	if(src != nullptr){
+		dst.data[0] = static_cast<uint8_t *>(av_malloc(size));
+		if(dst.data[0] != nullptr)
+			memcpy(dst.data[0],src,size);
+		else 
+			return dst;
+	}
+	dst.size = size;
+	return dst;
+}
+
+DataBuffer &DataBuffer::CopyData(DataBuffer &dst, DataBuffer &src) noexcept
+{
+	return dst.copy_data(src);
+}
+
+DataBuffer &DataBuffer::CopyData(DataBuffer &dst, DataBuffer &&src) noexcept
+{
+	return dst.copy_data(std::move(src));
+}
+
 bool DataBuffer::is_packet() noexcept
 {
 	//如果连第一行都没有数据，那肯定是空的
@@ -121,7 +248,7 @@ void DataBuffer::set_packet(void *packet) noexcept
 	clear();
 	if(packet == nullptr)
 		return;
-	_set_packet(packet);
+	_set_packet(static_cast<AVPacket*>(packet));
 }
 
 void DataBuffer::set_frame(void *frame) noexcept
@@ -130,7 +257,7 @@ void DataBuffer::set_frame(void *frame) noexcept
 	clear();
 	if(frame == nullptr)
 		return;
-	_set_frame(frame);
+	_set_frame(static_cast<AVFrame*>(frame));
 }
 
 void DataBuffer::clear() noexcept
@@ -167,19 +294,17 @@ void DataBuffer::clear() noexcept
 	memset(packet->linesize,0,sizeof(packet->linesize));
 }
 
-inline void DataBuffer::_set_packet(void *packet) noexcept
+inline void DataBuffer::_set_packet(AVPacket *packet) noexcept
 {
-	AVPacket * p = static_cast<AVPacket*>(packet);
-	data[0] = p->data;
-	size = p->size;
+	data[0] = packet->data;
+	size = packet->size;
 	this->packet = packet;
 }
 
-inline void DataBuffer::_set_frame(void *frame) noexcept
+inline void DataBuffer::_set_frame(AVFrame *frame) noexcept
 {
-	AVFrame * f = static_cast<AVFrame*>(frame);
-	memcpy(data,f->data,sizeof(data));
-	memcpy(linesize,f->linesize,sizeof(linesize));
+	memcpy(data,frame->data,sizeof(data));
+	memcpy(linesize,frame->linesize,sizeof(linesize));
 	this->frame = frame;
 }
 

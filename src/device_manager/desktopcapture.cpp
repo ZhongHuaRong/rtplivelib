@@ -181,23 +181,14 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	}
 #if defined (WIN64)
 	//去掉bmp头结构54字节
-	ptr->size = d_ptr->packet->size - 54;
+	ptr->data->size = d_ptr->packet->size - 54;
 #elif defined (unix)
 	ptr->size = d_ptr->packet->size;
 #endif
 	
-	ptr->data[0] = static_cast<uint8_t*>(av_malloc(static_cast<size_t>(ptr->size)));
-	if(ptr->data[0] == nullptr){
-		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::WARNING_LEVEL);
-		ptr->size = 0;
-		return ptr;
-	}
-	
 	//下面一步是为了赋值width和height，windows下面不能正确读取，需要计算
 #if defined (WIN64)
-	memcpy(ptr->data[0],d_ptr->packet->data + 54,static_cast<size_t>(ptr->size));
+	ptr->data->copy_data(d_ptr->packet->data + 54,static_cast<size_t>(ptr->data->size));
 	/*width在头结构地址18偏移处，详情参考BMP头结构*/
 	memcpy(&ptr->format.width,d_ptr->packet->data + 18,4);
 	/*height在头结构地址22偏移处，不过总为0*/
@@ -205,7 +196,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	memcpy(&ptr->format.height,d_ptr->packet->data + 2,4);
 	ptr->format.height = (ptr->format.height - 54) / ptr->format.width / 4;
 #elif defined (unix)
-	memcpy(ptr->data[0],d_ptr->packet->data,static_cast<size_t>(d_ptr->packet->size));
+	ptr->data->copy_data(d_ptr->packet->data,static_cast<size_t>(d_ptr->packet->size));
 	auto codec = d_ptr->fmtContxt->streams[d_ptr->packet->stream_index]->codecpar;
 	ptr->format.width = codec->width;
 	ptr->format.height = codec->height;
@@ -213,11 +204,11 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 #endif
 	ptr->format.pixel_format = AV_PIX_FMT_BGRA;
 	ptr->format.bits = 32;
-	ptr->linesize[0] = ptr->format.width * 4;
 	ptr->pts = d_ptr->packet->pts;
 	ptr->dts = d_ptr->packet->dts;
 	ptr->format.frame_rate = _fps;
 	ptr->flag = d_ptr->packet->flags;
+	ptr->data->linesize[0] = ptr->format.width * 4;
 	
 	return ptr;
 }

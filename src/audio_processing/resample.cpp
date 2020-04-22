@@ -227,22 +227,19 @@ core::Result Resample::resample(core::FramePacket *dst, core::FramePacket *src) 
 	if( src->format != d_ptr->ifmt)
 		return core::Result::Format_Error;
 	
-	auto src_data = static_cast<uint8_t**>(src->data);
+	auto src_data = static_cast<uint8_t**>(&(*src->data)[0]);
 	uint8_t ** data{nullptr};
 	int nb_samples{0};
 	int size{0};
 	auto block_size = src->format.bits * 4 / src->format.channels;
 	
-	auto ret = resample(&src_data, src->size / block_size ,&data ,nb_samples,size);
+	src->data->lock();
+	auto ret = resample(&src_data, src->data->size / block_size ,&data ,nb_samples,size);
+	src->data->unlock();
 	
 	if(ret == core::Result::Success){
-		dst->reset_pointer();
-		
 		dst->format = d_ptr->ofmt;
-		//这里赋值需要注意一下 
-		dst->data[0] = data[0];
-		av_free(data);
-		dst->size = size;
+		dst->data->set_data(data,size);
 	}
 	
 	return ret;

@@ -257,11 +257,9 @@ void AudioEncoder::receive_packet() noexcept
 										 LogLevel::WARNING_LEVEL);
 			break;
 		}
-		dst_packet->size = src_packet->size;
 
 		//浅拷贝,减少数据的拷贝次数
-		dst_packet->data[0] = src_packet->data;
-		dst_packet->packet = src_packet;
+		dst_packet->data->set_packet(src_packet);
 		//这里设置格式是为了后面发送包的时候设置各种参数
 		//感觉这里不需要赋值,对于编码数据，不需要设置格式,只需要设置编码格式
 		//好像音频需要用到
@@ -274,7 +272,7 @@ void AudioEncoder::receive_packet() noexcept
 		core::Logger::Print("audio size:{}",
 							__PRETTY_FUNCTION__,
 							LogLevel::ALLINFO_LEVEL,
-							dst_packet->size);
+							dst_packet->data->size);
 		
 		//让退出循环时不要释放掉该packet
 		src_packet = nullptr;

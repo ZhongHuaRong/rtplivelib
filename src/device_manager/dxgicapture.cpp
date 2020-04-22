@@ -203,10 +203,10 @@ public:
 		
 		output_dup->ReleaseFrame();
 		HRESULT hr = output_dup->AcquireNextFrame(0, &frame_info, &resource);
-		auto ptr = core::FramePacket::Make_Shared();
 		if (hr == DXGI_ERROR_WAIT_TIMEOUT){
-			return ptr;
+			return get_copy_packet();
 		}
+		auto ptr = core::FramePacket::Make_Shared();
 		if (FAILED(hr)){
 			core::Logger::Print_APP_Info(core::Result::DXGI_Capture_frame_failed,
 										 __PRETTY_FUNCTION__,
@@ -258,9 +258,8 @@ public:
 		if(data == nullptr){
 			return ptr;
 		}
-		memcpy(data, mapped_rect.pBits,data_size);
+		ptr->data->copy_data(mapped_rect.pBits,data_size);
 		surface->Unmap();
-
 		surface->Release();
 		previous_frame = ptr;
 		return ptr;
@@ -268,7 +267,7 @@ public:
 	
 	inline core::FramePacket::SharedPacket get_copy_packet() noexcept{
 		auto ptr = core::FramePacket::Make_Shared();
-		ptr->copy(this->previous_frame);
+		*ptr = *previous_frame;
 		return ptr;
 	}
 };

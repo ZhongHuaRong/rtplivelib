@@ -6,6 +6,9 @@
 #include <memory>
 #include <mutex>
 
+class AVPacket;
+class AVFrame;
+
 namespace rtplivelib {
 
 namespace core {
@@ -109,9 +112,17 @@ public:
 	inline DataBuffer& set_data(uint8_t ** src,size_t size) noexcept{
 		return DataBuffer::SetData(*this,src,size);
 	}
+	inline DataBuffer& set_data(uint8_t * src,size_t size) noexcept{
+		return DataBuffer::SetData(*this,src,size);
+	}
 	inline DataBuffer& copy_data(uint8_t ** src,size_t size) noexcept{
 		return DataBuffer::CopyData(*this,src,size);
 	}
+	inline DataBuffer& copy_data(uint8_t * src,size_t size) noexcept{
+		return DataBuffer::CopyData(*this,src,size);
+	}
+	DataBuffer& copy_data(DataBuffer &buf) noexcept;
+	DataBuffer& copy_data(DataBuffer &&buf) noexcept;
 	
 	/**
 	 * @brief SetData
@@ -129,6 +140,10 @@ public:
 	static SharedBuffer& SetData(SharedBuffer& dst,uint8_t ** src,size_t size) noexcept;
 	static DataBuffer& SetData(DataBuffer& dst,uint8_t ** src,size_t size) noexcept;
 	
+	/*重载函数，应用于一维数据*/
+	static SharedBuffer& SetData(SharedBuffer& dst,uint8_t * src,size_t size) noexcept;
+	static DataBuffer& SetData(DataBuffer& dst,uint8_t * src,size_t size) noexcept;
+	
 	/**
 	 * @brief CopyData
 	 * 从外部深度拷贝数据到类
@@ -136,6 +151,12 @@ public:
 	 */
 	static SharedBuffer& CopyData(SharedBuffer& dst,uint8_t ** src,size_t size) noexcept;
 	static DataBuffer& CopyData(DataBuffer& dst,uint8_t ** src,size_t size) noexcept;
+	/*重载函数，应用于一维数据*/
+	static SharedBuffer& CopyData(SharedBuffer& dst,uint8_t * src,size_t size) noexcept;
+	static DataBuffer& CopyData(DataBuffer& dst,uint8_t * src,size_t size) noexcept;
+	/*重载函数，应用DataBuffer*/
+	static DataBuffer& CopyData(DataBuffer& dst,DataBuffer& src) noexcept;
+	static DataBuffer& CopyData(DataBuffer& dst,DataBuffer&& src) noexcept;
 	
 	/**
 	 * @brief is_packet
@@ -176,10 +197,10 @@ protected:
 	void clear() noexcept;
 private:
 	/*内部使用*/
-	void _set_packet(void * packet) noexcept;
+	void _set_packet(AVPacket * packet) noexcept;
 	
 	/*内部使用*/
-	void _set_frame(void * frame) noexcept;
+	void _set_frame(AVFrame * frame) noexcept;
 public:
 	/*行大小,有时候会因为要数据对齐，一般大于等于width*/
 	int					linesize[4]{0,0,0,0};
