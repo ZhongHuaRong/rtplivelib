@@ -15,6 +15,14 @@
 
 #endif
 
+#if (__GNUC__ > (3) || __GNUC__ == (3) && __GNUC_MINOR__ >= (1))
+#    define attribute_deprecated __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#    define attribute_deprecated __declspec(deprecated)
+#else
+#    define attribute_deprecated
+#endif
+
 #include <stdint.h>
 namespace rtplivelib{
 

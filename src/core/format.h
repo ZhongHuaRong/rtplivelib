@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string>
 #include <memory>
+#include <mutex>
 
 namespace rtplivelib {
 
@@ -46,7 +47,7 @@ struct Format{
 		可以查看avutil/pixfmt.h文件查看AVPixelFormat结构*/
 	int pixel_format{-1};
 	
-	bool operator == (const Format& format){
+	bool operator == (const Format& format) noexcept{
 		//这里的判断可能不太严谨
 		if(this->width == 0 && format.width == 0){
 			//应该是音频
@@ -70,11 +71,11 @@ struct Format{
 		}
 	}
 	
-	bool operator != (const Format & format){
+	bool operator != (const Format & format) noexcept{
 		return !this->operator ==(format);
 	}
 	
-	const std::string to_string() {
+	const std::string to_string()  noexcept{
 		constexpr char str[] = "format:[ width:%d,height:%d,sample rate:%d,channels:%d,"
 							   "bits:%d,format:%d ]";
 		char ch[256];
@@ -84,62 +85,57 @@ struct Format{
 };
 
 /**
- * @brief The FramePacket struct
- * 该结构体是本lib运用最频繁的结构体
- * 所有的有关媒体相关的操作都会用到该结构体
+ * @brief The DataBuffer struct
+ * 保存数据的结构体，可以像指针一样使用
+ * 用智能指针包装了一层，可以用计数共享内存空间
+ * 多线程使用[]操作符读写数据时需要使用lock
+ * 其他接口不需要调用lock,会死锁
  */
-struct RTPLIVELIBSHARED_EXPORT FramePacket{
-	using SharedPacket = std::shared_ptr<FramePacket>;
-	/*保存数据的指针,rgb和yuyv422只需要用到0*/
-	/*这里可以通过判断第二位之后的指针，来知道数据结构是不是Ｐ*/
-	uint8_t				* data[4]{nullptr,nullptr,nullptr,nullptr};
-	/*行大小,有时候会因为要数据对齐，一般大于等于width*/
-	int					linesize[4]{0,0,0,0};
-	/*数据长度,只有在data用到第一位的时候有效,如果data用到了多位，则为0*/
-	int					size{0};
-	/*压缩格式,也可以说是rtp协议的有效负载类型pt,设置该字段是为了解码方便,未压缩的数据将会是0*/
-	int					payload_type{0};
-	/*显示时间戳*/
-	int64_t				pts{0};
-	/*解压缩时间戳*/
-	int64_t				dts{0};
-	/*数据格式*/
-	Format				format;
-	/*用于分包，组包，表示该包是第几个分包*/
-	int					pos{0};
-	/*用于表示是否为关键帧，如果需要用到则调用is_key接口*/
-	int					flag{0};
-	/*这个指针请不要使用,内部代码使用*/
-	void				*packet{nullptr};
-	/*这个指针请不要使用,内部代码使用*/
-	void				*frame{nullptr};
+struct RTPLIVELIBSHARED_EXPORT DataBuffer {
+	using SharedBuffer = std::shared_ptr<DataBuffer>;
+public:
+	/*构造函数只能选择赋值其中一个，或者不传参数，
+	 *如果传了两个可能出现不可预期的错误*/
+	DataBuffer(void * packet = nullptr,
+			   void * frame = nullptr);
 	
-	FramePacket() = default;
-	//该函数没有实际意义，所以删除
-	FramePacket(const FramePacket&) = delete;
+	~DataBuffer();
 	
-	//析构函数，默认调用reset_pointer，所以不需要手动调用reset_pointer
-	~FramePacket();
+	DataBuffer& operator() (const DataBuffer &) = delete;
+	
+	/*模拟数组指针,外部可以通过该接口获取数据,如果要进行写操作，先调用lock接口*/
+	uint8_t* & operator[] (const int &) noexcept;
+	
+	inline DataBuffer& set_data(uint8_t ** src,size_t size) noexcept{
+		return DataBuffer::SetData(*this,src,size);
+	}
+	inline DataBuffer& copy_data(uint8_t ** src,size_t size) noexcept{
+		return DataBuffer::CopyData(*this,src,size);
+	}
 	
 	/**
-	 * @brief copy
-	 * 同Copy
+	 * @brief SetData
+	 * 从外部浅拷贝数据到类
+	 * 使用该接口会减少计数，计数为0则释放之前的空间
+	 * @param dst
+	 * 拷贝的目标
+	 * @param src
+	 * 源数据,是一个四维数组
+	 * @param size
+	 * 对应src的数据长度
+	 * @return 
+	 * 返回dst
 	 */
-	FramePacket * copy(FramePacket * src);
-	
-	FramePacket & copy(FramePacket && src);
-	
-	FramePacket & copy(SharedPacket & src);
-	
+	static SharedBuffer& SetData(SharedBuffer& dst,uint8_t ** src,size_t size) noexcept;
+	static DataBuffer& SetData(DataBuffer& dst,uint8_t ** src,size_t size) noexcept;
 	
 	/**
-	 * @brief reset_pointer
-	 * 擦除该包所有指针
-	 * 所有指针指向nullptr，并且释放空间
-	 * 不会造成内存泄露
-	 * 和指针无关的参数将不会重置
+	 * @brief CopyData
+	 * 从外部深度拷贝数据到类
+	 * 使用该接口会减少计数，计数为0则释放之前的空间
 	 */
-	void reset_pointer();
+	static SharedBuffer& CopyData(SharedBuffer& dst,uint8_t ** src,size_t size) noexcept;
+	static DataBuffer& CopyData(DataBuffer& dst,uint8_t ** src,size_t size) noexcept;
 	
 	/**
 	 * @brief is_packet
@@ -157,6 +153,81 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 */
 	bool is_frame() noexcept;
 	
+	/*上锁，保证操作安全*/
+	inline void lock() noexcept{
+		mutex.lock();
+	}
+	
+	/*解锁*/
+	inline void unlock() noexcept{
+		mutex.unlock();
+	}
+	
+	/*内部使用*/
+	void set_packet(void * packet) noexcept;
+	
+	/*内部使用*/
+	void set_frame(void * frame) noexcept;
+protected:
+	/**
+	 * @brief clear
+	 * 清空所有数据
+	 */
+	void clear() noexcept;
+private:
+	/*内部使用*/
+	void _set_packet(void * packet) noexcept;
+	
+	/*内部使用*/
+	void _set_frame(void * frame) noexcept;
+public:
+	/*行大小,有时候会因为要数据对齐，一般大于等于width*/
+	int					linesize[4]{0,0,0,0};
+	/*数据长度,只有在data用到第一位的时候有效,如果data用到了多位，则为0*/
+	size_t				size;
+	/*数据读写保护锁,不想用接口的可以直接用这个结构体上锁*/
+	std::mutex			mutex;
+private:
+	/*保存数据的指针,rgb和yuyv422只需要用到0*/
+	/*这里可以通过判断第二位之后的指针，来知道数据结构是不是P*/
+	uint8_t				*data[4]{nullptr,nullptr,nullptr,nullptr};
+	void				*packet{nullptr};
+	void				*frame{nullptr};
+	
+	friend class std::shared_ptr<DataBuffer>;
+};
+
+/**
+ * @brief The FramePacket struct
+ * 该结构体是本lib运用最频繁的结构体
+ * 所有的有关媒体相关的操作都会用到该结构体
+ * 该类在此项目中基本是同一时间只在一个线程读写，所以不需要上锁
+ * 需要注意两层智能指针的关系
+ * data应该上锁后读写
+ */
+struct RTPLIVELIBSHARED_EXPORT FramePacket{
+	using SharedPacket = std::shared_ptr<FramePacket>;
+	using SharedBuffer = DataBuffer::SharedBuffer;
+	/*共享内存的数据空间,可以像指针一样使用该结构
+	 * 如果需要写数据则先深度拷贝*/
+	SharedBuffer		data;
+	/*压缩格式,也可以说是rtp协议的有效负载类型pt,设置该字段是为了解码方便,未压缩的数据将会是0*/
+	int					payload_type{0};
+	/*显示时间戳*/
+	int64_t				pts{0};
+	/*解压缩时间戳*/
+	int64_t				dts{0};
+	/*数据格式*/
+	Format				format;
+	/*用于分包，组包，表示该包是第几个分包*/
+	int					pos{0};
+	/*用于表示是否为关键帧，如果需要用到则调用is_key接口*/
+	int					flag{0};
+	
+	FramePacket() = default;
+	FramePacket & operator = (const FramePacket&) = default;
+	~FramePacket();
+	
 	/**
 	 * @brief is_key
 	 * 判断该包是否含有关键帧
@@ -165,50 +236,36 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	bool is_key() noexcept;
 	
 	/**
-	 * @brief Copy
-	 * 深度拷贝
-	 * 将会拷贝src的数据到dst，同时分配空间
-	 * @param dst
-	 * 目标包
-	 * @param src
-	 * 源包
-	 * @return 
-	 * 返回dst
-	 */
-	static FramePacket * Copy(FramePacket * dst,FramePacket * src);
-	static FramePacket & Copy(FramePacket & dst,FramePacket & src);
-	static FramePacket & Copy(FramePacket & dst,FramePacket && src);
-	static SharedPacket & Copy(SharedPacket & dst,SharedPacket & src);
-	
-	/**
 	 * @brief Make_packet
 	 * 堆上分配对象
 	 * @return 
 	 */
-	static inline FramePacket * Make_Packet(){
-		try {
-			return new FramePacket;
-		} catch (const std::bad_alloc&) {
-			return nullptr;
-		}
+	attribute_deprecated
+	static inline FramePacket * Make_Packet() noexcept{
+		return new (std::nothrow)FramePacket;
 	}
 	
 	/**
 	 * @brief Make_Shared
 	 * 构造一个智能指针版对象
 	 */
-	static inline SharedPacket Make_Shared(){
+	static inline SharedPacket Make_Shared() noexcept{
 		return std::make_shared<FramePacket>();
 	}
 	
-	static inline void Destroy_Packet(FramePacket ** packet){
+	/**
+	 * @brief Destroy_Packet
+	 * 删除一个FramePacket对象
+	 * 尽量使用智能指针而不是使用裸指针
+	 * @param packet
+	 */
+	attribute_deprecated
+	static inline void Destroy_Packet(FramePacket ** packet) noexcept{
 		if(packet == nullptr || (*packet) == nullptr)
 			return;
 		delete *packet;
 		*packet = nullptr;
 	}
-private:
-	FramePacket & operator = (const FramePacket&) = default;
 };
 
 } // namespace core

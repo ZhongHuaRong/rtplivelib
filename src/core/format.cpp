@@ -8,11 +8,132 @@ namespace rtplivelib {
 
 namespace core {
 
-FramePacket::~FramePacket(){
-	reset_pointer();
+DataBuffer::DataBuffer(void *packet, void *frame)
+{
+	if(packet != nullptr){
+		_set_packet(packet);
+	}
+	
+	if(frame != nullptr){
+		_set_frame(frame);
+	}
 }
 
-void FramePacket::reset_pointer()
+DataBuffer::~DataBuffer()
+{
+	clear();
+}
+
+uint8_t *&DataBuffer::operator[](const int &n) noexcept
+{
+	return data[n];
+}
+
+DataBuffer::SharedBuffer &DataBuffer::SetData(DataBuffer::SharedBuffer &dst, uint8_t **src, size_t size) noexcept
+{
+	if(dst == nullptr){
+		auto ptr = std::make_shared<DataBuffer>();
+		dst.swap(ptr);
+	}
+	std::lock_guard<decltype (dst->mutex)> lg(dst->mutex);
+	dst->clear();
+	
+	memcpy(dst->data,src,sizeof(dst->data));
+	dst->size = size;
+	return dst;
+}
+
+DataBuffer &DataBuffer::SetData(DataBuffer &dst, uint8_t **src, size_t size) noexcept
+{
+	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
+	dst.clear();
+	
+	memcpy(dst.data,src,sizeof(dst.data));
+	dst.size = size;
+	return dst;
+}
+
+DataBuffer::SharedBuffer &DataBuffer::CopyData(DataBuffer::SharedBuffer &dst, uint8_t **src, size_t size) noexcept
+{
+	if(dst == nullptr){
+		auto ptr = std::make_shared<DataBuffer>();
+		dst.swap(ptr);
+	}
+	std::lock_guard<decltype (dst->mutex)> lg(dst->mutex);
+	dst->clear();
+	
+	for(auto i = 0;i < 4;++i){
+		if(src[i] != nullptr){
+			dst->data[i] = static_cast<uint8_t *>(av_malloc(size));
+			if(dst->data[i] != nullptr)
+				memcpy(dst->data[i],src[i],size);
+		}
+	}
+	dst->size = size;
+	return dst;
+}
+
+DataBuffer &DataBuffer::CopyData(DataBuffer &dst, uint8_t **src, size_t size) noexcept
+{
+	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
+	dst.clear();
+	
+	for(auto i = 0;i < 4;++i){
+		if(src[i] != nullptr){
+			dst.data[i] = static_cast<uint8_t *>(av_malloc(size));
+			if(dst.data[i] != nullptr)
+				memcpy(dst.data[i],src[i],size);
+		}
+	}
+	dst.size = size;
+	return dst;
+}
+
+bool DataBuffer::is_packet() noexcept
+{
+	//如果连第一行都没有数据，那肯定是空的
+	if( data[0] == nullptr )
+		return false;
+	//packet只会存在第一个数组
+	//这里需要区分一下只用到一个数组的frame
+	else if(this->linesize[0] != 0)
+		return false;
+	else
+		return true;
+}
+
+bool DataBuffer::is_frame() noexcept
+{
+	//如果连第一行都没有数据，那肯定是空的
+	if( data[0] == nullptr )
+		return false;
+	else if( data[1] != nullptr)
+		return true;
+	else if(this->linesize[0] != 0)
+		return true;
+	else
+		return false;
+}
+
+void DataBuffer::set_packet(void *packet) noexcept
+{
+	std::lock_guard<decltype (mutex)> lg(mutex);
+	clear();
+	if(packet == nullptr)
+		return;
+	_set_packet(packet);
+}
+
+void DataBuffer::set_frame(void *frame) noexcept
+{
+	std::lock_guard<decltype (mutex)> lg(mutex);
+	clear();
+	if(frame == nullptr)
+		return;
+	_set_frame(frame);
+}
+
+void DataBuffer::clear() noexcept
 {
 	auto packet = this;
 	
@@ -43,108 +164,39 @@ void FramePacket::reset_pointer()
 		packet->frame = nullptr;
 	}
 	memset(packet->data,0,sizeof(packet->data));
-	
+	memset(packet->linesize,0,sizeof(packet->linesize));
 }
 
-bool FramePacket::is_packet() noexcept
+inline void DataBuffer::_set_packet(void *packet) noexcept
 {
-	//如果连第一行都没有数据，那肯定是空的
-	if( this->data[0] == nullptr )
-		return false;
-	//packet只会存在第一个数组
-	//这里需要区分一下只用到一个数组的frame
-	else if(this->linesize[0] != 0)
-		return false;
-	else
-		return true;
+	AVPacket * p = static_cast<AVPacket*>(packet);
+	data[0] = p->data;
+	size = p->size;
+	this->packet = packet;
 }
 
-bool FramePacket::is_frame() noexcept
+inline void DataBuffer::_set_frame(void *frame) noexcept
 {
-	//如果连第一行都没有数据，那肯定是空的
-	if( this->data[0] == nullptr )
-		return false;
-	else if( this->data[1] != nullptr)
-		return true;
-	else if(this->linesize[0] != 0)
-		return true;
-	else
-		return false;
+	AVFrame * f = static_cast<AVFrame*>(frame);
+	memcpy(data,f->data,sizeof(data));
+	memcpy(linesize,f->linesize,sizeof(linesize));
+	this->frame = frame;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+FramePacket::~FramePacket(){
 }
 
 bool FramePacket::is_key() noexcept
 {
-	if( this->data[0] == nullptr )
+	if( (*this->data)[0] == nullptr )
 		return false;
-	if(is_packet()){
+	if( data->is_packet() ){
 		return flag & AV_PKT_FLAG_KEY;
 	} else {
 		return flag;
 	}
-}
-
-FramePacket *FramePacket::copy(FramePacket *src)
-{
-	return FramePacket::Copy(this,src);
-}
-
-FramePacket &FramePacket::copy(FramePacket &&src)
-{
-	return FramePacket::Copy(*this,std::forward<FramePacket>(src));
-}
-
-FramePacket &FramePacket::copy(FramePacket::SharedPacket &src)
-{
-	return *FramePacket::Copy(this,src.get());
-}
-
-FramePacket * FramePacket::Copy(FramePacket * dst,FramePacket * src){
-	if(dst == nullptr || src == nullptr)
-		return nullptr;
-	dst->reset_pointer();
-	*dst = *src;
-	//考虑是否使用ffmpeg内置的内存计数
-	//现在暂时不用
-	dst->frame = nullptr;
-	dst->packet = nullptr;
-	
-	for(auto i = 0;i < 4;++i){
-		if(src->data[i] != nullptr){
-			dst->data[i] = static_cast<uint8_t *>(av_malloc(static_cast<size_t>(dst->size)));
-			if(dst->data[i] != nullptr)
-				memcpy(dst->data[i],src->data[i],static_cast<size_t>(dst->size));
-		}
-	}
-	
-	return dst;
-}
-
-FramePacket &FramePacket::Copy(FramePacket &dst, FramePacket &src)
-{
-	FramePacket::Copy(&dst,&src);
-	return dst;
-}
-
-FramePacket &FramePacket::Copy(FramePacket &dst, FramePacket &&src)
-{
-	//直接浅拷贝
-	dst = src;
-	memset(src.data,0,sizeof(src.data));
-	src.frame = nullptr;
-	src.packet = nullptr;
-	return dst;
-}
-
-FramePacket::SharedPacket &FramePacket::Copy(FramePacket::SharedPacket &dst, FramePacket::SharedPacket &src)
-{
-	if(src == nullptr)
-		return dst;
-	if(dst == nullptr){
-		SharedPacket && p =  FramePacket::Make_Shared();
-		dst.swap(p);
-	}
-	FramePacket::Copy(dst.get(),src.get());
-	return dst;
 }
 
 } // namespace core

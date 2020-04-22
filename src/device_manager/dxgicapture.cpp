@@ -2,6 +2,10 @@
 #include "../core/logger.h"
 #include "../core/stringformat.h"
 #include <VersionHelpers.h>
+#include <dxgi.h>
+#include <dxgi1_2.h>
+#include <dxgi1_5.h>
+#include <d3d11.h>
 
 namespace rtplivelib {
 
