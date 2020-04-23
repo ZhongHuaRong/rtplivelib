@@ -107,13 +107,16 @@ public:
 		
 		SDL_memset(stream, INT_MIN, len);
 		if(ptr->audio_len == 0){
+			if(ptr->tmp != nullptr && ptr->tmp->data != nullptr)
+				ptr->tmp->data->unlock();
 			ptr->tmp = ptr->audio_data_queue.get_next();
-			if( ptr->tmp == nullptr)
+			if( ptr->tmp == nullptr || ptr->tmp->data == nullptr)
 				return;
 			
-			ptr->audio_chunk = ptr->tmp->data[0];
+			ptr->tmp->data->lock();
+			ptr->audio_chunk = (*ptr->tmp->data)[0];
 			ptr->audio_pos = ptr->audio_chunk;
-			ptr->audio_len = ptr->tmp->size;
+			ptr->audio_len = ptr->tmp->data->size;
 			//            return; 
 		}
 		len=(len>ptr->audio_len?ptr->audio_len:len);
@@ -144,7 +147,7 @@ bool AudioPlayer::play(core::FramePacket::SharedPacket packet) noexcept
 	//格式不一致则重新打开
 	if( d_ptr->ofmt != packet->format){
 		d_ptr->close_device();
-		if(d_ptr->open_device(packet->format,packet->size) == false)
+		if(d_ptr->open_device(packet->format,packet->data->size) == false)
 			return false;
 	}
 	

@@ -395,7 +395,7 @@ void WASAPI::on_thread_run() noexcept
 			}
 			pCaptureClient->ReleaseBuffer(numFramesAvailable);
 			
-			packet->data->set_data(ptr,size);
+			packet->data->set_data_no_lock(ptr,size);
 			packet->format = get_format();
 			//获取时间戳
 			packet->dts = core::Time::Now().to_timestamp();

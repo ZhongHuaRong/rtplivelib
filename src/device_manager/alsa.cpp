@@ -270,7 +270,7 @@ void ALSA::on_thread_run() noexcept
 		return ;
 	}
 	
-	auto buffer = static_cast<uint8_t*>(malloc(d_ptr->buffer_size));
+	auto buffer = static_cast<uint8_t*>(av_malloc(d_ptr->buffer_size));
 	if( buffer == nullptr){
 		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
 									 __PRETTY_FUNCTION__,
@@ -295,12 +295,11 @@ void ALSA::on_thread_run() noexcept
 		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
 									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
-		free(buffer);
+		av_free(buffer);
 		return;
 	}
-	packet->data[0] = buffer;
 	
-	packet->size = d_ptr->buffer_size;
+	packet->data->set_data_no_lock(buffer,d_ptr->buffer_size);
 	packet->format = get_format();
 	//获取时间戳
 	packet->dts = core::Time::Now().to_timestamp();

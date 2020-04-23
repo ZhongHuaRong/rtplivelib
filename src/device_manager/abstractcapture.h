@@ -161,12 +161,11 @@ protected:
 	 * @param packet
 	 * 数据包
 	 * @return
-	 * 返回true则让该数据推进队列，返回flase则在该函数结束后释放资源
+	 * 返回true则让该数据推进队列
 	 * 这个可以说是除了get_next的另一种获取数据的方式，
-	 * 如果采用这种方式读取数据，则最好返回false
-	 * 返回false则自行析构packet,调用ReleasePacket
+	 * 如果需要读取data数据，则需要上锁，调用data->lock()
 	 */
-	virtual bool on_frame_data(FramePacket *packet);
+	virtual bool on_frame_data(SharedPacket packet);
 private:
 	
 	/**
@@ -183,12 +182,12 @@ private:
 	virtual void on_thread_pause() noexcept  override final;
 	
 protected:
-	device_info current_device_info;
+	device_info			current_device_info;
 	/**
 	 * @brief _current_device_value
 	 * 视频指当前帧数，音频指音量值
 	 */
-	uint32_t current_device_value;
+	uint32_t			current_device_value;
 private:
 	CaptureType			_type;
 	volatile bool		_is_running_flag;
@@ -200,7 +199,7 @@ inline void AbstractCapture::on_stop() noexcept												{		}
 inline bool AbstractCapture::get_thread_pause_condition() noexcept							{		return !_is_running_flag;}
 inline AbstractCapture::device_info AbstractCapture::get_current_device_info() noexcept		{		return current_device_info;}
 inline uint32_t AbstractCapture::get_device_value() noexcept								{		return current_device_value;}
-inline bool AbstractCapture::on_frame_data(FramePacket *)									{		return true;}
+inline bool AbstractCapture::on_frame_data(SharedPacket)									{		return true;}
 inline void AbstractCapture::on_thread_pause() noexcept										{		this->on_stop();}
 
 } // namespace device_manager

@@ -115,12 +115,25 @@ public:
 	inline DataBuffer& set_data(uint8_t * src,size_t size) noexcept{
 		return DataBuffer::SetData(*this,src,size);
 	}
+	inline DataBuffer& set_data_no_lock(uint8_t ** src,size_t size) noexcept{
+		return DataBuffer::SetData_NoLock(*this,src,size);
+	}
+	inline DataBuffer& set_data_no_lock(uint8_t * src,size_t size) noexcept{
+		return DataBuffer::SetData_NoLock(*this,src,size);
+	}
 	inline DataBuffer& copy_data(uint8_t ** src,size_t size) noexcept{
 		return DataBuffer::CopyData(*this,src,size);
 	}
 	inline DataBuffer& copy_data(uint8_t * src,size_t size) noexcept{
 		return DataBuffer::CopyData(*this,src,size);
 	}
+	inline DataBuffer& copy_data_no_lock(uint8_t ** src,size_t size) noexcept{
+		return DataBuffer::CopyData_NoLock(*this,src,size);
+	}
+	inline DataBuffer& copy_data_no_lock(uint8_t * src,size_t size) noexcept{
+		return DataBuffer::CopyData_NoLock(*this,src,size);
+	}
+	
 	DataBuffer& copy_data(DataBuffer &buf) noexcept;
 	DataBuffer& copy_data(DataBuffer &&buf) noexcept;
 	
@@ -137,26 +150,42 @@ public:
 	 * @return 
 	 * 返回dst
 	 */
-	static SharedBuffer& SetData(SharedBuffer& dst,uint8_t ** src,size_t size) noexcept;
 	static DataBuffer& SetData(DataBuffer& dst,uint8_t ** src,size_t size) noexcept;
 	
 	/*重载函数，应用于一维数据*/
-	static SharedBuffer& SetData(SharedBuffer& dst,uint8_t * src,size_t size) noexcept;
 	static DataBuffer& SetData(DataBuffer& dst,uint8_t * src,size_t size) noexcept;
 	
+	/*应用于不需要上锁的情景*/
+	static DataBuffer& SetData_NoLock(DataBuffer& dst,uint8_t ** src,size_t size) noexcept;
+	
+	/*重载函数，应用于一维数据*/
+	static DataBuffer& SetData_NoLock(DataBuffer& dst,uint8_t * src,size_t size) noexcept;
 	/**
 	 * @brief CopyData
 	 * 从外部深度拷贝数据到类
 	 * 使用该接口会减少计数，计数为0则释放之前的空间
 	 */
-	static SharedBuffer& CopyData(SharedBuffer& dst,uint8_t ** src,size_t size) noexcept;
 	static DataBuffer& CopyData(DataBuffer& dst,uint8_t ** src,size_t size) noexcept;
 	/*重载函数，应用于一维数据*/
-	static SharedBuffer& CopyData(SharedBuffer& dst,uint8_t * src,size_t size) noexcept;
 	static DataBuffer& CopyData(DataBuffer& dst,uint8_t * src,size_t size) noexcept;
 	/*重载函数，应用DataBuffer*/
 	static DataBuffer& CopyData(DataBuffer& dst,DataBuffer& src) noexcept;
 	static DataBuffer& CopyData(DataBuffer& dst,DataBuffer&& src) noexcept;
+	
+	/*应用于不需要上锁的情景*/
+	static DataBuffer& CopyData_NoLock(DataBuffer& dst,uint8_t ** src,size_t size) noexcept;
+	/*重载函数，应用于一维数据*/
+	static DataBuffer& CopyData_NoLock(DataBuffer& dst,uint8_t * src,size_t size) noexcept;
+	
+	
+	inline static constexpr int GetDataPtrSize() noexcept{
+		return sizeof(DataBuffer().data);
+	}
+	
+	inline static SharedBuffer Make_Shared(void * packet = nullptr,
+										   void * frame = nullptr) noexcept{
+		return std::make_shared<DataBuffer>(packet,frame);
+	}
 	
 	/**
 	 * @brief is_packet
@@ -186,9 +215,11 @@ public:
 	
 	/*内部使用*/
 	void set_packet(void * packet) noexcept;
+	void set_packet_no_lock(void * packet) noexcept;
 	
 	/*内部使用*/
 	void set_frame(void * frame) noexcept;
+	void set_frame_no_lock(void * frame) noexcept;
 protected:
 	/**
 	 * @brief clear
@@ -203,17 +234,17 @@ private:
 	void _set_frame(AVFrame * frame) noexcept;
 public:
 	/*行大小,有时候会因为要数据对齐，一般大于等于width*/
-	int					linesize[4]{0,0,0,0};
+	int						linesize[4]{0,0,0,0};
 	/*数据长度,只有在data用到第一位的时候有效,如果data用到了多位，则为0*/
-	size_t				size;
+	size_t					size;
 	/*数据读写保护锁,不想用接口的可以直接用这个结构体上锁*/
-	std::mutex			mutex;
+	std::recursive_mutex	mutex;
 private:
 	/*保存数据的指针,rgb和yuyv422只需要用到0*/
 	/*这里可以通过判断第二位之后的指针，来知道数据结构是不是P*/
-	uint8_t				*data[4]{nullptr,nullptr,nullptr,nullptr};
-	void				*packet{nullptr};
-	void				*frame{nullptr};
+	uint8_t					*data[4]{nullptr,nullptr,nullptr,nullptr};
+	void					*packet{nullptr};
+	void					*frame{nullptr};
 	
 	friend class std::shared_ptr<DataBuffer>;
 };

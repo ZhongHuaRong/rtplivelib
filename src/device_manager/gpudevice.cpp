@@ -68,10 +68,10 @@ std::vector<GPUInfo> GPUIdentify::Get_All_GPU_Info() noexcept
 		vector[i].name = core::StringFormat::WString2String(
 					std::wstring(adapterDesc.Description));
 		
-		// 输出设备  
+		// 输出设备
 		IDXGIOutput * pOutput;
 		std::vector<PIDXGIOutput> vOutputs;
-		// 输出设备数量  
+		// 输出设备数量
 		int iOutputNum = 0;
 		while (vAdapters[i]->EnumOutputs(iOutputNum, &pOutput) != DXGI_ERROR_NOT_FOUND)
 		{

@@ -95,7 +95,7 @@ void AbstractPlayer::on_thread_run() noexcept
 	//循环这里只判断指针
 	while(_play_object != nullptr){
 		auto pack = _get_next_packet();
-		if(pack == nullptr)
+		if(pack == nullptr || pack->data == nullptr)
 			break;
 		this->play(pack);
 	}

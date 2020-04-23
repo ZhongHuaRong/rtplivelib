@@ -109,16 +109,12 @@ void AudioProcessingFactory::on_thread_run() noexcept
 		}
 		
 		if(play_flag == true){
-			try {
-				if(player == nullptr){
-					player = new player::AudioPlayer;
-				}
-			} catch (const std::bad_alloc&) {
-				push_one(packet);
-				return;
+			if(player == nullptr){
+				player = new (std::nothrow)player::AudioPlayer;
 			}
-			
-			player->play(packet);
+			if(player!= nullptr){
+				player->play(packet);
+			}
 		}
 		push_one(packet);
 		return;

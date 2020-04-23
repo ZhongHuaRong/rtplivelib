@@ -171,7 +171,6 @@ end:
 				return core::Result::Crop_Filter_init_failed;
 			}
 		}
-		
 		/*初始化裁剪用帧*/
 		if( crop_frame_in == nullptr){
 			crop_frame_in = av_frame_alloc();
@@ -182,11 +181,12 @@ end:
 		crop_frame_in->width = ifmt.width;
 		crop_frame_in->height = ifmt.height;
 		crop_frame_in->format = ifmt.pixel_format;
-		memcpy(crop_frame_in->data,src->data,sizeof(src->data));
-		memcpy(crop_frame_in->linesize,src->linesize,sizeof(src->linesize));
 		
 		AVFrame * crop_frame_out{nullptr};
 		{
+			std::lock_guard<decltype (src->data->mutex)> lg(src->data->mutex);
+			memcpy(crop_frame_in->data,&(*src->data)[0],core::DataBuffer::GetDataPtrSize());
+			memcpy(crop_frame_in->linesize,src->data->linesize,sizeof(src->data->linesize));
 			std::lock_guard<std::recursive_mutex> lk(mutex);
 			//输入帧
 			int ret = av_buffersrc_add_frame_flags(buffersrc_ctx, crop_frame_in, AV_BUFFERSRC_FLAG_PUSH);
@@ -206,16 +206,19 @@ end:
 				core::Logger::Print_FFMPEG_Info(ret,
 												__PRETTY_FUNCTION__,
 												LogLevel::WARNING_LEVEL);
+				av_frame_free(&crop_frame_out);
 				return core::Result::Crop_Failed;
 			}
 		}
 		
-		//先删除原有数据
-		dst->reset_pointer();
-		//设置数据
-		memcpy(dst->data,crop_frame_out->data,sizeof(dst->data));
-		//浅拷贝一份数据
-		memcpy(dst->linesize,crop_frame_out->linesize,sizeof(dst->linesize));
+		if(dst->data == nullptr){
+			dst->data = core::DataBuffer::Make_Shared();
+			if(dst->data == nullptr){
+				av_frame_free(&crop_frame_out);
+				return core::Result::FramePacket_alloc_failed;
+			}
+		}
+		dst->data->set_frame_no_lock(crop_frame_out);
 		//设置其他参数
 		dst->format.height = crect.height;
 		dst->format.width = crect.width;
@@ -225,7 +228,6 @@ end:
 		else
 			dst->format.pixel_format = ofmt;
 		dst->format.bits = av_get_bits_per_pixel(av_pix_fmt_desc_get(static_cast<AVPixelFormat>(dst->format.pixel_format)));
-		dst->frame = crop_frame_out;
 		dst->dts = src->dts;
 		dst->pts = src->pts;
 		return core::Result::Success;
@@ -274,7 +276,7 @@ void Crop::set_default_crop_rect(const Rect &rect) noexcept
 
 core::Result Crop::crop(core::FramePacket *dst, core::FramePacket *src) noexcept
 {
-	if( dst == nullptr || src == nullptr)
+	if( dst == nullptr || src == nullptr || src->data == nullptr)
 		return core::Result::Invalid_Parameter;
 	set_default_input_format(src->format);
 	return d_ptr->crop(dst,src);

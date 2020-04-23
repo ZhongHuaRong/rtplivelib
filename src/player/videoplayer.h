@@ -87,7 +87,10 @@ private:
 };
 
 inline bool VideoPlayer::play(core::FramePacket::SharedPacket packet)	noexcept	{
-	return play(packet->format,packet->data,packet->linesize);
+	if(packet == nullptr ||packet->data == nullptr)
+		return false;
+	std::lock_guard<decltype (packet->data->mutex)> lg(packet->data->mutex);
+	return play(packet->format,&(*packet->data)[0],packet->data->linesize);
 }
 
 } // namespace player

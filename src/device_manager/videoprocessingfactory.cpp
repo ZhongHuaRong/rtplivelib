@@ -81,34 +81,30 @@ public:
 	inline core::FramePacket::SharedPacket get_latest_frame(AbstractCapture* caputre,
 															core::FramePacket::SharedPacket &privious_frame,
 															const int &wait_time) {
-		auto &pri_frame = privious_frame;
 		
 		//等待一个帧的时间
 		if(caputre->wait_for_resource_push(wait_time)){
 			//超时前获取到帧(也可能是队列本来就有帧，没有等待即返回)
 			//这里不采取特别措施，只获取最后一帧
-			pri_frame = caputre->get_latest();
-			return pri_frame;
+			privious_frame = caputre->get_latest();
+			return privious_frame;
 		}
 		else {
-			if(pri_frame == nullptr){
+			auto new_packet{core::FramePacket::Make_Shared()};
+			if(privious_frame == nullptr || new_packet == nullptr){
 				//如果连上一帧都没有，则返回空
 				//一般在设备刚启动的时候，会比较慢，获取到的是空
-				return core::FramePacket::SharedPacket(nullptr);
+				return new_packet;
 			}
-			//深拷贝一份数据
-			//			{
-			//				core::FramePacket * new_packet{core::FramePacket::Make_Packet()};
-			//				core::FramePacket::Copy(new_packet,pri_frame.get());
-			//				pri_frame = std::make_shared<core::FramePacket>(new_packet);
-			//			}
+			*new_packet = *privious_frame;
 			//然后修改pts和dts,为了保险起见，减6ms
 			auto time = static_cast<int64_t>(wait_time - 6);
 			//不能让time小于等于0
-			pri_frame->pts +=  (time <= 0 ? 1:time)* 1000;
-			pri_frame->dts = pri_frame->pts;
-			//如果没有获取到帧,则只需要拿一份上一份的样本去调用
-			return pri_frame;
+			new_packet->pts +=  (time <= 0 ? 1:time)* 1000;
+			new_packet->dts = privious_frame->pts;
+			
+			privious_frame = new_packet;
+			return new_packet;
 		}
 	}
 	
@@ -174,14 +170,12 @@ bool VideoProcessingFactory::set_desktop_capture_object(
 		return false;
 }
 
-void VideoProcessingFactory::set_crop_rect(const image_processing::Rect &rect) noexcept(false)
+void VideoProcessingFactory::set_crop_rect(const image_processing::Rect &rect) noexcept
 {
 	if(crop == nullptr){
-		try {
-			crop = new image_processing::Crop();
-		} catch (const std::bad_alloc& except) {
-			throw except;
-		}
+		crop = new (std::nothrow)image_processing::Crop();
+		if(crop == nullptr)
+			return;
 	}
 	
 	crop->set_default_crop_rect(rect);
@@ -238,7 +232,7 @@ void VideoProcessingFactory::set_fps(int value) noexcept
 		dc_ptr->set_fps(value);
 }
 
-void VideoProcessingFactory::set_display_win_id(void *id) noexcept(false)
+void VideoProcessingFactory::set_display_win_id(void *id) noexcept
 {
 	std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 	if(id == nullptr) {
@@ -251,16 +245,13 @@ void VideoProcessingFactory::set_display_win_id(void *id) noexcept(false)
 	}
 	else {
 		if(d_ptr->player == nullptr) {
-			try {
-				d_ptr->player = new player::VideoPlayer;
-				d_ptr->player_queue = new core::AbstractQueue<core::FramePacket>;
-			} catch (const std::bad_alloc& except) {
-				if(d_ptr->player != nullptr)
-					d_ptr->release_player();
-				throw except;
-			}
+			d_ptr->player = new (std::nothrow)player::VideoPlayer;
 		}
-		d_ptr->player->set_player_object(d_ptr->player_queue,id);
+		if(d_ptr->player_queue == nullptr){
+			d_ptr->player_queue = new (std::nothrow)core::AbstractQueue<core::FramePacket>;
+		}
+		if(d_ptr->player != nullptr)
+			d_ptr->player->set_player_object(d_ptr->player_queue,id);
 	}
 }
 
@@ -339,9 +330,13 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		if(camera_frame != nullptr && desktop_frame != nullptr){
 			//合成图像,接口暂时置空不处理
 			auto merge_packet = _merge_frame(camera_frame,desktop_frame);
+			if(merge_packet == nullptr)
+				return;
 			//回调合成图像
-			if(GlobalCallBack::Get_CallBack() != nullptr)
+			if(GlobalCallBack::Get_CallBack() != nullptr){
 				GlobalCallBack::Get_CallBack()->on_video_frame_merge(merge_packet);
+				d_ptr->on_real_time_fps(merge_packet->pts);
+			}
 			std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
 			if(d_ptr->player != nullptr)
 				d_ptr->player_queue->push_one(merge_packet);

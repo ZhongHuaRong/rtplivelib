@@ -1,9 +1,9 @@
 #include "desktopcapture.h"
 #include "../core/logger.h"
 extern "C" {
-    #include <libavformat/avformat.h>
-    #include <libavdevice/avdevice.h>
-	#include <libavutil/dict.h>
+#include <libavformat/avformat.h>
+#include <libavdevice/avdevice.h>
+#include <libavutil/dict.h>
 }
 
 namespace rtplivelib {
@@ -188,7 +188,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	
 	//下面一步是为了赋值width和height，windows下面不能正确读取，需要计算
 #if defined (WIN64)
-	ptr->data->copy_data(d_ptr->packet->data + 54,static_cast<size_t>(ptr->data->size));
+	ptr->data->copy_data_no_lock(d_ptr->packet->data + 54,static_cast<size_t>(ptr->data->size));
 	/*width在头结构地址18偏移处，详情参考BMP头结构*/
 	memcpy(&ptr->format.width,d_ptr->packet->data + 18,4);
 	/*height在头结构地址22偏移处，不过总为0*/
@@ -196,7 +196,7 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 	memcpy(&ptr->format.height,d_ptr->packet->data + 2,4);
 	ptr->format.height = (ptr->format.height - 54) / ptr->format.width / 4;
 #elif defined (unix)
-	ptr->data->copy_data(d_ptr->packet->data,static_cast<size_t>(d_ptr->packet->size));
+	ptr->data->copy_data_no_lock(d_ptr->packet->data,static_cast<size_t>(d_ptr->packet->size));
 	auto codec = d_ptr->fmtContxt->streams[d_ptr->packet->stream_index]->codecpar;
 	ptr->format.width = codec->width;
 	ptr->format.height = codec->height;

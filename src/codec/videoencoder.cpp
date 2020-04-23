@@ -171,11 +171,8 @@ void VideoEncoder::receive_packet() noexcept
 										 LogLevel::WARNING_LEVEL);
 			break;
 		}
-		dst_packet->size = src_packet->size;
 		
-		//浅拷贝,减少数据的拷贝次数
-		dst_packet->data[0] = src_packet->data;
-		dst_packet->packet = src_packet;
+		dst_packet->data->set_packet_no_lock(src_packet);
 		//这里设置格式是为了后面发送包的时候设置各种参数
 		//感觉这里不需要赋值,对于编码数据，不需要设置格式,只需要设置编码格式
 		//好像音频需要用到
@@ -188,7 +185,7 @@ void VideoEncoder::receive_packet() noexcept
 		core::Logger::Print("video size:{}",
 							__PRETTY_FUNCTION__,
 							LogLevel::ALLINFO_LEVEL,
-							dst_packet->size);
+							dst_packet->data->size);
 		
 		//让退出循环时不要释放掉该packet
 		src_packet = nullptr;
@@ -433,11 +430,11 @@ bool VideoEncoder::_set_frame_data(AVFrame *frame, core::FramePacket *packet) no
 	if( frame->format == AV_PIX_FMT_NONE || packet->format.pixel_format == AV_PIX_FMT_NONE)
 		return false;
 	if( frame->format == packet->format.pixel_format ) {
-		memcpy(frame->data,packet->data,sizeof(packet->data));
-		memcpy(frame->linesize,packet->linesize,sizeof(packet->linesize));
+		memcpy(frame->data,&(*packet->data)[0],core::DataBuffer::GetDataPtrSize());
+		memcpy(frame->linesize,packet->data->linesize,sizeof(packet->data->linesize));
 	} else {
 		scale_ctx->set_default_input_format(packet->format);
-		scale_ctx->scale(packet->data,packet->linesize,frame->data,frame->linesize);
+		scale_ctx->scale(&(*packet->data)[0],packet->data->linesize,frame->data,frame->linesize);
 		
 	}
 	frame->pts = packet->pts;

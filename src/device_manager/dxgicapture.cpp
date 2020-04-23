@@ -254,11 +254,7 @@ public:
 		
 		//frame data需要重构
 		size_t data_size =  output_desc.DesktopCoordinates.right * output_desc.DesktopCoordinates.bottom * 4;
-		auto data = static_cast<uint8_t *>(av_malloc(data_size));
-		if(data == nullptr){
-			return ptr;
-		}
-		ptr->data->copy_data(mapped_rect.pBits,data_size);
+		ptr->data->copy_data_no_lock(mapped_rect.pBits,data_size);
 		surface->Unmap();
 		surface->Release();
 		previous_frame = ptr;
@@ -267,7 +263,8 @@ public:
 	
 	inline core::FramePacket::SharedPacket get_copy_packet() noexcept{
 		auto ptr = core::FramePacket::Make_Shared();
-		*ptr = *previous_frame;
+		if(ptr != nullptr)
+			*ptr = *previous_frame;
 		return ptr;
 	}
 };

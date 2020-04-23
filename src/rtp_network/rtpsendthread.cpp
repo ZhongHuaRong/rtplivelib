@@ -272,7 +272,8 @@ public:
 			auto src_nb = param.size / param.symbol_size;
 			if(src_nb * param.symbol_size != param.size)
 				++src_nb;
-			auto _d = packet->data[0];
+			std::lock_guard<decltype (packet->data->mutex)> lg(packet->data->mutex);
+			auto _d = (*packet->data)[0];
 			uint16_t cur_pos = 0u;
 			
 			for( ; cur_pos < src_nb - 1; ++cur_pos ){

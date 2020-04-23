@@ -45,7 +45,7 @@ public:
 				//清空缓存
 				pkt->data = nullptr;
 				pkt->size = 0;
-				decode(false);
+				decode();
 			}
 			avcodec_free_context(&decoder_ctx);
 		}
@@ -110,10 +110,10 @@ public:
 	inline void check_pt(const PayloadType pt,
 						 const Packet & pack) noexcept {
 		UNUSED(pack)
-				//软解的初始化
-				//这里需要注意一下，判断hwd_type_cur是为了防止硬解转为软解的时候的误判
-				if( pt == cur_pt && parser_ctx != nullptr && decoder_ctx != nullptr )
-				return;
+		//软解的初始化
+		//这里需要注意一下，判断hwd_type_cur是为了防止硬解转为软解的时候的误判
+		if( pt == cur_pt && parser_ctx != nullptr && decoder_ctx != nullptr )
+			return;
 		
 		cur_pt = pt;
 		
@@ -125,7 +125,7 @@ public:
 	 * 解码操作
 	 * 在这里就不判断各种上下文了，直接开始解码
 	 */
-	inline void decode(bool play = true) noexcept{
+	inline void decode() noexcept{
 		int ret = 0;
 		
 		ret = avcodec_send_packet(decoder_ctx,pkt);
@@ -208,7 +208,7 @@ public:
 				return;
 		}
 		
-		parse(pack.second->data[0],pack.second->size,pack.second->pts,pack.second->pos);
+		parse((*pack.second->data)[0],pack.second->data->size,pack.second->pts,pack.second->pos);
 	}
 	
 private:
@@ -340,7 +340,13 @@ void AudioDecoder::on_thread_run() noexcept
 		auto pack = get_next();
 		if(pack == nullptr)
 			continue;
-		d_ptr->deal_with_pack(*pack);
+		if(pack->second != nullptr && pack->second->data != nullptr){
+			pack->second->data->mutex.lock();
+			d_ptr->deal_with_pack(*pack);
+			pack->second->data->mutex.unlock();
+		} else
+			//空的数据包也是有用处的
+			d_ptr->deal_with_pack(*pack);
 	}
 }
 

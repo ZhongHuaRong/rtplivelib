@@ -140,7 +140,12 @@ void Encoder::on_thread_run() noexcept
 	//循环这里只判断指针
 	while(_queue != nullptr && _queue->has_data()){
 		auto pack = _get_next_packet();
-		this->encode(pack.get());
+		if(pack != nullptr && pack->data != nullptr){
+			std::lock_guard<decltype (pack->data->mutex)> lg(pack->data->mutex);
+			this->encode(pack.get());
+		} else {
+			this->encode(pack.get());
+		}
 	}
 }
 

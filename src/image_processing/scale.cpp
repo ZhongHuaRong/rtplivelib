@@ -130,14 +130,30 @@ void Scale::set_default_input_format(const int &width, const int &height, const 
 
 core::Result Scale::scale(core::FramePacket *dst, core::FramePacket *src) noexcept
 {
-	if( dst == nullptr || src == nullptr)
+	if( dst == nullptr || src == nullptr || src->data == nullptr)
 		return core::Result::Invalid_Parameter;
-	dst->reset_pointer();
-	if(av_image_alloc(dst->data,dst->linesize,d_ptr->ofmt.width,d_ptr->ofmt.height,
+	
+	if(dst->data == nullptr){
+		dst->data = core::DataBuffer::Make_Shared();
+		if(dst->data == nullptr)
+			return core::Result::Invalid_Parameter;
+	}
+	uint8_t * data[4]{nullptr,nullptr,nullptr,nullptr};
+	int linesize[4]{0,0,0,0};
+	
+	if(av_image_alloc(data,linesize,d_ptr->ofmt.width,d_ptr->ofmt.height,
 					  static_cast<AVPixelFormat>(d_ptr->ofmt.pixel_format),0) < 0 )
 		return core::Result::FramePacket_data_alloc_failed;
-	return scale(src->data,src->linesize,
-				 dst->data,dst->linesize);
+	
+	auto ret = scale(&(*src->data)[0],src->data->linesize,
+			data,linesize);
+	
+	dst->data->set_data(&(data[0]),0);
+	for(auto i = 0;i < 4;++i){
+		dst->data->linesize[i] = linesize[i];
+	}
+	
+	return ret;
 }
 
 core::Result Scale::scale(core::FramePacket::SharedPacket &dst, core::FramePacket::SharedPacket &src) noexcept

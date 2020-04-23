@@ -397,14 +397,14 @@ public:
 		}
 		
 		if(hwdevice != nullptr && hwdevice->get_init_result() == true){
-			pkt->data = pack.second->data[0];
-			pkt->size = pack.second->size;
+			pkt->data = (*pack.second->data)[0];
+			pkt->size = pack.second->data->size;
 			//硬件加速，不需要解析
 			decode();
 			display();
 		} else {
 			//解析并解码
-			parse(pack.second->data[0],pack.second->size,pack.second->pts,pack.second->pos);
+			parse((*pack.second->data)[0],pack.second->data->size,pack.second->pts,pack.second->pos);
 		}
 	}
 	
@@ -587,7 +587,12 @@ void VideoDecoder::on_thread_run() noexcept
 		auto pack = get_next();
 		if(pack == nullptr)
 			continue;
-		d_ptr->deal_with_pack(*pack);
+		if(pack->second != nullptr && pack->second->data != nullptr){
+			pack->second->data->mutex.lock();
+			d_ptr->deal_with_pack(*pack);
+			pack->second->data->mutex.unlock();
+		} else
+			d_ptr->deal_with_pack(*pack);
 	}
 }
 

@@ -98,7 +98,7 @@ void AbstractCapture::on_thread_run() noexcept
 	auto packet = this->on_start();
 	/*如果有子类重写on_frame_data函数并返回false，则不加入队列*/
 	/*这里不判断包是否为空*/
-	if(this->on_frame_data(packet.get())){
+	if(this->on_frame_data(packet)){
 		this->push_one(packet);
 	}
 }

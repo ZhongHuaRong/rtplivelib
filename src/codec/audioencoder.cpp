@@ -151,8 +151,8 @@ void AudioEncoder::encode(core::FramePacket *packet) noexcept
 			}
 			
 			int nb{0},size{0};
-			uint8_t **src_data = static_cast<uint8_t**>(packet->data);
-			if( resample->resample(&src_data,packet->size / (packet->format.bits * 4 / packet->format.channels),
+			uint8_t **src_data = static_cast<uint8_t**>(&(*packet->data)[0]);
+			if( resample->resample(&src_data,packet->data->size / (packet->format.bits * 4 / packet->format.channels),
 								   &dst_data,nb,size) == false){
 				//日志在resample里面已经输出，这里就不输出了
 				return;
@@ -168,8 +168,8 @@ void AudioEncoder::encode(core::FramePacket *packet) noexcept
 			//不需要重采样
 //				memcpy(encode_frame->data,packet->data,sizeof(packet->data));
 			//只用到第一个
-			encode_frame->data[0] = packet->data[0];
-			encode_frame->nb_samples = packet->size / (packet->format.bits * 4 / packet->format.channels);
+			encode_frame->data[0] = (*packet->data)[0];
+			encode_frame->nb_samples = packet->data->size / (packet->format.bits * 4 / packet->format.channels);
 		}
 		
 		/* send the frame for encoding */
@@ -259,7 +259,8 @@ void AudioEncoder::receive_packet() noexcept
 		}
 
 		//浅拷贝,减少数据的拷贝次数
-		dst_packet->data->set_packet(src_packet);
+		//使用无锁版本
+		dst_packet->data->set_packet_no_lock(src_packet);
 		//这里设置格式是为了后面发送包的时候设置各种参数
 		//感觉这里不需要赋值,对于编码数据，不需要设置格式,只需要设置编码格式
 		//好像音频需要用到

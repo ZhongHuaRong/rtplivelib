@@ -220,20 +220,20 @@ void Resample::set_default_input_format(const int &sample_rate, const int &chann
 
 core::Result Resample::resample(core::FramePacket *dst, core::FramePacket *src) noexcept
 {
-	if( dst == nullptr || src == nullptr)
+	if( dst == nullptr || src == nullptr || src->data==nullptr)
 		return core::Result::Invalid_Parameter;
 	
 	std::lock_guard<std::recursive_mutex> lk(d_ptr->mutex);
 	if( src->format != d_ptr->ifmt)
 		return core::Result::Format_Error;
 	
+	src->data->lock();
 	auto src_data = static_cast<uint8_t**>(&(*src->data)[0]);
 	uint8_t ** data{nullptr};
 	int nb_samples{0};
 	int size{0};
 	auto block_size = src->format.bits * 4 / src->format.channels;
 	
-	src->data->lock();
 	auto ret = resample(&src_data, src->data->size / block_size ,&data ,nb_samples,size);
 	src->data->unlock();
 	

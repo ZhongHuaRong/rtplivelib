@@ -69,16 +69,15 @@ DataBuffer &DataBuffer::copy_data(DataBuffer &buf) noexcept
 
 DataBuffer &DataBuffer::copy_data(DataBuffer &&buf) noexcept
 {
-	{
-		std::lock_guard<decltype (mutex)> lg(mutex);
-		clear();
-		
-		memcpy(data,buf.data,sizeof(data));
-		memcpy(linesize,buf.linesize,sizeof(linesize));
-		packet = buf.packet;
-		frame = buf.frame;
-		size = buf.size;
-	}
+	std::lock_guard<decltype (mutex)> lg(mutex);
+	clear();
+	
+	memcpy(data,buf.data,sizeof(data));
+	memcpy(linesize,buf.linesize,sizeof(linesize));
+	packet = buf.packet;
+	frame = buf.frame;
+	size = buf.size;
+	
 	memset(buf.data,0,sizeof(data));
 	memset(buf.linesize,0,sizeof(linesize));
 	buf.packet = nullptr;
@@ -88,23 +87,20 @@ DataBuffer &DataBuffer::copy_data(DataBuffer &&buf) noexcept
 	return *this;
 }
 
-DataBuffer::SharedBuffer &DataBuffer::SetData(DataBuffer::SharedBuffer &dst, uint8_t **src, size_t size) noexcept
-{
-	if(dst == nullptr){
-		auto ptr = std::make_shared<DataBuffer>();
-		dst.swap(ptr);
-	}
-	std::lock_guard<decltype (dst->mutex)> lg(dst->mutex);
-	dst->clear();
-	
-	memcpy(dst->data,src,sizeof(dst->data));
-	dst->size = size;
-	return dst;
-}
-
 DataBuffer &DataBuffer::SetData(DataBuffer &dst, uint8_t **src, size_t size) noexcept
 {
 	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
+	return SetData_NoLock(dst,src,size);
+}
+
+DataBuffer &DataBuffer::SetData(DataBuffer &dst, uint8_t *src, size_t size) noexcept
+{
+	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
+	return SetData_NoLock(dst,src,size);
+}
+
+DataBuffer &DataBuffer::SetData_NoLock(DataBuffer &dst, uint8_t **src, size_t size) noexcept
+{
 	dst.clear();
 	
 	memcpy(dst.data,src,sizeof(dst.data));
@@ -112,23 +108,8 @@ DataBuffer &DataBuffer::SetData(DataBuffer &dst, uint8_t **src, size_t size) noe
 	return dst;
 }
 
-DataBuffer::SharedBuffer &DataBuffer::SetData(DataBuffer::SharedBuffer &dst, uint8_t *src, size_t size) noexcept
+DataBuffer &DataBuffer::SetData_NoLock(DataBuffer &dst, uint8_t *src, size_t size) noexcept
 {
-	if(dst == nullptr){
-		auto ptr = std::make_shared<DataBuffer>();
-		dst.swap(ptr);
-	}
-	std::lock_guard<decltype (dst->mutex)> lg(dst->mutex);
-	dst->clear();
-	
-	dst->data[0] = src;
-	dst->size = size;
-	return dst;
-}
-
-DataBuffer &DataBuffer::SetData(DataBuffer &dst, uint8_t *src, size_t size) noexcept
-{
-	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
 	dst.clear();
 	
 	dst.data[0] = src;
@@ -136,29 +117,30 @@ DataBuffer &DataBuffer::SetData(DataBuffer &dst, uint8_t *src, size_t size) noex
 	return dst;
 }
 
-DataBuffer::SharedBuffer &DataBuffer::CopyData(DataBuffer::SharedBuffer &dst, uint8_t **src, size_t size) noexcept
-{
-	if(dst == nullptr){
-		auto ptr = std::make_shared<DataBuffer>();
-		dst.swap(ptr);
-	}
-	std::lock_guard<decltype (dst->mutex)> lg(dst->mutex);
-	dst->clear();
-	
-	for(auto i = 0;i < 4;++i){
-		if(src[i] != nullptr){
-			dst->data[i] = static_cast<uint8_t *>(av_malloc(size));
-			if(dst->data[i] != nullptr)
-				memcpy(dst->data[i],src[i],size);
-		}
-	}
-	dst->size = size;
-	return dst;
-}
-
 DataBuffer &DataBuffer::CopyData(DataBuffer &dst, uint8_t **src, size_t size) noexcept
 {
 	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
+	return CopyData_NoLock(dst,src,size);
+}
+
+DataBuffer &DataBuffer::CopyData(DataBuffer &dst, uint8_t *src, size_t size) noexcept
+{
+	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
+	return CopyData_NoLock(dst,src,size);
+}
+
+DataBuffer &DataBuffer::CopyData(DataBuffer &dst, DataBuffer &src) noexcept
+{
+	return dst.copy_data(src);
+}
+
+DataBuffer &DataBuffer::CopyData(DataBuffer &dst, DataBuffer &&src) noexcept
+{
+	return dst.copy_data(std::move(src));
+}
+
+DataBuffer &DataBuffer::CopyData_NoLock(DataBuffer &dst, uint8_t **src, size_t size) noexcept
+{
 	dst.clear();
 	
 	for(auto i = 0;i < 4;++i){
@@ -172,27 +154,8 @@ DataBuffer &DataBuffer::CopyData(DataBuffer &dst, uint8_t **src, size_t size) no
 	return dst;
 }
 
-DataBuffer::SharedBuffer &DataBuffer::CopyData(DataBuffer::SharedBuffer &dst, uint8_t *src, size_t size) noexcept
+DataBuffer &DataBuffer::CopyData_NoLock(DataBuffer &dst, uint8_t *src, size_t size) noexcept
 {
-	if(dst == nullptr){
-		auto ptr = std::make_shared<DataBuffer>();
-		dst.swap(ptr);
-	}
-	std::lock_guard<decltype (dst->mutex)> lg(dst->mutex);
-	dst->clear();
-	
-	if(src != nullptr){
-		dst->data[0] = static_cast<uint8_t *>(av_malloc(size));
-		if(dst->data[0] != nullptr)
-			memcpy(dst->data[0],src,size);
-	}
-	dst->size = size;
-	return dst;
-}
-
-DataBuffer &DataBuffer::CopyData(DataBuffer &dst, uint8_t *src, size_t size) noexcept
-{
-	std::lock_guard<decltype (dst.mutex)> lg(dst.mutex);
 	dst.clear();
 	
 	if(src != nullptr){
@@ -204,16 +167,6 @@ DataBuffer &DataBuffer::CopyData(DataBuffer &dst, uint8_t *src, size_t size) noe
 	}
 	dst.size = size;
 	return dst;
-}
-
-DataBuffer &DataBuffer::CopyData(DataBuffer &dst, DataBuffer &src) noexcept
-{
-	return dst.copy_data(src);
-}
-
-DataBuffer &DataBuffer::CopyData(DataBuffer &dst, DataBuffer &&src) noexcept
-{
-	return dst.copy_data(std::move(src));
 }
 
 bool DataBuffer::is_packet() noexcept
@@ -245,6 +198,11 @@ bool DataBuffer::is_frame() noexcept
 void DataBuffer::set_packet(void *packet) noexcept
 {
 	std::lock_guard<decltype (mutex)> lg(mutex);
+	set_packet_no_lock(packet);
+}
+
+inline void DataBuffer::set_packet_no_lock(void *packet) noexcept
+{
 	clear();
 	if(packet == nullptr)
 		return;
@@ -254,6 +212,11 @@ void DataBuffer::set_packet(void *packet) noexcept
 void DataBuffer::set_frame(void *frame) noexcept
 {
 	std::lock_guard<decltype (mutex)> lg(mutex);
+	set_frame_no_lock(frame);
+}
+
+inline void DataBuffer::set_frame_no_lock(void *frame) noexcept
+{
 	clear();
 	if(frame == nullptr)
 		return;
@@ -262,36 +225,34 @@ void DataBuffer::set_frame(void *frame) noexcept
 
 void DataBuffer::clear() noexcept
 {
-	auto packet = this;
-	
 	/**
 	 * 分两种情况，一种是含有ffmpeg的包，也就是packet指针不为nullptr
 	 * 一种是不使用ffmpeg的API采集的数据包，也就是packet指针为空
 	 * 这个时候需要自己delete data
 	 */
-	if(packet->packet == nullptr && packet->frame == nullptr){
+	if(this->packet == nullptr && this->frame == nullptr){
 		for( auto n = 0; n < 4; ++n){
-			if(packet->data[n] != nullptr){
-				av_free(packet->data[n]);
+			if(this->data[n] != nullptr){
+				av_free(this->data[n]);
 			}
 		}
 	}
-	if(packet->packet != nullptr){
-		auto ptr = static_cast<AVPacket*>(packet->packet);
+	if(this->packet != nullptr){
+		auto ptr = static_cast<AVPacket*>(this->packet);
 		if(ptr->buf != nullptr){
 			av_packet_unref(ptr);
 		}
 		av_packet_free(&ptr);
-		packet->packet = nullptr;
+		this->packet = nullptr;
 	}
-	if(packet->frame != nullptr){
-		auto ptr = static_cast<AVFrame*>(packet->frame);
+	if(this->frame != nullptr){
+		auto ptr = static_cast<AVFrame*>(this->frame);
 		av_frame_unref(ptr);
 		av_frame_free(&ptr);
-		packet->frame = nullptr;
+		this->frame = nullptr;
 	}
-	memset(packet->data,0,sizeof(packet->data));
-	memset(packet->linesize,0,sizeof(packet->linesize));
+	memset(this->data,0,sizeof(this->data));
+	memset(this->linesize,0,sizeof(this->linesize));
 }
 
 inline void DataBuffer::_set_packet(AVPacket *packet) noexcept

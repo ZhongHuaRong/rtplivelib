@@ -253,7 +253,7 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 	ptr->format.width = codec->width;
 	ptr->format.height = codec->height;
 	ptr->format.bits = 16;
-	ptr->linesize[0] = ptr->format.width * 2;
+	ptr->data->linesize[0] = ptr->format.width * 2;
 	ptr->format.pixel_format = AV_PIX_FMT_YUYV422;
 	ptr->pts = d_ptr->packet->pts;
 	ptr->dts = d_ptr->packet->dts;
@@ -261,17 +261,7 @@ CameraCapture::SharedPacket CameraCapture::on_start() noexcept {
 	ptr->flag = d_ptr->packet->flags;
 	
 	//packet在close input format后就失效
-	//所以需要拷贝一份
-	ptr->data[0] = static_cast<uint8_t*>(av_malloc(static_cast<size_t>(d_ptr->packet->size)));
-	if(ptr->data[0] == nullptr){
-		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::WARNING_LEVEL);
-		ptr->size = 0;
-		return ptr;
-	}
-	memcpy(ptr->data[0],d_ptr->packet->data,static_cast<size_t>(d_ptr->packet->size));
-	ptr->size = d_ptr->packet->size;
+	ptr->data->copy_data_no_lock(d_ptr->packet->data,static_cast<size_t>(d_ptr->packet->size));
 	return ptr;
 }
 

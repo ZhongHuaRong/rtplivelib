@@ -54,10 +54,8 @@ public:
 	/**
 	 * @brief set_crop_rect
 	 * 设置裁剪区域，只留rect区域
-	 * @exception
-	 * bad_alloc异常
 	 */
-	void set_crop_rect(const image_processing::Rect & rect) noexcept(false);
+	void set_crop_rect(const image_processing::Rect & rect) noexcept;
 	
 	/**
 	 * @brief set_overlay_rect
@@ -105,10 +103,8 @@ public:
 	 * 可以理解为显示自己画面(毕竟要和显示别人的画面分开处理)
 	 * @param id
 	 * 窗口id
-	 * @exception
-	 * bad_alloc异常
 	 */
-	void set_display_win_id(void * id) noexcept(false);
+	void set_display_win_id(void * id) noexcept;
 	
 	/**
 	 * @brief set_display_screen_size
