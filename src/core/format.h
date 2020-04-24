@@ -294,7 +294,10 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 */
 	attribute_deprecated
 	static inline FramePacket * Make_Packet() noexcept{
-		return new (std::nothrow)FramePacket;
+		auto ptr =  new (std::nothrow)FramePacket;
+		if(ptr != nullptr)
+			ptr->data = DataBuffer::Make_Shared();
+		return ptr;
 	}
 	
 	/**
@@ -302,7 +305,10 @@ struct RTPLIVELIBSHARED_EXPORT FramePacket{
 	 * 构造一个智能指针版对象
 	 */
 	static inline SharedPacket Make_Shared() noexcept{
-		return std::make_shared<FramePacket>();
+		auto ptr = std::make_shared<FramePacket>();
+		if(ptr != nullptr)
+			ptr->data = DataBuffer::Make_Shared();
+		return ptr;
 	}
 	
 	/**

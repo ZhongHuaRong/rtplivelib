@@ -117,13 +117,7 @@ void LiveEngine::set_local_microphone_audio(bool flag) noexcept
 
 void LiveEngine::set_local_display_win_id(void *win_id)
 {
-	try {
-		device->get_video_factory()->set_display_win_id(win_id);
-	} catch (const std::bad_alloc& except) {
-		core::Logger::Print(except.what(),
-							__PRETTY_FUNCTION__,
-							LogLevel::INFO_LEVEL);
-	}
+	device->get_video_factory()->set_display_win_id(win_id);
 }
 
 void LiveEngine::set_remote_display_win_id(void *win_id, const std::string &name)
@@ -147,13 +141,7 @@ void LiveEngine::set_remote_display_screen_size(const std::string& name,
 
 void LiveEngine::set_crop_rect(const image_processing::Rect &rect)noexcept
 {
-	try {
-		device->get_video_factory()->set_crop_rect(rect);
-	} catch (const std::bad_alloc& except) {
-		core::Logger::Print(except.what(),
-							__PRETTY_FUNCTION__,
-							LogLevel::INFO_LEVEL);
-	}
+	device->get_video_factory()->set_crop_rect(rect);
 }
 
 void LiveEngine::set_overlay_rect(const image_processing::FRect &rect) noexcept

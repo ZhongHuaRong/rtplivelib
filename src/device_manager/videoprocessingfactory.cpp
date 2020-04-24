@@ -90,12 +90,14 @@ public:
 			return privious_frame;
 		}
 		else {
-			auto new_packet{core::FramePacket::Make_Shared()};
-			if(privious_frame == nullptr || new_packet == nullptr){
+			if(privious_frame == nullptr){
 				//如果连上一帧都没有，则返回空
 				//一般在设备刚启动的时候，会比较慢，获取到的是空
-				return new_packet;
+				return core::FramePacket::SharedPacket(nullptr);
 			}
+			auto new_packet{core::FramePacket::Make_Shared()};
+			if(new_packet == nullptr)
+				return new_packet;
 			*new_packet = *privious_frame;
 			//然后修改pts和dts,为了保险起见，减6ms
 			auto time = static_cast<int64_t>(wait_time - 6);
@@ -321,7 +323,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		
 		if( is_crop ) {
 			auto new_frame = core::FramePacket::Make_Shared();
-			if (crop->crop(new_frame,desktop_frame) == false)
+			if (crop->crop(new_frame,desktop_frame) != core::Result::Success)
 				return;
 			desktop_frame = new_frame;
 		}
@@ -378,7 +380,7 @@ void VideoProcessingFactory::on_thread_run() noexcept
 		//裁剪的判断
 		if( is_crop ){
 			auto new_frame = core::FramePacket::Make_Shared();
-			if (crop->crop(new_frame,packet) == false)
+			if (crop->crop(new_frame,packet) != core::Result::Success)
 				return;
 			packet = new_frame;
 		}

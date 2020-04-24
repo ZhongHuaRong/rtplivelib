@@ -46,7 +46,7 @@ core::Result FECEncoder::encode(core::FramePacket::SharedPacket packet,
 								std::vector<std::vector<int8_t> > &output,
 								FECParam & param) noexcept
 {
-	if(packet == nullptr)
+	if(packet == nullptr || packet->data == nullptr)
 		return core::Result::Invalid_Parameter;
 	
 	std::lock_guard<decltype (packet->data->mutex)> lg(packet->data->mutex);

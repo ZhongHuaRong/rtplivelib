@@ -78,10 +78,10 @@ public:
 							const int32_t &flag,
 							RTPPacket::SharedRTPPacket &rtp_packet) noexcept{
 		UNUSED(src_nb)
-				UNUSED(fill_size)
-				UNUSED(repair_nb)
+		UNUSED(fill_size)
+		UNUSED(repair_nb)
 				
-				auto ts = get_correct_timestamp(timestamp,pos);
+		auto ts = get_correct_timestamp(timestamp,pos);
 		core::Result ret;
 		if(flag){
 			//使用了FEC的情况
@@ -105,22 +105,15 @@ public:
 			if(src_nb == 1){
 				erase_nofec_map(ts);
 				//直接返回
-				uint8_t * p = static_cast<uint8_t *>(av_malloc(static_cast<size_t>(total_size)));
-				if(p != nullptr){
-					auto ptr = core::FramePacket::Make_Shared();
-					
-					if( ptr != nullptr){
-						memcpy(p,data,total_size);
-						ptr->data[0] = p;
-						ptr->size = total_size;
-						ptr->payload_type = payload_type;
-						ptr->dts = ptr->pts = ts;
-					} else  {
-						av_free(p);
-					}
-					
-					next_pack.swap(ptr);
+				auto ptr = core::FramePacket::Make_Shared();
+				
+				if( ptr != nullptr && ptr->data != nullptr){
+					ptr->data->copy_data_no_lock(data,total_size);
+					ptr->payload_type = payload_type;
+					ptr->dts = ptr->pts = ts;
 				}
+				
+				next_pack.swap(ptr);
 				return core::Result::Success;
 			}
 			
@@ -155,9 +148,8 @@ public:
 				
 				auto ptr = core::FramePacket::Make_Shared();
 				
-				if(ret == core::Result::Success && ptr != nullptr){
-					ptr->data[0] = p;
-					ptr->size = total_size;
+				if(ret == core::Result::Success && ptr != nullptr && ptr->data != nullptr){
+					ptr->data->set_data_no_lock(p,total_size);
 					ptr->payload_type = payload_type;
 					ptr->dts = ptr->pts = i->first;
 				} else  {
@@ -174,10 +166,9 @@ public:
 			if(p != nullptr){
 				auto ptr = core::FramePacket::Make_Shared();
 				
-				if( ptr != nullptr){
+				if( ptr != nullptr && ptr->data != nullptr){
 					i->second.get_data(p);
-					ptr->data[0] = p;
-					ptr->size = total_size;
+					ptr->data->set_data_no_lock(p,total_size);
 					ptr->payload_type = payload_type;
 					ptr->dts = ptr->pts = i->first;
 				} else  {
