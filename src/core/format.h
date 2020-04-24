@@ -188,6 +188,25 @@ public:
 	}
 	
 	/**
+	 * @brief data_resize
+	 * 给data[0]分配空间
+	 * @param size
+	 * 数据大小，将会填充this->size字段
+	 * @return 
+	 * 成功分配返回true，失败则返回false，同时size为0
+	 * @note
+	 * 有的函数需要提前分配空间，然后操作完再通过set_data复制到DataBuffer
+	 * 为了减少外部分配空间的情况，在这里设置一个接口，统一使用该接口分配空间
+	 * 使用该接口会释放原来的数据空间
+	 */
+	bool data_resize(size_t size) noexcept;
+	
+	/**
+	 * 不加锁版本
+	 */
+	bool data_resize_no_lock(size_t size) noexcept;
+	
+	/**
 	 * @brief is_packet
 	 * 判断该类存的数据是不是包
 	 * 指压缩后或解压前的数据

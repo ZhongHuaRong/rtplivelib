@@ -270,15 +270,17 @@ void ALSA::on_thread_run() noexcept
 		return ;
 	}
 	
-	auto buffer = static_cast<uint8_t*>(av_malloc(d_ptr->buffer_size));
-	if( buffer == nullptr){
+	auto packet = core::FramePacket::Make_Shared();
+	if(packet == nullptr || packet->data == nullptr){
 		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
 									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
 		return;
 	}
+	if(packet->data->data_resize_no_lock(d_ptr->buffer_size) == false)
+		return;
 	
-	auto rc = snd_pcm_readi(d_ptr->handle, buffer, d_ptr->frames);
+	auto rc = snd_pcm_readi(d_ptr->handle, (*packet->data)[0], d_ptr->frames);
 	if (rc == -EPIPE) {
 		/* EPIPE means overrun */
 		snd_pcm_prepare(d_ptr->handle);
@@ -290,16 +292,6 @@ void ALSA::on_thread_run() noexcept
 		return ;
 	}
 	
-	auto packet = core::FramePacket::Make_Shared();
-	if(packet == nullptr){
-		core::Logger::Print_APP_Info(core::Result::FramePacket_data_alloc_failed,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::WARNING_LEVEL);
-		av_free(buffer);
-		return;
-	}
-	
-	packet->data->set_data_no_lock(buffer,d_ptr->buffer_size);
 	packet->format = get_format();
 	//获取时间戳
 	packet->dts = core::Time::Now().to_timestamp();

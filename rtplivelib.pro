@@ -93,6 +93,7 @@ HEADERS += \
     src/core/abstractqueue.h \
     src/core/abstractthread.h \
     src/core/config.h \
+    src/core/releasefunction.h \
     src/player/abstractplayer.h \
     src/core/format.h \
     src/device_manager/abstractcapture.h \

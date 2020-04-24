@@ -31,6 +31,7 @@ uint8_t *&DataBuffer::operator[](const int &n) noexcept
 
 DataBuffer &DataBuffer::copy_data(DataBuffer &buf) noexcept
 {
+	//这里可能会导致死锁
 	std::lock_guard<decltype (mutex)> lg(mutex);
 	std::lock_guard<decltype (mutex)> lg2(buf.mutex);
 	clear();
@@ -167,6 +168,24 @@ DataBuffer &DataBuffer::CopyData_NoLock(DataBuffer &dst, uint8_t *src, size_t si
 	}
 	dst.size = size;
 	return dst;
+}
+
+bool DataBuffer::data_resize(size_t size) noexcept
+{
+	std::lock_guard<decltype (mutex)> lg(mutex);
+	return data_resize_no_lock(size);
+}
+
+bool DataBuffer::data_resize_no_lock(size_t size) noexcept
+{
+	clear();
+	if(size == 0)
+		return true;
+	data[0] = static_cast<uint8_t *>(av_malloc(size));
+	if(data[0] == nullptr)
+		return false;
+	this->size = size;
+	return true;
 }
 
 bool DataBuffer::is_packet() noexcept

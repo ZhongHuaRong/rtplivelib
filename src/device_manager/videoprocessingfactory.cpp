@@ -427,7 +427,7 @@ core::FramePacket::SharedPacket VideoProcessingFactory::_merge_frame(
 		core::FramePacket::SharedPacket dp, core::FramePacket::SharedPacket cp)
 {
 	UNUSED(cp)
-			return dp;
+	return dp;
 }
 
 } // namespace device_manager

@@ -82,13 +82,15 @@ public:
 		UNUSED(repair_nb)
 				
 		auto ts = get_correct_timestamp(timestamp,pos);
-		core::Result ret;
 		if(flag){
 			//使用了FEC的情况
+			core::Result ret{core::Result::Success};
 			auto & ptr = fec_map[ts];
 			if(ptr == nullptr){
 				Codec && c = Make_Codec();
 				ptr.swap(c);
+				if(ptr == nullptr)
+					return core::Result::Codec_codec_open_failed;
 			}
 			
 			ret = ptr->decode(pos,data,len,total_size);
@@ -97,6 +99,7 @@ public:
 				erase_fec_map(ts);
 				push(total_size,static_cast<RTPSession::PayloadType>(payload_type),flag);
 			}
+			return ret;
 			
 		} else {
 			//没有使用FEC的情况
@@ -131,54 +134,72 @@ public:
 			if(++ptr.count == src_nb){
 				erase_nofec_map(ts);
 				push(total_size,static_cast<RTPSession::PayloadType>(payload_type),flag);
+				return core::Result::Success;
 			}
+			return core::Result::FEC_Decode_Need_More;
 		}
-		return core::Result::Success;
 	}
 	
 	inline void push(const int32_t &total_size,
 					 const int &payload_type,
 					 const int32_t &flag) noexcept {
+		
+		auto ptr = core::FramePacket::Make_Shared();
 		if(flag){
-			
-			auto i = fec_map.begin();
-			uint8_t * p = static_cast<uint8_t *>(av_malloc(static_cast<size_t>(total_size)));
-			if(p != nullptr){
-				auto ret = i->second->data_recover(p);
-				
-				auto ptr = core::FramePacket::Make_Shared();
-				
-				if(ret == core::Result::Success && ptr != nullptr && ptr->data != nullptr){
-					ptr->data->set_data_no_lock(p,total_size);
-					ptr->payload_type = payload_type;
-					ptr->dts = ptr->pts = i->first;
-				} else  {
-					av_free(p);
-				}
-				
-				next_pack.swap(ptr);
-			}
-			fec_map.erase(i);
-			
+			push_fec(total_size,payload_type,ptr);
 		} else {
-			auto i = nofec_map.begin();
-			uint8_t * p = static_cast<uint8_t *>(av_malloc(static_cast<size_t>(total_size)));
-			if(p != nullptr){
-				auto ptr = core::FramePacket::Make_Shared();
-				
-				if( ptr != nullptr && ptr->data != nullptr){
-					i->second.get_data(p);
-					ptr->data->set_data_no_lock(p,total_size);
-					ptr->payload_type = payload_type;
-					ptr->dts = ptr->pts = i->first;
-				} else  {
-					av_free(p);
-				}
-				
-				next_pack.swap(ptr);
-			}
-			nofec_map.erase(i);
+			push_no_fec(total_size,payload_type,ptr);
 		}
+	}
+	
+	inline void push_fec(const int32_t &total_size,
+						 const int &payload_type,
+						 core::FramePacket::SharedPacket & packet) noexcept{
+		
+		auto i = fec_map.begin();
+		if( packet == nullptr || packet->data == nullptr){
+			next_pack.swap(packet);
+			fec_map.erase(i);
+			return;
+		} 
+		
+		if(packet->data->data_resize_no_lock(total_size) == false){
+			next_pack.swap(packet);
+			fec_map.erase(i);
+			return;
+		}
+		
+		auto ret = i->second->data_recover((*packet->data)[0]);
+		
+		if(ret == core::Result::Success ){
+			packet->payload_type = payload_type;
+			packet->dts = packet->pts = i->first;
+		} 
+		next_pack.swap(packet);
+		fec_map.erase(i);
+	}
+	
+	inline void push_no_fec(const int32_t &total_size,
+							const int &payload_type,
+							core::FramePacket::SharedPacket & packet) noexcept{
+		
+		auto i = nofec_map.begin();
+		if( packet == nullptr || packet->data == nullptr){
+			next_pack.swap(packet);
+			nofec_map.erase(i);
+			return;
+		} 
+		if(packet->data->data_resize_no_lock(total_size) == false){
+			next_pack.swap(packet);
+			nofec_map.erase(i);
+			return;
+		}
+		
+		i->second.get_data((*packet->data)[0]);
+		packet->payload_type = payload_type;
+		packet->dts = packet->pts = i->first;
+		next_pack.swap(packet);
+		nofec_map.erase(i);
 	}
 	
 };
@@ -236,9 +257,7 @@ core::Result FECDecoder::decode(RTPPacket::SharedRTPPacket rtp_packet) noexcept
 
 core::FramePacket::SharedPacket FECDecoder::get_packet() noexcept
 {
-	auto p = d_ptr->next_pack;
-	d_ptr->next_pack.reset();
-	return p;
+	return d_ptr->next_pack;
 }
 
 } //namespace fec

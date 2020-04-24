@@ -369,12 +369,11 @@ void WASAPI::on_thread_run() noexcept
 			auto size = numFramesAvailable * nFrameSize;
 			
 			auto packet = core::FramePacket::Make_Shared();
-			if(packet == nullptr){
+			if(packet == nullptr || packet->data == nullptr){
 				pCaptureClient->ReleaseBuffer(numFramesAvailable);
 				return ;
 			}
-			uint8_t * ptr = static_cast<uint8_t*>(av_malloc(size));
-			if(ptr == nullptr){
+			if(packet->data->data_resize_no_lock(size) == false){
 				pCaptureClient->ReleaseBuffer(numFramesAvailable);
 				return ;
 			}
@@ -384,18 +383,17 @@ void WASAPI::on_thread_run() noexcept
 				//
 				//  Fill 0s from the capture buffer to the output buffer.
 				//
-				memset(ptr,0,size);
+				memset((*packet->data)[0],0,size);
 			}
 			else
 			{
 				//
 				//  Copy data from the audio engine buffer to the output buffer.
 				//
-				memcpy(ptr,pData,size);
+				memcpy((*packet->data)[0],pData,size);
 			}
 			pCaptureClient->ReleaseBuffer(numFramesAvailable);
 			
-			packet->data->set_data_no_lock(ptr,size);
 			packet->format = get_format();
 			//获取时间戳
 			packet->dts = core::Time::Now().to_timestamp();
