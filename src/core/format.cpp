@@ -220,7 +220,7 @@ void DataBuffer::set_packet(void *packet) noexcept
 	set_packet_no_lock(packet);
 }
 
-inline void DataBuffer::set_packet_no_lock(void *packet) noexcept
+void DataBuffer::set_packet_no_lock(void *packet) noexcept
 {
 	clear();
 	if(packet == nullptr)
@@ -234,7 +234,7 @@ void DataBuffer::set_frame(void *frame) noexcept
 	set_frame_no_lock(frame);
 }
 
-inline void DataBuffer::set_frame_no_lock(void *frame) noexcept
+void DataBuffer::set_frame_no_lock(void *frame) noexcept
 {
 	clear();
 	if(frame == nullptr)

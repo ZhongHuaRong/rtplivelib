@@ -254,13 +254,6 @@ bool ALSA::is_start() noexcept
 	return _is_running_flag;
 }
 
-core::FramePacket::SharedPacket ALSA::read_packet() noexcept
-{
-	wait_resource_push();
-	
-	return get_next();
-}
-
 void ALSA::on_thread_run() noexcept
 {
 	sleep(1);
@@ -297,11 +290,6 @@ void ALSA::on_thread_run() noexcept
 	packet->dts = core::Time::Now().to_timestamp();
 	packet->pts = packet->dts;
 	push_one(packet);
-}
-
-void ALSA::on_thread_pause() noexcept
-{
-	stop();
 }
 
 } // namespace device_manager

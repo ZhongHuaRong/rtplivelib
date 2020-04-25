@@ -48,6 +48,7 @@ MicrophoneCapture::MicrophoneCapture() :
 
 MicrophoneCapture::~MicrophoneCapture() 
 {
+	d_ptr->audio_api.stop();
 	exit_thread();
 	delete d_ptr;
 }
@@ -119,7 +120,8 @@ AbstractCapture::SharedPacket MicrophoneCapture::on_start() noexcept
 		}
 	}
 	
-	return d_ptr->audio_api.read_packet();
+	d_ptr->audio_api.wait_resource_push();
+	return d_ptr->audio_api.get_next();
 }
 
 /**

@@ -308,13 +308,6 @@ bool WASAPI::is_start() noexcept
 	return _is_running_flag;
 }
 
-core::FramePacket::SharedPacket WASAPI::read_packet() noexcept
-{
-	wait_resource_push();
-	
-	return get_next();
-}
-
 WASAPI::device_info WASAPI::get_device_info(IMMDevice *device) noexcept
 {
 	wchar_t * str{nullptr};
@@ -401,11 +394,6 @@ void WASAPI::on_thread_run() noexcept
 			push_one(packet);
 		}
 	}
-}
-
-void WASAPI::on_thread_pause() noexcept
-{
-	stop();
 }
 
 bool WASAPI::_init_enumerator() noexcept

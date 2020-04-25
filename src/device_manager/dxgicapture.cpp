@@ -365,9 +365,35 @@ bool DXGICapture::set_default_device() noexcept
 	return set_current_device(0,0);
 }
 
+
+bool DXGICapture::start(int time_space) noexcept
+{
+	_is_running_flag = true;
+	notify_thread();
+	//防止外部调用正在使用read_packet接口
+	exit_wait_resource();
+	return true;
+}
+
+bool DXGICapture::stop() noexcept
+{
+	_is_running_flag = false;
+	return true;
+}
+
+bool DXGICapture::is_start() noexcept
+{
+	return _is_running_flag;
+}
+
 core::FramePacket::SharedPacket DXGICapture::read_packet() noexcept
 {
 	return d_ptr->get_packet();
+}
+
+void DXGICapture::on_thread_run() noexcept
+{
+	
 }
 
 

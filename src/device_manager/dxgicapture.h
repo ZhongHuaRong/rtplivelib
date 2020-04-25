@@ -15,18 +15,16 @@ class DXGIPrivate;
  * 限于Win8以上系统，效率有待测试，应该比GDI好一点
  * 在Win8系统下捕捉到的图像格式是BGRA8888
  * Win10的话有可能是其他格式
- * 该类不另外开线程采集数据，和WASAPI不同，音频是需要时刻采集数据
- * 所以需要开线程获取
- * 图像的话要求不高，交给上级(DesktopCapture)控制采集
  */
-class DXGICapture
+class DXGICapture:
+        protected core::AbstractQueue<core::FramePacket>
 {
 public:
 	using device_list = std::vector<GPUInfo>;
 public:
 	DXGICapture();
 	
-	virtual ~DXGICapture();
+	virtual ~DXGICapture() override;
 	
 	/**
 	 * @brief get_device_info
@@ -78,16 +76,47 @@ public:
 	 * @return 
 	 */
 	bool set_default_device() noexcept;
+		
+	/**
+	 * @brief start
+	 * 开始采集,
+	 * @param time_space
+	 * 时间间隔
+	 * @return 
+	 */
+	bool start(int time_space) noexcept;
 	
 	/**
-	 * @brief get_packet
-	 * 获取数据
-	 * 数据包的时间戳没设置，外部调用根据自己的时间间隔来设置时间戳
+	 * @brief stop
+	 * 停止采集
+	 * @return 
 	 */
-	core::FramePacket::SharedPacket read_packet() noexcept;
+	bool stop() noexcept;
+	
+	/**
+	 * @brief is_start
+	 * 获取设备是否正在读取数据
+	 * 如果正在读取则返回true
+	 * @return 
+	 */
+	bool is_start() noexcept;
+protected:
+	/**
+	 * @brief on_thread_run
+	 */
+	virtual void on_thread_run() noexcept override final;
+	
+	/**
+	 * @brief get_thread_pause_condition
+	 * @return 
+	 */
+	virtual bool get_thread_pause_condition() noexcept override final;
 private:
 	DXGIPrivate * const d_ptr;
+	volatile bool _is_running_flag{false};
 };
+
+inline bool DXGICapture::get_thread_pause_condition() noexcept									{	return !_is_running_flag;}
 
 } // namespace device_manager
 

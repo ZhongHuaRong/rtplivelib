@@ -21,7 +21,7 @@ namespace device_manager {
  * 该类操作都是线程安全
  */
 class WASAPI :
-		protected core::AbstractQueue<core::FramePacket>
+		public core::AbstractQueue<core::FramePacket>
 {
 public:
 	enum FlowType{
@@ -124,13 +124,6 @@ public:
 	 * @return 
 	 */
 	bool is_start() noexcept;
-	
-	/**
-	 * @brief get_packet
-	 * 获取音频包
-	 * 该函数会阻塞当前线程,直到有包返回
-	 */
-	core::FramePacket::SharedPacket read_packet() noexcept;
 protected:
 	device_info get_device_info(IMMDevice * device) noexcept;
 	
@@ -138,11 +131,6 @@ protected:
 	 * @brief on_thread_run
 	 */
 	virtual void on_thread_run() noexcept override final;
-	
-	/**
-	 * @brief on_thread_pause
-	 */
-	virtual void on_thread_pause() noexcept override final;
 	
 	/**
 	 * @brief get_thread_pause_condition
