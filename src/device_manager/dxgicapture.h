@@ -79,10 +79,15 @@ public:
 		
 	/**
 	 * @brief start
-	 * 开始采集,
+	 * 开始采集
 	 * @param time_space
-	 * 时间间隔
+	 * 时间间隔(ms)
+	 * 0 <= time_space <= 1000
+	 * 如果超过这个区间则默认失败，至少一秒一帧
+	 * 设置0则是尽可能的抓取
+	 * 如果需要更改时间间隔，可以再次调用该接口修改
 	 * @return 
+	 * 成功运行则返回true
 	 */
 	bool start(int time_space) noexcept;
 	
@@ -116,6 +121,7 @@ private:
 	volatile bool _is_running_flag{false};
 };
 
+inline bool DXGICapture::is_start() noexcept													{	return _is_running_flag;}
 inline bool DXGICapture::get_thread_pause_condition() noexcept									{	return !_is_running_flag;}
 
 } // namespace device_manager

@@ -41,6 +41,8 @@ public:
 
 	int									cur_gpu_index{0};
 	int									cur_screen_index{0};
+	/*采集的时间间隔，默认60fps，所以是16*/
+	volatile int						time_space{16};
 private:
 	std::vector <PIDXGIAdapter1>		adapters{nullptr};
 	PID3D11Device						device{nullptr};
@@ -368,6 +370,10 @@ bool DXGICapture::set_default_device() noexcept
 
 bool DXGICapture::start(int time_space) noexcept
 {
+	if(time_space < 0 || time_space > 1000)
+		return false;
+	d_ptr->time_space = time_space;
+	
 	_is_running_flag = true;
 	notify_thread();
 	//防止外部调用正在使用read_packet接口
@@ -381,19 +387,13 @@ bool DXGICapture::stop() noexcept
 	return true;
 }
 
-bool DXGICapture::is_start() noexcept
-{
-	return _is_running_flag;
-}
-
-core::FramePacket::SharedPacket DXGICapture::read_packet() noexcept
-{
-	return d_ptr->get_packet();
-}
-
 void DXGICapture::on_thread_run() noexcept
 {
+	//去掉采集时间
+	if(d_ptr->time_space > 2)
+		sleep(d_ptr->time_space - 2);
 	
+	this->push_one(d_ptr->get_packet());
 }
 
 
