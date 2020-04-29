@@ -44,7 +44,7 @@ public:
 	/*采集的时间间隔，默认60fps，所以是16*/
 	volatile int						time_space{16};
 private:
-	std::vector <PIDXGIAdapter1>		adapters{nullptr};
+	std::vector <PIDXGIAdapter1>		adapters;
 	PID3D11Device						device{nullptr};
 	PID3D11DeviceContext				device_ctx{nullptr};
 	PIDXGIOutputDuplication				output_dup{nullptr};

@@ -34,7 +34,7 @@ public:
 	
 #if defined (WIN64)
 	//Windows桌面捕捉添加了dxgi,旧版本依旧使用gdi，这里用于区分dxgi和ffmpeg的gdi
-	static auto use_ffmpeg = IsWindows8OrGreater();
+	static auto use_ffmpeg = !IsWindows8OrGreater();
 #else
 	static auto use_ffmpeg = true;
 #endif
