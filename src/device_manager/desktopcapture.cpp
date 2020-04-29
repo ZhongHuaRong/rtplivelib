@@ -5,6 +5,10 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 #include <libavutil/dict.h>
 }
+#ifdef WIN64
+#include "dxgicapture.h"
+#include <VersionHelpers.h>
+#endif
 
 namespace rtplivelib {
 
@@ -16,6 +20,10 @@ public:
 	AVFormatContext *fmtContxt{nullptr};
 	std::mutex _fmt_ctx_mutex;
 	AVPacket *packet{nullptr};
+	
+#ifdef WIN64
+	DXGICapture capture;
+#endif
 };
 
 #if defined (WIN64)
@@ -23,41 +31,57 @@ public:
 #elif defined (unix)
 	static constexpr char format_name[] = "fbdev";
 #endif
+	
+#if defined (WIN64)
+	//Windows桌面捕捉添加了dxgi,旧版本依旧使用gdi，这里用于区分dxgi和ffmpeg的gdi
+	static auto use_ffmpeg = IsWindows8OrGreater();
+#else
+	static auto use_ffmpeg = true;
+#endif
 
 DesktopCapture::DesktopCapture() :
 	AbstractCapture(AbstractCapture::CaptureType::Desktop),
 	_fps(15),
 	d_ptr(new DesktopCapturePrivateData)
 {
-	avdevice_register_all();
-	
-	d_ptr->ifmt = av_find_input_format(format_name);
-	//这里应该不会出现这种情况,但是ffmpeg库的编译出问题的话，这里就会触发了
-	if(d_ptr->ifmt == nullptr){
-		core::Logger::Print_APP_Info(core::Result::InputFormat_format_not_found,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::ERROR_LEVEL,
-									 format_name);
-	}
-	
-	//这里只是为了设置当前名字
-	AVDeviceInfoList *info_list = nullptr;
-	avdevice_list_input_sources(d_ptr->ifmt,nullptr,nullptr,&info_list);
-	if(info_list != nullptr && info_list->nb_devices != 0){
-		if(info_list->default_device == -1){
-			current_device_info.first = info_list->devices[0]->device_description;
-			current_device_info.second = info_list->devices[0]->device_description;
+	if(use_ffmpeg){
+		avdevice_register_all();
+		
+		d_ptr->ifmt = av_find_input_format(format_name);
+		//这里应该不会出现这种情况,但是ffmpeg库的编译出问题的话，这里就会触发了
+		if(d_ptr->ifmt == nullptr){
+			core::Logger::Print_APP_Info(core::Result::InputFormat_format_not_found,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::ERROR_LEVEL,
+										 format_name);
 		}
-		else{
-			current_device_info.first = info_list->devices[info_list->default_device]->device_description;
-			current_device_info.second = info_list->devices[info_list->default_device]->device_description;
+		
+		//这里只是为了设置当前名字
+		AVDeviceInfoList *info_list = nullptr;
+		avdevice_list_input_sources(d_ptr->ifmt,nullptr,nullptr,&info_list);
+		if(info_list != nullptr && info_list->nb_devices != 0){
+			if(info_list->default_device == -1){
+				current_device_info.first = info_list->devices[0]->device_description;
+				current_device_info.second = current_device_info.first;
+			}
+			else{
+				current_device_info.first = info_list->devices[info_list->default_device]->device_description;
+				current_device_info.second = current_device_info.first;
+			}
 		}
+		
+	#if defined (WIN64)
+		current_device_info.first = "desktop";
+		current_device_info.second = current_device_info.first;
+	#endif
+	} else {
+		auto info = d_ptr->capture.get_current_device_info();
+		current_device_info.first = "0";
+		if(info.screen_list.size() == 0)
+			current_device_info.second = "";
+		else
+			current_device_info.second = info.screen_list[0];
 	}
-	
-#if defined (WIN64)
-	current_device_info.first = "desktop";
-	current_device_info.second = current_device_info.first;
-#endif
 	
 	/*在子类初始化里开启线程*/
 	start_thread();
@@ -84,133 +108,164 @@ void DesktopCapture::set_window(const uint64_t & id)  noexcept{
 
 std::map<DesktopCapture::device_id,DesktopCapture::device_name> DesktopCapture::get_all_device_info() noexcept(false)
 {
-	if(d_ptr->ifmt == nullptr){
-		throw core::uninitialized_error("AVInputFormat(ifmt)");
-	}
-	
-	AVDeviceInfoList *info_list = nullptr;
-	avdevice_list_input_sources(d_ptr->ifmt,nullptr,nullptr,&info_list);
-	if(info_list){
+	if(use_ffmpeg){
+		if(d_ptr->ifmt == nullptr){
+			throw core::uninitialized_error("AVInputFormat(ifmt)");
+		}
+		
+		AVDeviceInfoList *info_list = nullptr;
+		avdevice_list_input_sources(d_ptr->ifmt,nullptr,nullptr,&info_list);
+		if(info_list){
+			std::map<device_id,device_name> info_map;
+			for(auto index = 0;index < info_list->nb_devices;++index){
+				std::pair<device_id,device_name> pair;
+				pair.first = info_list->devices[index]->device_description;
+				pair.second = info_list->devices[index]->device_name;
+				info_map.insert(pair);
+			}
+			return info_map;
+		}
+		else {
+			//这里不判断返回值了，因为我知道失败的情况一般是函数未实现
+			throw core::func_not_implemented_error(core::MessageString[int(core::Result::Device_info_failed)]);
+		}
+	} else {
+		auto all = d_ptr->capture.get_all_device_info();
 		std::map<device_id,device_name> info_map;
-		for(auto index = 0;index < info_list->nb_devices;++index){
-			std::pair<device_id,device_name> pair;
-			pair.first = info_list->devices[index]->device_description;
-			pair.second = info_list->devices[index]->device_name;
-			info_map.insert(pair);
+		if(all.size() == 0)
+			return info_map;
+		for(size_t n = 0;n < all[0].screen_list.size();++n){
+			info_map[std::to_string(n)] = all[0].screen_list[n];
 		}
 		return info_map;
-	}
-	else {
-		//这里不判断返回值了，因为我知道失败的情况一般是函数未实现
-		throw core::func_not_implemented_error(core::MessageString[int(core::Result::Device_info_failed)]);
 	}
 }
 
 bool DesktopCapture::set_current_device(device_id device_id) noexcept
 {
-	//只区分设备id，不区分设备名字
-	if(device_id.compare(current_device_info.second) == 0){
-		return true;
+	if(use_ffmpeg){
+		//只区分设备id，不区分设备名字
+		if(device_id.compare(current_device_info.first) == 0){
+			return true;
+		}
+		auto temp = current_device_info;
+		current_device_info.first = device_id;
+		current_device_info.second = device_id;
+		auto result = open_device();
+		if(!result){
+			current_device_info = temp;
+			core::Logger::Print_APP_Info(core::Result::Device_change_success,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::ERROR_LEVEL,
+										 current_device_info.first.c_str());
+		}
+		return result;
+	} else {
+		return d_ptr->capture.set_current_device(0,std::stoi(device_id));
 	}
-	auto temp = current_device_info;
-	current_device_info.first = device_id;
-	current_device_info.second = device_id;
-	auto result = open_device();
-	if(!result){
-		current_device_info = temp;
-		core::Logger::Print_APP_Info(core::Result::Device_change_success,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::ERROR_LEVEL,
-									 current_device_info.first.c_str());
-	}
-	return result;
 }
 
 bool DesktopCapture::set_default_device() noexcept
 {
 	//这里没有实现
-    //预期应该是设置成主屏
-    return false;
+	//预期应该是设置成主屏
+	if(use_ffmpeg){
+		return false;
+	} else {
+		return d_ptr->capture.set_default_device();
+	}
 }
 
 AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 {
-	if(d_ptr->fmtContxt == nullptr){
-		if(!open_device()){
-			stop_capture();
-			return nullptr;
+	if(use_ffmpeg){
+		if(d_ptr->fmtContxt == nullptr){
+			if(!open_device()){
+				stop_capture();
+				return nullptr;
+			}
 		}
-	}
-	
-	//开始捕捉前，睡眠1ms
-	//防止刚解锁就拿到锁，其他线程饥饿
-	this->sleep(1);
-	
-	if(d_ptr->packet == nullptr){
-		d_ptr->packet = av_packet_alloc();
+		
+		//开始捕捉前，睡眠1ms
+		//防止刚解锁就拿到锁，其他线程饥饿
+		this->sleep(1);
+		
 		if(d_ptr->packet == nullptr){
-			core::Logger::Print_APP_Info(core::Result::FramePacket_packet_alloc_failed,
+			d_ptr->packet = av_packet_alloc();
+			if(d_ptr->packet == nullptr){
+				core::Logger::Print_APP_Info(core::Result::FramePacket_packet_alloc_failed,
+											 __PRETTY_FUNCTION__,
+											 LogLevel::WARNING_LEVEL);
+				return nullptr;
+			}
+		}
+		
+		/*这里说明一下，为什么不需要用计时器来算每帧间隔*/
+		/*这里的av_read_frame函数会阻塞，一直等到有帧可读才返回，所以不需要自己设定间隔*/
+		/*加锁是怕主线程在重启设备fmtContxt*/
+		std::lock_guard<std::mutex> lk(d_ptr->_fmt_ctx_mutex);
+		av_packet_unref(d_ptr->packet);
+		auto ret = av_read_frame(d_ptr->fmtContxt, d_ptr->packet);
+		if( ret < 0){
+			core::Logger::Print_APP_Info(core::Result::Device_read_frame_failed,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL);
+			core::Logger::Print_RTP_Info(ret,
 										 __PRETTY_FUNCTION__,
 										 LogLevel::WARNING_LEVEL);
 			return nullptr;
 		}
-	}
-	
-	/*这里说明一下，为什么不需要用计时器来算每帧间隔*/
-	/*这里的av_read_frame函数会阻塞，一直等到有帧可读才返回，所以不需要自己设定间隔*/
-	/*加锁是怕主线程在重启设备fmtContxt*/
-	std::lock_guard<std::mutex> lk(d_ptr->_fmt_ctx_mutex);
-	av_packet_unref(d_ptr->packet);
-	auto ret = av_read_frame(d_ptr->fmtContxt, d_ptr->packet);
-	if( ret < 0){
-		core::Logger::Print_APP_Info(core::Result::Device_read_frame_failed,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::WARNING_LEVEL);
-		core::Logger::Print_RTP_Info(ret,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::WARNING_LEVEL);
-		return nullptr;
-	}
+			
+		auto ptr = FramePacket::Make_Shared();
+		if(ptr == nullptr){
+			core::Logger::Print_APP_Info(core::Result::FramePacket_alloc_failed,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL);
+			return ptr;
+		}
+	#if defined (WIN64)
+		//去掉bmp头结构54字节
+		ptr->data->size = d_ptr->packet->size - 54;
+	#elif defined (unix)
+		ptr->size = d_ptr->packet->size;
+	#endif
 		
-	auto ptr = FramePacket::Make_Shared();
-	if(ptr == nullptr){
-		core::Logger::Print_APP_Info(core::Result::FramePacket_alloc_failed,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::WARNING_LEVEL);
+		//下面一步是为了赋值width和height，windows下面不能正确读取，需要计算
+	#if defined (WIN64)
+		ptr->data->copy_data_no_lock(d_ptr->packet->data + 54,static_cast<size_t>(ptr->data->size));
+		/*width在头结构地址18偏移处，详情参考BMP头结构*/
+		memcpy(&ptr->format.width,d_ptr->packet->data + 18,4);
+		/*height在头结构地址22偏移处，不过总为0*/
+		/*所以采用数据大小除以宽和像素位宽(RGB32是4位)得到高*/
+		memcpy(&ptr->format.height,d_ptr->packet->data + 2,4);
+		ptr->format.height = (ptr->format.height - 54) / ptr->format.width / 4;
+	#elif defined (unix)
+		ptr->data->copy_data_no_lock(d_ptr->packet->data,static_cast<size_t>(d_ptr->packet->size));
+		auto codec = d_ptr->fmtContxt->streams[d_ptr->packet->stream_index]->codecpar;
+		ptr->format.width = codec->width;
+		ptr->format.height = codec->height;
+		
+	#endif
+		ptr->format.pixel_format = AV_PIX_FMT_BGRA;
+		ptr->format.bits = 32;
+		ptr->pts = d_ptr->packet->pts;
+		ptr->dts = d_ptr->packet->dts;
+		ptr->format.frame_rate = _fps;
+		ptr->flag = d_ptr->packet->flags;
+		ptr->data->linesize[0] = ptr->format.width * 4;
+		
 		return ptr;
+	} else {
+		if(d_ptr->capture.is_start() == false){
+			if( open_device() == false){
+				stop_capture();
+				return nullptr;
+			}
+		}
+		
+		return d_ptr->capture.get_next();
 	}
-#if defined (WIN64)
-	//去掉bmp头结构54字节
-	ptr->data->size = d_ptr->packet->size - 54;
-#elif defined (unix)
-	ptr->size = d_ptr->packet->size;
-#endif
 	
-	//下面一步是为了赋值width和height，windows下面不能正确读取，需要计算
-#if defined (WIN64)
-	ptr->data->copy_data_no_lock(d_ptr->packet->data + 54,static_cast<size_t>(ptr->data->size));
-	/*width在头结构地址18偏移处，详情参考BMP头结构*/
-	memcpy(&ptr->format.width,d_ptr->packet->data + 18,4);
-	/*height在头结构地址22偏移处，不过总为0*/
-	/*所以采用数据大小除以宽和像素位宽(RGB32是4位)得到高*/
-	memcpy(&ptr->format.height,d_ptr->packet->data + 2,4);
-	ptr->format.height = (ptr->format.height - 54) / ptr->format.width / 4;
-#elif defined (unix)
-	ptr->data->copy_data_no_lock(d_ptr->packet->data,static_cast<size_t>(d_ptr->packet->size));
-	auto codec = d_ptr->fmtContxt->streams[d_ptr->packet->stream_index]->codecpar;
-	ptr->format.width = codec->width;
-	ptr->format.height = codec->height;
-	
-#endif
-	ptr->format.pixel_format = AV_PIX_FMT_BGRA;
-	ptr->format.bits = 32;
-	ptr->pts = d_ptr->packet->pts;
-	ptr->dts = d_ptr->packet->dts;
-	ptr->format.frame_rate = _fps;
-	ptr->flag = d_ptr->packet->flags;
-	ptr->data->linesize[0] = ptr->format.width * 4;
-	
-	return ptr;
 }
 
 void DesktopCapture::on_stop() noexcept
@@ -226,40 +281,50 @@ void DesktopCapture::on_stop() noexcept
 
 bool DesktopCapture::open_device() noexcept
 {
-	AVDictionary *options = nullptr;
-	//windows采用GDI采集桌面屏幕，比较吃资源，以后需要更换API
-	//设置帧数，经过测试，貌似最高是30，而且太吃资源，有空肯定换了这个API
-	char fps_char[5];
-	sprintf(fps_char,"%d",_fps);
-	av_dict_set(&options,"framerate",fps_char,0);
+	if(use_ffmpeg){
+		AVDictionary *options = nullptr;
+		//windows采用GDI采集桌面屏幕，比较吃资源，以后需要更换API
+		//设置帧数，经过测试，貌似最高是30，而且太吃资源，有空肯定换了这个API
+		char fps_char[5];
+		sprintf(fps_char,"%d",_fps);
+		av_dict_set(&options,"framerate",fps_char,0);
+		
+		std::lock_guard<std::mutex> lk(d_ptr->_fmt_ctx_mutex);
+		if(d_ptr->fmtContxt != nullptr){
+			avformat_close_input(&d_ptr->fmtContxt);
+		}
+	#if defined (WIN64)
+		/*暂时只考虑截取屏幕的情况，截取窗口和另外的屏幕以后再考虑*/
+		auto n = avformat_open_input(&d_ptr->fmtContxt, "desktop", d_ptr->ifmt, &options);
+	#elif defined (unix)
+		auto ptr = get_all_device_info()[current_device_info.second].c_str();
+		auto n = avformat_open_input(&d_ptr->fmtContxt, ptr, 
+									 d_ptr->ifmt, &options);
+	#endif
+		if( n != 0 ){
+			core::Logger::Print_APP_Info(core::Result::InputFormat_context_open,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::WARNING_LEVEL,
+										 "false");
+			core::Logger::Print_FFMPEG_Info(n,
+											__PRETTY_FUNCTION__,
+											LogLevel::WARNING_LEVEL);
+		}else {
+			core::Logger::Print_APP_Info(core::Result::InputFormat_context_open,
+										 __PRETTY_FUNCTION__,
+										 LogLevel::INFO_LEVEL,
+										 "true");
+		}
+		return n == 0;
+	} else {
+		if(_fps == 0)
+			return d_ptr->capture.start(1000);
+		else {
+			int fps = 1000 / _fps;
+			return d_ptr->capture.start(fps > 2?fps - 2:0);
+		}
+	}
 	
-	std::lock_guard<std::mutex> lk(d_ptr->_fmt_ctx_mutex);
-	if(d_ptr->fmtContxt != nullptr){
-		avformat_close_input(&d_ptr->fmtContxt);
-	}
-#if defined (WIN64)
-	/*暂时只考虑截取屏幕的情况，截取窗口和另外的屏幕以后再考虑*/
-	auto n = avformat_open_input(&d_ptr->fmtContxt, "desktop", d_ptr->ifmt, &options);
-#elif defined (unix)
-	auto ptr = get_all_device_info()[current_device_info.second].c_str();
-	auto n = avformat_open_input(&d_ptr->fmtContxt, ptr, 
-								 d_ptr->ifmt, &options);
-#endif
-	if( n != 0 ){
-		core::Logger::Print_APP_Info(core::Result::InputFormat_context_open,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::WARNING_LEVEL,
-									 "false");
-		core::Logger::Print_FFMPEG_Info(n,
-										__PRETTY_FUNCTION__,
-										LogLevel::WARNING_LEVEL);
-	}else {
-		core::Logger::Print_APP_Info(core::Result::InputFormat_context_open,
-									 __PRETTY_FUNCTION__,
-									 LogLevel::INFO_LEVEL,
-									 "true");
-	}
-	return n == 0;
 }
 
 } // namespace device_manager

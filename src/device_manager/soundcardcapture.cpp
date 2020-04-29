@@ -118,7 +118,7 @@ AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
 		}
 	}
 	
-	return d_ptr->audio_api.read_packet();
+	return d_ptr->audio_api.get_next();
 }
 
 /**
