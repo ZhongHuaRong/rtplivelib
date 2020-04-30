@@ -8,7 +8,7 @@
 * 视频编解码(h264,HEVC)
 * 音频编解码(AAC)
 * 摄像头采集(dshow,v4l2)
-* 桌面采集(gdigrab,fbdev)
+* 桌面采集(gdigrab,dxgi,fbdev)
 * 麦克风和声卡采集(WASAPI,alsa)
 * 视频播放(SDL2)
 * 音频播放(SDL2)
@@ -16,8 +16,7 @@
 * 用户管理
 
 ## 下一步工作
-* Windows下的桌面捕捉
-* 修改DesktopCapture接口
+* qsv_hevc
 * 音视频同步
 * 音频合成,图像合成
 
