@@ -263,20 +263,29 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 			}
 		}
 		
-		return d_ptr->capture.get_next();
+		d_ptr->capture.wait_resource_push();
+		auto packet = d_ptr->capture.get_next();
+		if(packet != nullptr){
+			packet->format.frame_rate = _fps;
+		}
+		return packet;
 	}
 	
 }
 
 void DesktopCapture::on_stop() noexcept
 {
-	std::lock_guard<std::mutex> lk(d_ptr->_fmt_ctx_mutex);
-	if(d_ptr->fmtContxt == nullptr)
-		return;
-	avformat_close_input(&d_ptr->fmtContxt);
-	core::Logger::Print_APP_Info(core::Result::InputFormat_context_close,
-								 __PRETTY_FUNCTION__,
-								 LogLevel::INFO_LEVEL);
+	if(use_ffmpeg){
+		std::lock_guard<std::mutex> lk(d_ptr->_fmt_ctx_mutex);
+		if(d_ptr->fmtContxt == nullptr)
+			return;
+		avformat_close_input(&d_ptr->fmtContxt);
+		core::Logger::Print_APP_Info(core::Result::InputFormat_context_close,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::INFO_LEVEL);
+	} else {
+		d_ptr->capture.stop();
+	}
 }
 
 bool DesktopCapture::open_device() noexcept
@@ -320,8 +329,7 @@ bool DesktopCapture::open_device() noexcept
 		if(_fps == 0)
 			return d_ptr->capture.start(1000);
 		else {
-			int fps = 1000 / _fps;
-			return d_ptr->capture.start(fps > 2?fps - 2:0);
+			return d_ptr->capture.start(1000 / _fps);
 		}
 	}
 	

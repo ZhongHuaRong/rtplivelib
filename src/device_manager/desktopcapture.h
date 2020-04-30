@@ -17,8 +17,12 @@ class DesktopCapturePrivateData;
  * Windows系统
  * 底层采用GDI采集桌面，好像效率不太高，而且采集到的数据带有BMP结构头，
  * 大小为54字节,注意:通过接口获取到的数据是没有带数据头的，是纯数据
- * set_current_device_name等接口暂时未实现(只限于Windows)，只能采集主屏幕，也不能截取特定窗口
+ * 只能采集主屏幕，不能截取特定窗口
  * set_window 用于截取特定的窗口，该接口暂时没有实现
+ * WIN8以上的系统将采用DXGI捕捉,测试过性能比GDI要强很多
+ * 现在默认采集的是BGRA32,以后会增加其他格式
+ * 这将会减少一次转格式(系统自动将其他格式转为BGRA32),这个功能只限于WIN10
+ * 所以采集的时候不转格式是效率最高的(因为后面要转一次YUV420或NV12用于编码)
  * 
  * Linux系统
  * 底层采用fbdev采集桌面，目前采集到的是tty2，并不是桌面，以后有待研究
@@ -28,9 +32,11 @@ class DesktopCapturePrivateData;
  * 然后返回false，也可以用wait_resource_push()和get_next()来获取队列的数据
  * 也可以通过实例化DeviceCapture类来捕捉，该类已经封装好其他四个类了，然后关闭其他三个的捕捉
  * 
- * 目前对于Windows桌面采集，实现了DXGI的捕捉方式，考虑到设备采集不仅限于显示器，还要考虑显卡的情况
- * 该类的基类设备枚举接口暂时不使用，全部抛出函数未实现的异常,使用新的设备枚举接口
- * 不过目前DXGI只支持采集默认显卡上的屏幕图像，只支持Win8以上的系统，Win7将采用GDI
+ * 该类的枚举接口未完善，尽量不要使用接口枚举设备(因为毫无意义),目前只能采集默认设备
+ * Win8以上系统采用的DXGI则可以设置采集设备(多屏采集),建议使用GPUDevice来枚举设备
+ * 然后通过第一个显卡(默认输出的显卡)的screen_list数组的下标来set_current_device
+ * 默认采集的是第一个显卡的第一个screen
+ * set_current_device参数是string，需要将int转为string
  */
 class RTPLIVELIBSHARED_EXPORT DesktopCapture :public AbstractCapture
 {

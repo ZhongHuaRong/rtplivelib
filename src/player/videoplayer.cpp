@@ -270,8 +270,8 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 			return false;
 		SDL_UpdateYUVTexture( d_ptr->texture, nullptr,
 							  data[0],linesize[0],
-				data[1],linesize[1],
-				data[2],linesize[2]);
+							  data[1],linesize[1],
+							  data[2],linesize[2]);
 		break;
 	case AV_PIX_FMT_QSV:
 	case AV_PIX_FMT_NV12:

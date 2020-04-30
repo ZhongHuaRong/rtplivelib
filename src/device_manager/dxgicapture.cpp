@@ -1,6 +1,7 @@
 #include "dxgicapture.h"
 #include "../core/logger.h"
 #include "../core/stringformat.h"
+#include "../core/time.h"
 #include <VersionHelpers.h>
 #include <dxgi.h>
 #include <dxgi1_2.h>
@@ -82,6 +83,7 @@ public:
 				PIDXGIAdapter1 ptr(adapter,ObjectRelease());
 				adapters.push_back(ptr);
 			}
+			factory->Release();
 		}
 		
 		return adapters;
@@ -119,6 +121,11 @@ public:
 	}
 	
 	inline bool init_dup() noexcept{
+		//先初始化adapters
+		if(get_adapters(false).size()<= static_cast<size_t>(cur_gpu_index)){
+			if(get_adapters(true).size()<= static_cast<size_t>(cur_gpu_index))
+				return false;
+		}
 		if(init_device(adapters[cur_gpu_index]) == false){
 			return false;
 		}
@@ -128,8 +135,7 @@ public:
 		
 		IDXGIOutput * output{nullptr};
 		
-		if (adapters.size() > static_cast<size_t>(cur_gpu_index) ||
-				adapters[cur_gpu_index]->EnumOutputs(cur_screen_index, &output) == DXGI_ERROR_NOT_FOUND)
+		if (adapters[cur_gpu_index]->EnumOutputs(cur_screen_index, &output) == DXGI_ERROR_NOT_FOUND)
 			return false;
 		
 		PIDXGIOutput poutput(output,ObjectRelease());
@@ -254,9 +260,17 @@ public:
 										 hr);
 		} 
 		
-		//frame data需要重构
 		size_t data_size =  output_desc.DesktopCoordinates.right * output_desc.DesktopCoordinates.bottom * 4;
 		ptr->data->copy_data_no_lock(mapped_rect.pBits,data_size);
+		//format
+		ptr->format.height = output_desc.DesktopCoordinates.bottom;
+		ptr->format.width = output_desc.DesktopCoordinates.right;
+		//现在只有BGRA32
+		ptr->format.bits = 32;
+		ptr->format.pixel_format = AV_PIX_FMT_BGRA;
+		//为了和ffmpeg的ts单位一致
+		ptr->pts = ptr->dts = core::Time::Now().to_timestamp() * 1000;
+		ptr->data->linesize[0] = ptr->format.width * 4;
 		surface->Unmap();
 		surface->Release();
 		previous_frame = ptr;
@@ -265,8 +279,10 @@ public:
 	
 	inline core::FramePacket::SharedPacket get_copy_packet() noexcept{
 		auto ptr = core::FramePacket::Make_Shared();
-		if(ptr != nullptr)
+		if(ptr != nullptr){
 			*ptr = *previous_frame;
+			ptr->dts = ptr->pts = ptr->pts + time_space * 1000;
+		}
 		return ptr;
 	}
 };
@@ -375,9 +391,13 @@ bool DXGICapture::start(int time_space) noexcept
 	d_ptr->time_space = time_space;
 	
 	_is_running_flag = true;
-	notify_thread();
-	//防止外部调用正在使用read_packet接口
-	exit_wait_resource();
+	if(get_exit_flag()){
+		return start_thread();
+	} else {
+		notify_thread();
+		//防止外部调用正在使用read_packet接口
+		exit_wait_resource();
+	}
 	return true;
 }
 
@@ -389,10 +409,7 @@ bool DXGICapture::stop() noexcept
 
 void DXGICapture::on_thread_run() noexcept
 {
-	//去掉采集时间
-	if(d_ptr->time_space > 2)
-		sleep(d_ptr->time_space - 2);
-	
+	sleep(d_ptr->time_space);
 	this->push_one(d_ptr->get_packet());
 }
 
