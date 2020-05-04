@@ -27,7 +27,11 @@
 namespace rtplivelib{
 
 constexpr char LOGGERNAME[] = "Debug";
+#if (DEBUG)
+constexpr char LOGGER_ERROR_NAME[] = "Debug_Error";
+#else
 constexpr char LOGGERFILENAME[] = "Rtplivelib.txt";
+#endif
 
 //调试用的宏定义，注释后就是广域网，没注释就是局域网P2P
 #define TEST

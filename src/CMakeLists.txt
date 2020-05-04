@@ -84,9 +84,7 @@ elseif(WIN64)
                           Advapi32
                           Ole32
                           OleAut32
-                          Strmiids
-                          DXGI
-                          D3D11)
+                          Strmiids)
     INSTALL(TARGETS ${PROJECT_NAME}
             RUNTIME DESTINATION bin
             LIBRARY DESTINATION bin
