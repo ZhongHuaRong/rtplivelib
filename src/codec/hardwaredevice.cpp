@@ -122,10 +122,22 @@ public:
 			ctx->pix_fmt = AV_PIX_FMT_QSV;
 			frames_ctx->format = AV_PIX_FMT_QSV;
 			frames_ctx->sw_format = AV_PIX_FMT_NV12;
-			frames_ctx->initial_pool_size = 20;
-			ctx->gop_size = 10;
-			ctx->max_b_frames = 1;
-			ctx->bit_rate = 12000;
+			if(ctx->codec_id == AV_CODEC_ID_HEVC){
+				frames_ctx->initial_pool_size = 60;
+				ctx->gop_size = INT_MAX;
+				ctx->max_b_frames = 0;
+				ctx->has_b_frames = false;
+				ctx->dia_size = INT_MAX;
+				ctx->qmax = INT_MAX;
+				ctx->rc_buffer_size = INT_MAX;
+				ctx->rc_max_rate = INT_MAX;
+//				ctx->bit_rate = 12000;
+			} else if(ctx->codec_id == AV_CODEC_ID_H264){
+				frames_ctx->initial_pool_size = 20;
+				ctx->gop_size = 10;
+				ctx->max_b_frames = 1;
+//				ctx->bit_rate = 12000;
+			}
 			break;
 		case AV_HWDEVICE_TYPE_VIDEOTOOLBOX:
 			ctx->pix_fmt = AV_PIX_FMT_VIDEOTOOLBOX;

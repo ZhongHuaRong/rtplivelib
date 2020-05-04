@@ -410,6 +410,8 @@ bool DXGICapture::stop() noexcept
 void DXGICapture::on_thread_run() noexcept
 {
 	sleep(d_ptr->time_space);
+	if(!_is_running_flag || get_exit_flag())
+		return;
 	this->push_one(d_ptr->get_packet());
 }
 
