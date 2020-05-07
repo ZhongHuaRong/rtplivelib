@@ -294,6 +294,7 @@ DXGICapture::DXGICapture():
 
 DXGICapture::~DXGICapture()
 {
+	exit_thread();
 	delete d_ptr;
 }
 

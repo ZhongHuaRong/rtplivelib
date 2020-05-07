@@ -11,18 +11,23 @@ namespace rtplivelib {
 
 namespace codec {
 
-Encoder::Encoder(bool use_hw_acceleration,HardwareDevice::HWDType hwa_type):
+Encoder::Encoder(bool use_hw_acceleration,
+				 HardwareDevice::HWDType hwa_type,
+				 EncoderType enc_type):
 	_queue(nullptr)
 {
 	set_hardware_acceleration(use_hw_acceleration,hwa_type);
+	set_encoder_type(enc_type);
 }
 
 Encoder::Encoder(Encoder::Queue *queue,
 				 bool use_hw_acceleration,
-				 HardwareDevice::HWDType hwa_type):
+				 HardwareDevice::HWDType hwa_type,
+				 EncoderType enc_type):
 	_queue(queue)
 {
 	set_hardware_acceleration(use_hw_acceleration,hwa_type);
+	set_encoder_type(enc_type);
 	start_thread();
 }
 
@@ -34,10 +39,26 @@ Encoder::~Encoder()
 
 bool Encoder::set_encoder_name(const char *codec_name) noexcept
 {
-	return create_encoder(codec_name);
+	UNUSED(codec_name)
+	return false;
+	//	return create_encoder(codec_name);
 }
 
-std::string Encoder::get_encoder_name() noexcept
+void Encoder::set_encoder_type(const Encoder::EncoderType type) noexcept
+{
+	if(type == enc_type_user)
+		return;
+	//当前一次设置的是Auto且当前使用的类型和type一样，则将用户设置改为type就可以了
+	if(enc_type_user == Encoder::Auto && type == enc_type_cur){
+		enc_type_user = enc_type_cur;
+		return;
+	}
+	
+	enc_type_user = type;
+	close_encoder();
+}
+
+std::string Encoder::get_encoder_name() const noexcept
 {
 	if(encoder == nullptr)
 		return "";
@@ -84,9 +105,8 @@ bool Encoder::create_encoder(const char *name) noexcept
 			return false;
 		}
 		
-//		std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
-		if(encoder_ctx != nullptr)
-			avcodec_free_context(&encoder_ctx);
+		std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
+		close_encoder();
 		
 		encoder = coder;
 		encoder_ctx = ctx;
@@ -100,7 +120,7 @@ bool Encoder::create_encoder(const char *name) noexcept
 
 bool Encoder::open_encoder() noexcept
 {
-//	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
+	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 	if( encoder_ctx == nullptr || encoder == nullptr){
 		core::Logger::Print_APP_Info(core::Result::Codec_codec_context_alloc_failed,
 									 __PRETTY_FUNCTION__,
@@ -124,9 +144,9 @@ bool Encoder::open_encoder() noexcept
 
 void Encoder::close_encoder() noexcept
 {
+	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 	if(encoder_ctx == nullptr)
 		return;
-//	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 	this->encode(nullptr);
 	avcodec_free_context(&encoder_ctx);
 }
@@ -136,21 +156,28 @@ void Encoder::on_thread_run() noexcept
 	if(_queue == nullptr){
 		return;
 	}
-	_queue->wait_for_resource_push(100);
+	
+	_queue->wait_for_resource_push(16);
+	std::lock_guard<std::mutex> lk(_queue_mutex);
+	if(_queue == nullptr){
+		return;
+	}
 	//循环这里只判断指针
-	while(_queue != nullptr && _queue->has_data()){
-		auto pack = _get_next_packet();
+	while(_queue->has_data()){
+		auto pack = _queue->get_next();
+		std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 		if(pack != nullptr && pack->data != nullptr){
 			std::lock_guard<decltype (pack->data->mutex)> lg(pack->data->mutex);
-			this->encode(pack.get());
+			this->encode(pack);
 		} else {
-			this->encode(pack.get());
+			this->encode(pack);
 		}
 	}
 }
 
 void Encoder::on_thread_pause() noexcept
 {
+	std::lock_guard<decltype (encoder_mutex)> lk(encoder_mutex);
 	this->encode(nullptr);
 }
 
@@ -159,21 +186,6 @@ bool Encoder::get_thread_pause_condition() noexcept
 	return _queue == nullptr;
 }
 
-/**
- * @brief get_next_packet
- * 从队列里获取下一个包
- * @return 
- * 如果失败则返回nullptr
- */
-core::FramePacket::SharedPacket Encoder::_get_next_packet() noexcept 
-{
-	std::lock_guard<std::mutex> lk(_queue_mutex);
-	//真正需要判断数据的语句放在锁里面
-	if(_queue == nullptr || !_queue->has_data()){
-		return nullptr;
-	}
-	return _queue->get_next();
-}
 
 } // namespace codec
 

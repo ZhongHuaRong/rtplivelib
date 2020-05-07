@@ -27,7 +27,8 @@ public:
 	 * 不带参数的构造函数，没啥作用，需要调用set_input_queue设置一个输入队列
 	 */
 	VideoEncoder(bool use_hw_acceleration = true,
-				 HardwareDevice::HWDType hwa_type = HardwareDevice::Auto);
+				 HardwareDevice::HWDType hwa_type = HardwareDevice::Auto,
+				 EncoderType enc_type = EncoderType::Auto);
 	
 	/**
 	 * @brief VideoEncode
@@ -35,7 +36,8 @@ public:
 	 */
 	explicit VideoEncoder(Queue * input_queue,
 						  bool use_hw_acceleration = true,
-						  HardwareDevice::HWDType hwa_type = HardwareDevice::Auto);
+						  HardwareDevice::HWDType hwa_type = HardwareDevice::Auto,
+						  EncoderType enc_type = EncoderType::Auto);
 	
 	/**
 	 * @brief ~VideoEncoder
@@ -47,7 +49,7 @@ protected:
 	 * @brief encode
 	 * 编码
 	 */
-	virtual void encode(core::FramePacket * packet) noexcept override;
+	virtual void encode(core::FramePacket::SharedPacket packet) noexcept override;
 	
 	/**
 	 * @brief set_encoder_param
@@ -57,14 +59,13 @@ protected:
 	 * 用于设置的参数
 	 * @see creat_encoder
 	 */
-	virtual void set_encoder_param(const core::Format & format) noexcept override;
+	virtual void set_encoder_param(const core::Format & format) noexcept;
 	
 	/**
 	 * @brief receive_packet
 	 * 接受编码成功后的包
 	 */
 	void receive_packet() noexcept;
-	
 private:
 	/**
 	 * @brief _init_hwdevice
@@ -86,7 +87,7 @@ private:
 	 * 将要编码的包信息
 	 * @return 
 	 */
-	bool _select_hwdevice(const core::FramePacket * packet) noexcept;
+	bool _select_hwdevice(const core::FramePacket::SharedPacket packet) noexcept;
 	
 	/**
 	 * @brief _set_sw_encoder_ctx
@@ -98,7 +99,7 @@ private:
 	 * @param fps
 	 * 每秒帧数 
 	 */
-	void _set_sw_encoder_ctx(const core::FramePacket * packet) noexcept;
+	void _set_sw_encoder_ctx(const core::FramePacket::SharedPacket packet) noexcept;
 	
 	/**
 	 * @brief _close_ctx
@@ -135,20 +136,18 @@ private:
 	 * @return 
 	 * 如果设置失败则返回false
 	 */
-	bool _set_frame_data(AVFrame * frame,core::FramePacket *packet) noexcept;
+	bool _set_frame_data(AVFrame * frame,core::FramePacket::SharedPacket packet) noexcept;
 private:
 	//硬件加速类
-	HardwareDevice				* hwdevice{nullptr};
+	HardwareDevice								* hwdevice{nullptr};
 	//保存上一次正确编码时的输入格式
-	core::Format				format;
-	//目前正在使用的类型,用于判断用户是否修改硬件加速方案
-	HardwareDevice::HWDType		hwd_type_cur{HardwareDevice::None};
+	core::Format								format;
 	//用于格式转换
-	image_processing::Scale		* scale_ctx{new image_processing::Scale};
+	std::shared_ptr<image_processing::Scale>	scale_ctx;
 	//用来编码的数据结构，只在设置format的时候分配一次
 	//随着格式的改变和上下文一起重新分配
-	AVFrame						* encode_sw_frame{nullptr};
-	AVFrame						* encode_hw_frame{nullptr};
+	AVFrame										* encode_sw_frame{nullptr};
+	AVFrame										* encode_hw_frame{nullptr};
 };
 
 } // namespace codec

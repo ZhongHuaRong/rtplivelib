@@ -24,7 +24,7 @@ private:
 		int last_size{0};
 		
 		inline void get_data(uint8_t * d) noexcept{
-			auto i = 0;
+			size_t i = 0;
 			for(;i < data_vector.size() - 1;++i){
 				memcpy(d,data_vector[i],unit_size);
 				d += unit_size;

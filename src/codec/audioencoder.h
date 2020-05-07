@@ -39,13 +39,13 @@ public:
 	 * @brief set_hardware_acceleration
 	 * 音频编码不需要硬件加速
 	 */
-	void set_hardware_acceleration(bool flag,HardwareDevice::HWDType hwa_type = HardwareDevice::Auto) noexcept = delete;
+	void set_hardware_acceleration(bool flag,HardwareDevice::HWDType hwa_type) noexcept = delete;
 protected:
 	/**
 	 * @brief encode
 	 * 编码
 	 */
-	virtual void encode(core::FramePacket * packet) noexcept override;
+	virtual void encode(core::FramePacket::SharedPacket packet) noexcept override;
 	
 	/**
 	 * @brief set_encoder_param
@@ -55,7 +55,7 @@ protected:
 	 * 用于设置的参数
 	 * @see creat_encoder
 	 */
-	virtual void set_encoder_param(const core::Format & format) noexcept override;
+	virtual void set_encoder_param(const core::Format & format) noexcept;
 	
 	/**
 	 * @brief receive_packet
@@ -75,7 +75,7 @@ private:
 	 * @brief open_ctx
 	 * 打开编码器,对父类的open_encoder接口进行了封装
 	 */
-	bool _open_ctx(const core::FramePacket * packet) noexcept;
+	bool _open_ctx(const core::FramePacket::SharedPacket packet) noexcept;
 	
 	/**
 	 * @brief _init_resample

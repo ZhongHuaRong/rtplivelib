@@ -110,7 +110,7 @@ AudioEncoder::~AudioEncoder()
 	}
 }
 
-void AudioEncoder::encode(core::FramePacket *packet) noexcept
+void AudioEncoder::encode(core::FramePacket::SharedPacket packet) noexcept
 {
 	//先初始化编码器上下文
 	if(packet != nullptr){
@@ -304,7 +304,7 @@ bool AudioEncoder::_alloc_encode_frame() noexcept
 	return true;
 }
 
-bool AudioEncoder::_open_ctx(const core::FramePacket *packet) noexcept
+bool AudioEncoder::_open_ctx(const core::FramePacket::SharedPacket packet) noexcept
 {
 	if(encoder_ctx != nullptr && ifmt == packet->format){
 		return true;
