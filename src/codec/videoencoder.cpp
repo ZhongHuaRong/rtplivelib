@@ -296,13 +296,17 @@ inline void VideoEncoder::_select_encoder(const core::FramePacket::SharedPacket 
 bool VideoEncoder::_set_hw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept
 {
 	//只要用户不设置，直返回false
-	if( hwd_type_user == HardwareDevice::None)
+	if( hwd_type_user == HardwareDevice::None || enc_type_user == EncoderType::None)
 		return false;
 	//如果用户设置了，但是是和当前使用的一样，不操作直接返回true
 	else if( hwd_type_cur == hwd_type_user ){
-		//如果当前格式一样才直接返回，否则还是需要重新设置
-		if(format == packet->format)
-			return true;
+		//如果用户设置Auto且当前不为空，则可以进行下一步判断
+		if( enc_type_user == enc_type_cur ||
+				(enc_type_user == EncoderType::Auto && enc_type_cur != EncoderType::None)){
+			//如果当前格式一样才直接返回，否则还是需要重新设置
+			if(format == packet->format)
+				return true;
+		}
 	}
 	//当用户设置了Auto，只要当前使用了硬件加速(应该是上一次优化过的)，也不操作直接返回true
 	//因为存在手动选择其他加速方案再选择自动的情况
