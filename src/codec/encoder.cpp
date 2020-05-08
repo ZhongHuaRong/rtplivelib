@@ -55,7 +55,6 @@ void Encoder::set_encoder_type(const Encoder::EncoderType type) noexcept
 	}
 	
 	enc_type_user = type;
-	close_encoder();
 }
 
 std::string Encoder::get_encoder_name() const noexcept
@@ -183,7 +182,7 @@ void Encoder::on_thread_pause() noexcept
 
 bool Encoder::get_thread_pause_condition() noexcept
 {
-	return _queue == nullptr;
+	return _queue == nullptr || enc_type_user == EncoderType::None;
 }
 
 

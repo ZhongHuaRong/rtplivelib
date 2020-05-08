@@ -81,25 +81,34 @@ private:
 	
 	/**
 	 * @brief _select_hwdevice
-	 * 根据当前情况选择最优的硬件加速方案
-	 * 目前只设置qsv
+	 * 根据当前情况选择硬件加速方案
 	 * @param packet
 	 * 将要编码的包信息
 	 * @return 
 	 */
-	bool _select_hwdevice(const core::FramePacket::SharedPacket packet) noexcept;
+	bool _select_hwdevice(const core::FramePacket::SharedPacket& packet) noexcept;
+	
+	/**
+	 * @brief _select_encoder
+	 * 根据当前情况选择编码器
+	 * @param packet
+	 * 将要编码的包信息
+	 */
+	void _select_encoder(const core::FramePacket::SharedPacket& packet) noexcept;
+	
+	/**
+	 * @brief _set_hw_encoder_ctx
+	 * 设置编码器上下文并打开硬压相关的编码器
+	 * @return 
+	 * false代表硬件加速方案设置失败
+	 */
+	bool _set_hw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept;
 	
 	/**
 	 * @brief _set_sw_encoder_ctx
-	 * 设置编码器上下文并打开编码器
-	 * 这个接口将会启动纯CPU进行编码
-	 * 在输入图像的时候，要严格按照格式设置
-	 * @param dst_format
-	 * 目标格式
-	 * @param fps
-	 * 每秒帧数 
+	 * 设置编码器上下文并打开软压相关的编码器
 	 */
-	void _set_sw_encoder_ctx(const core::FramePacket::SharedPacket packet) noexcept;
+	void _set_sw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept;
 	
 	/**
 	 * @brief _close_ctx

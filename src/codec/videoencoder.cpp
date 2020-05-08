@@ -63,11 +63,7 @@ void VideoEncoder::encode(core::FramePacket::SharedPacket packet) noexcept
 		}
 	}
 	
-	if(use_hw_flag == false || _select_hwdevice(packet) == false){
-		//硬件初始化失败的话，转为纯CPU操作
-		set_hardware_acceleration(false,HardwareDevice::None);
-		_set_sw_encoder_ctx(packet);
-	}
+	_select_encoder(packet);
 	
 	//在这里判断编码器上下文是否初始化成功，不成功则直接返回
 	if(encoder_ctx ==nullptr || avcodec_is_open(encoder_ctx) == 0)
@@ -287,7 +283,17 @@ inline bool VideoEncoder::_init_hwdevice(HardwareDevice::HWDType hwdtype,const c
 	return true;
 }
 
-bool VideoEncoder::_select_hwdevice(const core::FramePacket::SharedPacket packet) noexcept
+inline void VideoEncoder::_select_encoder(const core::FramePacket::SharedPacket &packet) noexcept
+{
+	//使用硬件加速时的初始化方案
+	if(use_hw_flag == false || _set_hw_encoder_ctx(packet) == false){
+		//硬件初始化失败的话，转为纯CPU操作
+		set_hardware_acceleration(false,HardwareDevice::None);
+		_set_sw_encoder_ctx(packet);
+	}
+}
+
+bool VideoEncoder::_set_hw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept
 {
 	//只要用户不设置，直返回false
 	if( hwd_type_user == HardwareDevice::None)
@@ -303,6 +309,13 @@ bool VideoEncoder::_select_hwdevice(const core::FramePacket::SharedPacket packet
 	//所以需要手动选择关闭硬件加速才能正确使用Auto
 	else if( hwd_type_user == HardwareDevice::Auto && hwd_type_cur != HardwareDevice::None)
 		return true;
+	
+	if(packet->format.frame_rate <= 0){
+		core::Logger::Print_APP_Info(core::Result::Codec_frame_rate_must_more_than_zero,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::WARNING_LEVEL);
+		return false;
+	}
 	
 	//先释放之前的编码器上下文
 	_close_ctx();
@@ -350,8 +363,9 @@ bool VideoEncoder::_select_hwdevice(const core::FramePacket::SharedPacket packet
 	return false;
 }
 
-void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket::SharedPacket packet) noexcept
+void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept
 {
+	
 	//根据输入的图像格式和帧率来决定编码器的上下文
 	//不过貌似重启上下文会导致有异常情况，所以还是尽量少重启上下文
 	//		if(format == dst_format && format.frame_rate == dst_format.frame_rate)
@@ -366,7 +380,6 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket::SharedPacket pac
 	}
 	
 	_close_ctx();
-	
 	//寻找纯CPU编码器
 	//软压和硬压不同，软压不存在初始化失败，所以Auto默认选择HEVC
 	switch(enc_type_user){

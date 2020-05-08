@@ -38,7 +38,8 @@ public:
 		HEVC,
 		H264,
 		VP9,
-		AAC
+		AAC,
+		None
 	};
 
 public:
