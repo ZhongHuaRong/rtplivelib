@@ -53,14 +53,13 @@ void RTPUserManager::deal_with_rtcp(void *p) noexcept
 		switch(rtcp_packet->GetPacketType()){
 		case jrtplib::RTCPPacket::PacketType::SR:
 		{
-			auto packet = static_cast<jrtplib::RTCPSRPacket*>(rtcp_packet);
+//			auto packet = static_cast<jrtplib::RTCPSRPacket*>(rtcp_packet);
 			//发送端报文先不解析，因为可能有多个发送端
 //			core::Logger::Info("SR: send[{}],recv[{}],lost[{}]",
 //							   api,
 //							   packet->GetSenderPacketCount(),
 //							   packet->GetFractionLost(packet-> GetReceptionReportCount() - 1 ),
 //							   packet->GetLostPacketCount(packet-> GetReceptionReportCount() - 1 ));
-			UNUSED(packet)
 			break;
 		}
 		case jrtplib::RTCPPacket::PacketType::RR:
