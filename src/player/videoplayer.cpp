@@ -1,5 +1,7 @@
 #include "videoplayer.h"
 #include "../core/logger.h"
+#include "../core/time.h"
+#include <thread>
 extern "C" {
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_vulkan.h"
@@ -21,10 +23,14 @@ public:
 	SDL_Rect						*show_rect{new SDL_Rect()};
 	int								frame_w{0};
 	int								frame_h{0};
+	std::thread						*thread{nullptr};
+	volatile bool					thread_run_flag{false};
+	volatile bool					lock_flag{false};
+	int64_t							lock_timestamp{0};
 	
 	VideoPlayerPrivateData(){}
 	
-	inline void release_window(){
+	inline void release_window() noexcept{
 		release_renderer();
 		if(show_screen != nullptr){
 			SDL_DestroyWindow(show_screen);
@@ -32,7 +38,7 @@ public:
 		}
 	}
 	
-	inline void release_renderer(){
+	inline void release_renderer() noexcept{
 		release_texture();
 		if(renderer != nullptr){
 			SDL_DestroyRenderer(renderer);
@@ -40,11 +46,74 @@ public:
 		}
 	}
 	
-	inline void release_texture(){
+	inline void release_texture() noexcept{
 		if(texture != nullptr){
 			SDL_DestroyTexture(texture);
 			texture = nullptr;
 		}
+	}
+	
+	inline bool start_thread() noexcept{
+		if(thread != nullptr)
+			return true;
+		
+		thread = new (std::nothrow)std::thread(
+					
+			[](VideoPlayerPrivateData * data){
+				SDL_Event event;
+				while(data->thread_run_flag){
+					SDL_PollEvent(&event);
+					switch(event.type){
+						case SDL_QUIT:
+							return;
+						case SDL_WINDOWEVENT:
+						{
+							switch(event.window.event){
+								case ::SDL_WINDOWEVENT_RESIZED:
+								case ::SDL_WINDOWEVENT_SIZE_CHANGED:
+									if(!data->lock_flag){
+										core::Logger::Print("true",
+											 __PRETTY_FUNCTION__,
+											LogLevel::WARNING_LEVEL);
+										data->lock_flag = true;
+									}
+									data->lock_timestamp = core::Time::Now().to_timestamp();
+									break;
+								default:
+									if(data->lock_flag){
+										if(core::Time::Now().to_timestamp() - data->lock_timestamp > 100){
+											core::Logger::Print("false",
+												__PRETTY_FUNCTION__,
+												LogLevel::WARNING_LEVEL);
+											data->lock_flag = false;
+										}				
+									}
+							}
+						}
+					}
+				}
+				
+		},this);
+		if(thread)
+			thread_run_flag = true;
+		return thread != nullptr;
+	}
+	
+	inline void exit_thread() noexcept{
+		if(thread == nullptr)
+			return;
+		thread_run_flag = false;
+		SDL_Event user_event;
+		user_event.type = SDL_QUIT;
+		user_event.user.code=0;
+		user_event.user.data1=NULL;
+		user_event.user.data2=NULL;
+		SDL_PushEvent(&user_event);
+		//这里会造成本线程调用该接口造成死锁
+		if(thread->joinable())
+			thread->join();
+		delete thread;
+		thread = nullptr;
 	}
 	
 	/**
@@ -53,7 +122,7 @@ public:
 	 * 需要自行使用release_window
 	 * @param id
 	 */
-	inline void create_window(void *id){
+	inline void create_window(void *id) noexcept{
 		show_id = id;
 		if(id == nullptr)
 			return;
@@ -75,7 +144,7 @@ public:
 	 * @brief create_renderer
 	 * 创建渲染器
 	 */
-	inline void create_renderer(){
+	inline void create_renderer() noexcept{
 		//硬件加速有问题，先设置成软件渲染
 		renderer = SDL_CreateRenderer(show_screen, -1, SDL_RENDERER_SOFTWARE);
 		if(renderer == nullptr){
@@ -93,7 +162,7 @@ public:
 	 * 在show之前，检查格式，然后分配合适的纹理
 	 * @param format
 	 */
-	inline void set_format(const rtplivelib::core::Format& format){
+	inline void set_format(const rtplivelib::core::Format& format) noexcept{
 		if(show_format == format)
 			return;
 		release_texture();
@@ -158,6 +227,7 @@ VideoPlayer::~VideoPlayer()
 {
 	set_player_object(nullptr);
 	d_ptr->release_window();
+	d_ptr->exit_thread();
 	
 	delete d_ptr->show_rect;
 	delete d_ptr;
@@ -234,6 +304,7 @@ void VideoPlayer::set_win_id(void *id) noexcept
 	d_ptr->release_window();
 	//分配新的窗口，如果为空则不处理
 	d_ptr->create_window(id);
+	d_ptr->start_thread();
 }
 
 /**
@@ -244,6 +315,9 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 {
 	//如果显示窗口不存在或者图片不存在，则不显示，其他情况都可以
 	if(d_ptr->show_screen == nullptr || data ==nullptr)
+		return false;
+	//窗口被锁，不应该继续渲染
+	if(d_ptr->lock_flag)
 		return false;
 	std::lock_guard<std::mutex> lk(d_ptr->show_mutex);
 #ifndef unix
@@ -278,16 +352,18 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 		if( data[0] == nullptr || data[1] == nullptr)
 			return false;
 		SDL_UpdateTexture( d_ptr->texture, nullptr, data[0], linesize[0]); 
-		//		SDL_UpdateYUVTexture( d_ptr->texture, nullptr,
-		//							  data[0],linesize[0],
-		//							  data[1],linesize[1],
-		//							  data[2],linesize[2] );
 		break;
 	default:
 		return false;
 	}
 	
-	SDL_RenderClear( d_ptr->renderer );   
+	//窗口被锁，不应该继续渲染
+	if(d_ptr->lock_flag)
+		return false;
+	SDL_RenderClear( d_ptr->renderer );
+	//窗口被锁，不应该继续渲染
+	if(d_ptr->lock_flag)
+		return false;
 	auto ret = SDL_RenderCopy( d_ptr->renderer, d_ptr->texture, nullptr, d_ptr->show_rect); 
 	if(ret != 0){
 		core::Logger::Print(SDL_GetError(),
@@ -295,7 +371,10 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 							LogLevel::WARNING_LEVEL);
 		return false;
 	}
-	SDL_RenderPresent( d_ptr->renderer ); 
+	//窗口被锁，不应该继续渲染
+	if(d_ptr->lock_flag)
+		return false;
+	SDL_RenderPresent( d_ptr->renderer );
 	return true;
 }
 
