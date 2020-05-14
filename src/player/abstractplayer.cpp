@@ -47,12 +47,12 @@ PlayerEvent::PlayerEvent()
 		core::Logger::Print_APP_Info(core::Result::Thread_Create_Failed,
 									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL,
-									 "SDL_Event");
+									 "PlayerEvent");
 	else
 		core::Logger::Print_APP_Info(core::Result::Thread_Create_Success,
 									 __PRETTY_FUNCTION__,
 									 LogLevel::INFO_LEVEL,
-									 "SDL_Event");
+									 "PlayerEvent");
 }
 
 PlayerEvent::~PlayerEvent()
