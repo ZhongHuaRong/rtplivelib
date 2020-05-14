@@ -1,5 +1,6 @@
 #pragma once
 #include "../device_manager/abstractcapture.h"
+#include "../core/time.h"
 #include <mutex>
 
 namespace rtplivelib{
@@ -9,6 +10,38 @@ namespace player {
 enum struct PlayFormat{
 	PF_VIDEO = 0x01,
 	PF_AUDIO
+};
+
+/**
+ * @brief The PlayerEvent struct
+ * 该结构体用于处理播放器各种事件
+ */
+class PlayerEvent{
+public:
+	//单例模式，因为仅在该文件中使用，所以不做限制了
+	static PlayerEvent			EventObject;
+	//该flag用于表示是否可以播放
+	//true则表示可以播放，false则不能播放，因为资源被占用了
+	//在窗口频繁被更改时(拉伸窗口导致频繁resize)不允许播放
+	bool						play_flag{true};
+private:
+	//用于控制线程退出的flag
+	bool						thread_flag{false};
+	//另开一个线程处理SDL事件
+	std::thread					*event_thread{nullptr};
+	//锁定资源时的时间点
+	core::Time					lock_time;
+	//防止频繁修改资源(或者更新过快)导致play_flag误判而出现bug
+	//添加一个延迟来解锁，表示锁定资源delay ms后就会解锁
+	static constexpr int64_t	delay{100};
+	
+	static void deal_event(PlayerEvent *obj) noexcept;
+	
+	//构造函数用于创建线程
+	PlayerEvent();
+	
+	//析构函数用于退出线程并释放资源
+	~PlayerEvent();
 };
 
 /**
@@ -62,6 +95,7 @@ public:
 	 * 子类实现显示方案
 	 */
 	virtual bool play(core::FramePacket::SharedPacket packet) noexcept = 0;
+
 protected:
 	/**
 	 * @brief on_thread_run
@@ -77,13 +111,6 @@ protected:
 	 * 线程在设置完object后才开启
 	 */
 	virtual bool get_thread_pause_condition() noexcept override;
-private:
-	/**
-	 * @brief _get_next_packet
-	 * 从队列里获取下一个包
-	 * @return 
-	 */
-	core::FramePacket::SharedPacket _get_next_packet() noexcept;
 protected:
 	core::AbstractQueue<core::FramePacket> * _play_object;
 private:

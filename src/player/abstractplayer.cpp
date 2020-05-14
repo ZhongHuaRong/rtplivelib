@@ -7,6 +7,71 @@ namespace rtplivelib{
 
 namespace player {
 
+PlayerEvent PlayerEvent::EventObject;
+
+void PlayerEvent::deal_event(PlayerEvent *obj) noexcept
+{
+	SDL_Event event;
+	while(obj->thread_flag){
+		SDL_PollEvent(&event);
+		switch(event.type){
+			case SDL_QUIT:
+				return;
+			case SDL_WINDOWEVENT:
+			{
+				switch(event.window.event){
+					case ::SDL_WINDOWEVENT_RESIZED:
+					case ::SDL_WINDOWEVENT_SIZE_CHANGED:
+						if(obj->play_flag){
+							obj->play_flag = false;
+						}
+						obj->lock_time = core::Time::Now();
+						break;
+					default:
+						if(!obj->play_flag){
+							if((core::Time::Now() - obj->lock_time).to_timestamp() > delay){
+								obj->play_flag = true;
+							}
+						}
+				}
+			}
+		}
+	}
+}
+
+PlayerEvent::PlayerEvent()
+{
+	thread_flag = true;
+	event_thread = new (std::nothrow)std::thread(PlayerEvent::deal_event,this);
+	if(!event_thread)
+		core::Logger::Print_APP_Info(core::Result::Thread_Create_Failed,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::WARNING_LEVEL,
+									 "SDL_Event");
+	else
+		core::Logger::Print_APP_Info(core::Result::Thread_Create_Success,
+									 __PRETTY_FUNCTION__,
+									 LogLevel::INFO_LEVEL,
+									 "SDL_Event");
+}
+
+PlayerEvent::~PlayerEvent()
+{
+	if(event_thread == nullptr)
+		return;
+	thread_flag = false;
+	SDL_Event user_event;
+	user_event.type = SDL_QUIT;
+	user_event.user.code=0;
+	user_event.user.data1=NULL;
+	user_event.user.data2=NULL;
+	SDL_PushEvent(&user_event);
+	//这里会造成本线程调用该接口造成死锁
+	if(event_thread->joinable())
+		event_thread->join();
+	delete event_thread;
+	event_thread = nullptr;
+}
 
 AbstractPlayer::AbstractPlayer(PlayFormat format):
 	_play_object(nullptr),
@@ -41,16 +106,6 @@ AbstractPlayer::~AbstractPlayer()
 		SDL_Quit();
 }
 
-/**
- * @brief setPlayerObject
- * 简易播放接口，可以传入捕捉类的子类实例，然后调用start_capture接口开始捕捉数据
- * 则可以显示画面或者播放音频
- * (该接口不提供数据前处理，需要前处理可以继承捕捉类实现on_frame_data,而且需要该接口返回true)
- * @param object
- * 对象实例
- * @param winId
- * 窗口显示ID，音频则无视该参数
- */
 void AbstractPlayer::set_player_object(core::AbstractQueue<core::FramePacket> *object,
 									   void *winId) noexcept
 {
@@ -75,10 +130,6 @@ void AbstractPlayer::set_player_object(core::AbstractQueue<core::FramePacket> *o
 	start_thread();
 }
 
-/**
- * @brief on_thread_run
- * 重写
- */
 void AbstractPlayer::on_thread_run() noexcept
 {
 	/* 这里的每个步骤都需要很谨慎，因为_play_object随时都会被主线程设置为nullptr
@@ -92,23 +143,15 @@ void AbstractPlayer::on_thread_run() noexcept
 	//退出线程也很简单，只需要在set_player_object传入nullptr
 	//会默认唤醒线程，然后退出(这个时候_play_object已经是nullptr)
 	_play_object->wait_resource_push();
-	//循环这里只判断指针
+	//这里上锁，感觉问题不大,不用每次取包都上一次锁，
+	//上锁的概率太低(只有更换队列的时候才更换)
+	std::lock_guard<std::mutex> lk(_object_mutex);
 	while(_play_object != nullptr){
-		auto pack = _get_next_packet();
+		auto pack = _play_object->get_next();
 		if(pack == nullptr || pack->data == nullptr)
 			break;
 		this->play(pack);
 	}
-}
-
-core::FramePacket::SharedPacket AbstractPlayer::_get_next_packet() noexcept
-{
-	std::lock_guard<std::mutex> lk(_object_mutex);
-	//真正需要判断数据的语句放在锁里面
-	if(_play_object == nullptr || !_play_object->has_data()){
-		return nullptr;
-	}
-	return _play_object->get_next();
 }
 
 }// namespace player

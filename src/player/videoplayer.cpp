@@ -1,7 +1,6 @@
 #include "videoplayer.h"
 #include "../core/logger.h"
 #include "../core/time.h"
-#include <thread>
 extern "C" {
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_vulkan.h"
@@ -23,10 +22,6 @@ public:
 	SDL_Rect						*show_rect{new SDL_Rect()};
 	int								frame_w{0};
 	int								frame_h{0};
-	std::thread						*thread{nullptr};
-	volatile bool					thread_run_flag{false};
-	volatile bool					lock_flag{false};
-	int64_t							lock_timestamp{0};
 	
 	VideoPlayerPrivateData(){}
 	
@@ -51,69 +46,6 @@ public:
 			SDL_DestroyTexture(texture);
 			texture = nullptr;
 		}
-	}
-	
-	inline bool start_thread() noexcept{
-		if(thread != nullptr)
-			return true;
-		
-		thread = new (std::nothrow)std::thread(
-					
-			[](VideoPlayerPrivateData * data){
-				SDL_Event event;
-				while(data->thread_run_flag){
-					SDL_PollEvent(&event);
-					switch(event.type){
-						case SDL_QUIT:
-							return;
-						case SDL_WINDOWEVENT:
-						{
-							switch(event.window.event){
-								case ::SDL_WINDOWEVENT_RESIZED:
-								case ::SDL_WINDOWEVENT_SIZE_CHANGED:
-									if(!data->lock_flag){
-										core::Logger::Print("true",
-											 __PRETTY_FUNCTION__,
-											LogLevel::WARNING_LEVEL);
-										data->lock_flag = true;
-									}
-									data->lock_timestamp = core::Time::Now().to_timestamp();
-									break;
-								default:
-									if(data->lock_flag){
-										if(core::Time::Now().to_timestamp() - data->lock_timestamp > 100){
-											core::Logger::Print("false",
-												__PRETTY_FUNCTION__,
-												LogLevel::WARNING_LEVEL);
-											data->lock_flag = false;
-										}				
-									}
-							}
-						}
-					}
-				}
-				
-		},this);
-		if(thread)
-			thread_run_flag = true;
-		return thread != nullptr;
-	}
-	
-	inline void exit_thread() noexcept{
-		if(thread == nullptr)
-			return;
-		thread_run_flag = false;
-		SDL_Event user_event;
-		user_event.type = SDL_QUIT;
-		user_event.user.code=0;
-		user_event.user.data1=NULL;
-		user_event.user.data2=NULL;
-		SDL_PushEvent(&user_event);
-		//这里会造成本线程调用该接口造成死锁
-		if(thread->joinable())
-			thread->join();
-		delete thread;
-		thread = nullptr;
 	}
 	
 	/**
@@ -227,7 +159,6 @@ VideoPlayer::~VideoPlayer()
 {
 	set_player_object(nullptr);
 	d_ptr->release_window();
-	d_ptr->exit_thread();
 	
 	delete d_ptr->show_rect;
 	delete d_ptr;
@@ -304,7 +235,6 @@ void VideoPlayer::set_win_id(void *id) noexcept
 	d_ptr->release_window();
 	//分配新的窗口，如果为空则不处理
 	d_ptr->create_window(id);
-	d_ptr->start_thread();
 }
 
 /**
@@ -317,7 +247,7 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 	if(d_ptr->show_screen == nullptr || data ==nullptr)
 		return false;
 	//窗口被锁，不应该继续渲染
-	if(d_ptr->lock_flag)
+	if(!PlayerEvent::EventObject.play_flag)
 		return false;
 	std::lock_guard<std::mutex> lk(d_ptr->show_mutex);
 #ifndef unix
@@ -358,11 +288,11 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 	}
 	
 	//窗口被锁，不应该继续渲染
-	if(d_ptr->lock_flag)
+	if(!PlayerEvent::EventObject.play_flag)
 		return false;
 	SDL_RenderClear( d_ptr->renderer );
 	//窗口被锁，不应该继续渲染
-	if(d_ptr->lock_flag)
+	if(!PlayerEvent::EventObject.play_flag)
 		return false;
 	auto ret = SDL_RenderCopy( d_ptr->renderer, d_ptr->texture, nullptr, d_ptr->show_rect); 
 	if(ret != 0){
@@ -372,7 +302,7 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 		return false;
 	}
 	//窗口被锁，不应该继续渲染
-	if(d_ptr->lock_flag)
+	if(!PlayerEvent::EventObject.play_flag)
 		return false;
 	SDL_RenderPresent( d_ptr->renderer );
 	return true;

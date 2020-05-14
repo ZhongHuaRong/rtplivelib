@@ -81,7 +81,9 @@ constexpr char MessageString[][128] = {
 	"Encoding failed, error message has been output to the log",
 	"Decoding failed, error message has been output to the log",
 	"Need more packets to decode",
-	"time setting must be greater than zero"
+	"time setting must be greater than zero",
+	"({})Thread creation failed",
+	"({})Thread created successfully"
 };
 
 enum Result {
@@ -156,7 +158,9 @@ enum Result {
 	FEC_Encode_Failed,
 	FEC_Decode_Failed,
 	FEC_Decode_Need_More,
-	Timer_time_less_than_zero
+	Timer_time_less_than_zero,
+	Thread_Create_Failed,
+	Thread_Create_Success
 };
 
 /**
