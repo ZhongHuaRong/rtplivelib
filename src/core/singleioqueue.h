@@ -16,19 +16,17 @@ namespace core {
  * (这种思路可以扩展成多输出)
  */
 template<typename Type>
-class RTPLIVELIBSHARED_EXPORT SingleIOQueue : public AbstractQueue<Type>
+class SingleIOQueue : public AbstractQueue<Type>
 {
 private:
 	using queue = AbstractQueue<Type>;
 public:
-	SingleIOQueue():AbstractQueue<Type>(){
+	SingleIOQueue(){
 		
 	}
 	
 	virtual ~SingleIOQueue() override{
-		if(!this->get_exit_flag())
-			this->exit_thread();
-		this->clear();
+		this->exit_thread();
 	}
 	
 	inline bool is_input() const noexcept{
@@ -117,10 +115,7 @@ protected:
 	 */
 	inline virtual void on_thread_run() noexcept override final{
 		std::lock_guard<std::mutex> lk(mutex);
-		if(get_thread_pause_condition()){
-			return;
-		}
-		input->wait_for_resource_push(100);
+		input->wait_for_resource_push(10);
 		//循环这里只判断指针
 		while(input->has_data()){
 			auto pack = input->get_next();

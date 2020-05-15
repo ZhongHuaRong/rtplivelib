@@ -19,6 +19,8 @@ class MultiOutputQueue : public AbstractQueue<Type>
 {
 public:
 	MultiOutputQueue() {}
+	
+	virtual ~MultiOutputQueue() {}
 };
 
 

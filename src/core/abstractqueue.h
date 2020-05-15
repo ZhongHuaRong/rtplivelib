@@ -20,7 +20,7 @@ namespace core {
  * 拒绝使用裸指针作为参数
  */
 template<typename Type>
-class RTPLIVELIBSHARED_EXPORT AbstractQueue : public AbstractThread
+class AbstractQueue : public AbstractThread
 {
 public:
 	using value_type			= std::shared_ptr<Type>;
