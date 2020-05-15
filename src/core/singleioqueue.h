@@ -54,20 +54,16 @@ public:
 		if(iqueue == input)
 			return;
 		
+		//先让他解锁，才能lock
+		if(input)
+			input->exit_wait_resource();
 		mutex.lock();
-		//先记录之前的队列情况
-		queue *_i = input;
 		
 		//设置当前队列，如果输入为空则不设置输出
 		//如果输入不为空，输出则默认设置为自己
 		input = iqueue;
 		output = input != nullptr?this:nullptr;
 		mutex.unlock();
-		
-		//唤醒输入队列，因为可能在之前阻塞了
-		//在即将失去拥有权时做好释放操作
-		if(_i)
-			_i->exit_wait_resource();
 		
 		if(has_input() && has_output() && this->get_exit_flag()){
 			this->start_thread();
@@ -83,18 +79,14 @@ public:
 		if(oqueue == output)
 			return;
 		
+		//先让他解锁，才能lock
+		if(input)
+			input->exit_wait_resource();
 		mutex.lock();
-		//先记录之前的队列情况
-		queue *_i = input;
 		
 		output = oqueue;
 		input = output != nullptr?this:nullptr;
 		mutex.unlock();
-		
-		//唤醒输入队列，因为可能在之前阻塞了
-		//在即将失去拥有权时做好释放操作
-		if(_i)
-			_i->exit_wait_resource();
 		
 		if(has_input() && has_output() && this->get_exit_flag()){
 			this->start_thread();
@@ -115,7 +107,7 @@ protected:
 	 */
 	inline virtual void on_thread_run() noexcept override final{
 		std::lock_guard<std::mutex> lk(mutex);
-		input->wait_for_resource_push(10);
+		input->wait_for_resource_push(100);
 		//循环这里只判断指针
 		while(input->has_data()){
 			auto pack = input->get_next();
