@@ -21,11 +21,14 @@ class RTPLIVELIBSHARED_EXPORT SingleIOQueue : public AbstractQueue<Type>
 private:
 	using queue = AbstractQueue<Type>;
 public:
-	SingleIOQueue() {}
+	SingleIOQueue():AbstractQueue<Type>(){
+		
+	}
 	
-	~SingleIOQueue(){
+	virtual ~SingleIOQueue() override{
 		if(!this->get_exit_flag())
 			this->exit_thread();
+		this->clear();
 	}
 	
 	inline bool is_input() const noexcept{
@@ -44,13 +47,18 @@ public:
 		return output;
 	}
 	
+	/**
+	 * @brief set_input
+	 * 设置输入队列，这时，该对象就会默认设置为输出队列
+	 * @param iqueue
+	 */
 	inline void set_input(queue * iqueue) noexcept{
 		if(iqueue == input)
 			return;
 		
 		mutex.lock();
 		//先记录之前的队列情况
-		queue _i = input;
+		queue *_i = input;
 		
 		//设置当前队列，如果输入为空则不设置输出
 		//如果输入不为空，输出则默认设置为自己
@@ -61,20 +69,25 @@ public:
 		//唤醒输入队列，因为可能在之前阻塞了
 		//在即将失去拥有权时做好释放操作
 		if(_i)
-			_i.exit_wait_resource();
+			_i->exit_wait_resource();
 		
 		if(has_input() && has_output() && this->get_exit_flag()){
 			this->start_thread();
 		}
 	}
 	
+	/**
+	 * @brief set_output
+	 * 设置输出队列，这时，该对象就会默认设置为输入队列
+	 * @param oqueue
+	 */
 	inline void set_output(queue * oqueue) noexcept{
 		if(oqueue == output)
 			return;
 		
 		mutex.lock();
 		//先记录之前的队列情况
-		queue _i = input;
+		queue *_i = input;
 		
 		output = oqueue;
 		input = output != nullptr?this:nullptr;
@@ -83,7 +96,7 @@ public:
 		//唤醒输入队列，因为可能在之前阻塞了
 		//在即将失去拥有权时做好释放操作
 		if(_i)
-			_i.exit_wait_resource();
+			_i->exit_wait_resource();
 		
 		if(has_input() && has_output() && this->get_exit_flag()){
 			this->start_thread();
@@ -115,6 +128,13 @@ protected:
 		}
 	}
 	
+	/**
+	 * @brief deal_pack
+	 * 该函数由子类实现，在该函数实现处理逻辑
+	 * 也可以不实现默认转发
+	 * @param value
+	 * @return 
+	 */
 	virtual typename AbstractQueue<Type>::value_type 
 	deal_pack(typename AbstractQueue<Type>::value_type value) noexcept {
 		return value;
@@ -135,7 +155,6 @@ private:
 	queue			*input{nullptr};
 	queue			*output{nullptr};
 };
-
 
 } // namespace core
 
