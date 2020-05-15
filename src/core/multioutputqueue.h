@@ -12,8 +12,7 @@ namespace core {
  * 这对于需要多个输出来说是致命的，所以需要设计一个多输出接口的队列
  * 编码器编完码之后需要推流的同时也需要保存到本地，就需要多输出队列
  * 
- * @warning 需要注意的是该类本身充当输入，
- * SingleIOQueue是即可以充当输出也可以充当输入，不要搞混定位
+ * 该类可以设置输入接口，然后把该类对象设置为输出，也可以实现多输出
  */
 template<typename Type>
 class MultiOutputQueue : public AbstractQueue<Type>

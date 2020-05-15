@@ -20,6 +20,9 @@ class SingleIOQueue : public AbstractQueue<Type>
 {
 public:
 	SingleIOQueue() {}
+	
+private:
+	
 };
 
 
