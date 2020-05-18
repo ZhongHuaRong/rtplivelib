@@ -19,11 +19,17 @@ enum struct PlayFormat{
 class PlayerEvent{
 public:
 	//单例模式，因为仅在该文件中使用，所以不做限制了
-	static PlayerEvent			EventObject;
+	static std::shared_ptr<PlayerEvent>		EventObject;
 	//该flag用于表示是否可以播放
 	//true则表示可以播放，false则不能播放，因为资源被占用了
 	//在窗口频繁被更改时(拉伸窗口导致频繁resize)不允许播放
 	bool						play_flag{true};
+	
+	//构造函数用于创建线程
+	PlayerEvent();
+	
+	//析构函数用于退出线程并释放资源
+	~PlayerEvent();
 private:
 	//用于控制线程退出的flag
 	bool						thread_flag{false};
@@ -36,12 +42,6 @@ private:
 	static constexpr int64_t	delay{100};
 	
 	static void deal_event(PlayerEvent *obj) noexcept;
-	
-	//构造函数用于创建线程
-	PlayerEvent();
-	
-	//析构函数用于退出线程并释放资源
-	~PlayerEvent();
 };
 
 /**

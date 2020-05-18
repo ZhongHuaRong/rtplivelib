@@ -247,7 +247,7 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 	if(d_ptr->show_screen == nullptr || data ==nullptr)
 		return false;
 	//窗口被锁，不应该继续渲染
-	if(!PlayerEvent::EventObject.play_flag)
+	if(!PlayerEvent::EventObject->play_flag)
 		return false;
 	std::lock_guard<std::mutex> lk(d_ptr->show_mutex);
 #ifndef unix
@@ -288,11 +288,11 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 	}
 	
 	//窗口被锁，不应该继续渲染
-	if(!PlayerEvent::EventObject.play_flag)
+	if(!PlayerEvent::EventObject->play_flag)
 		return false;
 	SDL_RenderClear( d_ptr->renderer );
 	//窗口被锁，不应该继续渲染
-	if(!PlayerEvent::EventObject.play_flag)
+	if(!PlayerEvent::EventObject->play_flag)
 		return false;
 	auto ret = SDL_RenderCopy( d_ptr->renderer, d_ptr->texture, nullptr, d_ptr->show_rect); 
 	if(ret != 0){
@@ -302,7 +302,7 @@ bool VideoPlayer::play(const core::Format& format,uint8_t * data[],int linesize[
 		return false;
 	}
 	//窗口被锁，不应该继续渲染
-	if(!PlayerEvent::EventObject.play_flag)
+	if(!PlayerEvent::EventObject->play_flag)
 		return false;
 	SDL_RenderPresent( d_ptr->renderer );
 	return true;

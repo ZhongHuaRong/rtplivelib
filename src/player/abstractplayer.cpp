@@ -7,7 +7,7 @@ namespace rtplivelib{
 
 namespace player {
 
-PlayerEvent PlayerEvent::EventObject;
+std::shared_ptr<PlayerEvent> PlayerEvent::EventObject;
 
 void PlayerEvent::deal_event(PlayerEvent *obj) noexcept
 {
@@ -73,6 +73,9 @@ PlayerEvent::~PlayerEvent()
 	event_thread = nullptr;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////
+
 AbstractPlayer::AbstractPlayer(PlayFormat format):
 	_play_object(nullptr),
 	_fmt(format)
@@ -89,6 +92,10 @@ AbstractPlayer::AbstractPlayer(PlayFormat format):
 		core::Logger::Print(SDL_GetError(),
 							__PRETTY_FUNCTION__,
 							LogLevel::ERROR_LEVEL);
+	if(PlayerEvent::EventObject == nullptr){
+		auto p = std::make_shared<PlayerEvent>();
+		PlayerEvent::EventObject.swap(p);
+	}
 }
 
 AbstractPlayer::~AbstractPlayer()
@@ -102,8 +109,9 @@ AbstractPlayer::~AbstractPlayer()
 		break;
 	}
 	
-	if(!SDL_WasInit(0))
+	if(!SDL_WasInit(0)){
 		SDL_Quit();
+	}
 }
 
 void AbstractPlayer::set_player_object(core::AbstractQueue<core::FramePacket> *object,

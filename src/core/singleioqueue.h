@@ -69,10 +69,7 @@ public:
 		mutex.unlock();
 		
 		if(!get_thread_pause_condition()){
-			if(this->get_exit_flag())
-				this->start_thread();
-			else
-				this->notify_thread();
+			this->start_thread();
 		}
 	}
 	
@@ -98,10 +95,7 @@ public:
 		mutex.unlock();
 		
 		if(!get_thread_pause_condition()){
-			if(this->get_exit_flag())
-				this->start_thread();
-			else
-				this->notify_thread();
+			this->start_thread();
 		}
 	}
 	
