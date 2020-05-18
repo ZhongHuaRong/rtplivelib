@@ -13,7 +13,7 @@ void PlayerEvent::deal_event(PlayerEvent *obj) noexcept
 {
 	SDL_Event event;
 	while(obj->thread_flag){
-		SDL_PollEvent(&event);
+		SDL_WaitEventTimeout(&event,delay);
 		switch(event.type){
 			case SDL_QUIT:
 				return;
@@ -29,7 +29,7 @@ void PlayerEvent::deal_event(PlayerEvent *obj) noexcept
 						break;
 					default:
 						if(!obj->play_flag){
-							if((core::Time::Now() - obj->lock_time).to_timestamp() > delay){
+							if((core::Time::Now() - obj->lock_time).to_timestamp() >= delay){
 								obj->play_flag = true;
 							}
 						}
