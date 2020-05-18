@@ -18,7 +18,7 @@ namespace core {
 template<typename Type>
 class SingleIOQueue : public AbstractQueue<Type>
 {
-private:
+public:
 	using queue = AbstractQueue<Type>;
 public:
 	SingleIOQueue(){
@@ -37,21 +37,24 @@ public:
 		return this == output;
 	}
 	
-	inline queue get_input() const noexcept{
+	inline queue* get_input() const noexcept{
 		return input;
 	}
 	
-	inline queue get_output() const noexcept{
+	inline queue* get_output() const noexcept{
 		return output;
 	}
 	
 	/**
 	 * @brief set_input
 	 * 设置输入队列，这时，该对象就会默认设置为输出队列
+	 * 当oqueue是空或者自己的时候，如果iqueue是自己，则不处理
 	 * @param iqueue
 	 */
 	inline void set_input(queue * iqueue) noexcept{
 		if(iqueue == input)
+			return;
+		if((output == this || output == nullptr) && iqueue == this)
 			return;
 		
 		//先让他解锁，才能lock
@@ -65,18 +68,24 @@ public:
 		output = input != nullptr?this:nullptr;
 		mutex.unlock();
 		
-		if(has_input() && has_output() && this->get_exit_flag()){
-			this->start_thread();
+		if(!get_thread_pause_condition()){
+			if(this->get_exit_flag())
+				this->start_thread();
+			else
+				this->notify_thread();
 		}
 	}
 	
 	/**
 	 * @brief set_output
 	 * 设置输出队列，这时，该对象就会默认设置为输入队列
+	 * 当iqueue是空或者自己的时候，如果oqueue是自己，则不处理
 	 * @param oqueue
 	 */
 	inline void set_output(queue * oqueue) noexcept{
 		if(oqueue == output)
+			return;
+		if((input == this || input == nullptr) && oqueue == this)
 			return;
 		
 		//先让他解锁，才能lock
@@ -88,8 +97,11 @@ public:
 		input = output != nullptr?this:nullptr;
 		mutex.unlock();
 		
-		if(has_input() && has_output() && this->get_exit_flag()){
-			this->start_thread();
+		if(!get_thread_pause_condition()){
+			if(this->get_exit_flag())
+				this->start_thread();
+			else
+				this->notify_thread();
 		}
 	}
 	
@@ -101,10 +113,6 @@ public:
 		return output != nullptr;
 	}
 protected:
-	/**
-	 * @brief on_thread_run
-	 * 线程运行时需要处理的操作
-	 */
 	inline virtual void on_thread_run() noexcept override final{
 		std::lock_guard<std::mutex> lk(mutex);
 		input->wait_for_resource_push(100);
@@ -127,13 +135,6 @@ protected:
 		return value;
 	}
 	
-	/**
-	 * @brief get_thread_pause_condition
-	 * 该函数用于判断线程是否需要暂停
-	 * @return 
-	 * 返回true则线程睡眠
-	 * 默认是返回true，线程启动即睡眠
-	 */
 	inline virtual bool get_thread_pause_condition() noexcept override final{
 		return input == nullptr || output == nullptr;
 	}

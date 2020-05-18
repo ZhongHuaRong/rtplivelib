@@ -127,7 +127,7 @@ protected:
 	
 	/**
 	 * @brief notify_thread
-	 * 唤醒线程，在线程睡眠时调用
+	 * 唤醒线程，在线程暂停时调用
 	 */
 	void notify_thread() noexcept;
 private:
@@ -137,9 +137,6 @@ private:
 	 * @param flag
 	 */
 	void _set_exit_flag(bool flag) noexcept;
-	
-protected:
-	
 private:
 	volatile bool				_thread_exit_flag;
 	std::thread					*_thread;

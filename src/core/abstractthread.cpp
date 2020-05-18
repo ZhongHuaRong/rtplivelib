@@ -65,8 +65,16 @@ bool AbstractThread::start_thread() noexcept
 	 * 这里说一下我的理解，由于构造类的时候，先初始化父类，再初始化子类，那么在父类初始化的时候，子类并没有初始化，
 	 * 虚函数表vtable并没有更新，导致基类指针调用虚函数还是父类的虚函数，所以在子类开启，线程调用的函数才是多态
 	 */
-	if(_thread)
-		return true;
+	if(_thread){
+//		return true;
+		/**
+		 * 这里做一下修改，如果线程已经存在且暂停条件为false的时候，唤醒线程
+		 */
+		if(!get_thread_pause_condition()){
+			notify_thread();
+			return true;
+		}
+	}
 	_set_exit_flag(false);
 	_thread = new std::thread(&AbstractThread::ThreadCallBackFunction,this);
 	return _thread != nullptr;
