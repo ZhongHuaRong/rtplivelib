@@ -39,9 +39,6 @@ SoundCardCapture::SoundCardCapture() :
 	current_device_info.first = pair.first;
 	current_device_info.second = pair.second;
 #endif
-	
-	/*在子类初始化里开启线程*/
-	start_thread();
 }
 
 SoundCardCapture::~SoundCardCapture() 

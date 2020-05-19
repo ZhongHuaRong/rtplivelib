@@ -82,9 +82,6 @@ DesktopCapture::DesktopCapture() :
 		else
 			current_device_info.second = info.screen_list[0];
 	}
-	
-	/*在子类初始化里开启线程*/
-	start_thread();
 }
 
 DesktopCapture::~DesktopCapture()

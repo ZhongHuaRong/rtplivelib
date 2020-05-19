@@ -48,9 +48,6 @@ CameraCapture::CameraCapture() :
 	}
 	//初始化的时候将设备设置成默认设备
 	set_default_device();
-	
-	/*在子类初始化里开启线程*/
-	start_thread();
 }
 
 CameraCapture::~CameraCapture()

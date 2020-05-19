@@ -59,16 +59,8 @@ void AbstractCapture::start_capture(bool enable) noexcept
 		return;
 	}
 	
-	/*notify需要先解锁再调用，因为线程需要获取锁的使用权*/
-	/*如果程序因为这个原因出错，则取消注释*/
-	//		_mutex->lock();
 	_is_running_flag = true;
-	//		_mutex->unlock();
-	/*如果线程启动了，则唤醒线程处理，否则自己处理*/
-	if(!get_exit_flag())
-		notify_thread();
-	else
-		on_start();
+	start_thread();
 }
 
 /**
@@ -77,9 +69,6 @@ void AbstractCapture::start_capture(bool enable) noexcept
   */
 void AbstractCapture::stop_capture() noexcept
 {
-	/*只需设置标志位.其实已经设置了volatile标志了,没必要上锁了*/
-	/*如果程序因为这个原因出错，则取消注释*/
-	//		std::lock_guard<std::mutex> lk(*_mutex);
 	_is_running_flag = false;
 	core::Logger::Print_APP_Info(core::Result::Device_stop_capture,
 								 __PRETTY_FUNCTION__,
