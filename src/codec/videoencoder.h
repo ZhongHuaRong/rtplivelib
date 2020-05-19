@@ -93,8 +93,10 @@ private:
 	 * 根据当前情况选择编码器
 	 * @param packet
 	 * 将要编码的包信息
+	 * @return 
+	 * 软硬编码器都初始化失败则返回false，此时不应该继续编码
 	 */
-	void _select_encoder(const core::FramePacket::SharedPacket& packet) noexcept;
+	bool _select_encoder(const core::FramePacket::SharedPacket& packet) noexcept;
 	
 	/**
 	 * @brief _set_hw_encoder_ctx
@@ -108,7 +110,7 @@ private:
 	 * @brief _set_sw_encoder_ctx
 	 * 设置编码器上下文并打开软压相关的编码器
 	 */
-	void _set_sw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept;
+	bool _set_sw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept;
 	
 	/**
 	 * @brief _close_ctx

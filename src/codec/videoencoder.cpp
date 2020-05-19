@@ -63,7 +63,11 @@ void VideoEncoder::encode(core::FramePacket::SharedPacket packet) noexcept
 		}
 	}
 	
-	_select_encoder(packet);
+	if(_select_encoder(packet) == false){
+		set_encoder_type(Encoder::None);
+		_close_ctx();
+		return;
+	}
 	
 	//在这里判断编码器上下文是否初始化成功，不成功则直接返回
 	if(encoder_ctx ==nullptr || avcodec_is_open(encoder_ctx) == 0)
@@ -283,20 +287,27 @@ inline bool VideoEncoder::_init_hwdevice(HardwareDevice::HWDType hwdtype,const c
 	return true;
 }
 
-inline void VideoEncoder::_select_encoder(const core::FramePacket::SharedPacket &packet) noexcept
+inline bool VideoEncoder::_select_encoder(const core::FramePacket::SharedPacket &packet) noexcept
 {
+	//如果编码器未设置，则返回false
+	if(enc_type_user == EncoderType::None)
+		return false;
 	//使用硬件加速时的初始化方案
 	if(use_hw_flag == false || _set_hw_encoder_ctx(packet) == false){
 		//硬件初始化失败的话，转为纯CPU操作
 		set_hardware_acceleration(false,HardwareDevice::None);
-		_set_sw_encoder_ctx(packet);
+		if(hwd_type_cur != HardwareDevice::None){
+			_close_ctx();
+		}
+		return _set_sw_encoder_ctx(packet);
 	}
+	return true;
 }
 
 bool VideoEncoder::_set_hw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept
 {
-	//只要用户不设置，直返回false
-	if( hwd_type_user == HardwareDevice::None || enc_type_user == EncoderType::None)
+	//只要用户不设置，直接返回false进入软编
+	if( hwd_type_user == HardwareDevice::None)
 		return false;
 	//如果用户设置了，但是是和当前使用的一样，不操作直接返回true
 	else if( hwd_type_cur == hwd_type_user ){
@@ -367,7 +378,7 @@ bool VideoEncoder::_set_hw_encoder_ctx(const core::FramePacket::SharedPacket &pa
 	return false;
 }
 
-void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept
+bool VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket::SharedPacket &packet) noexcept
 {
 	
 	//根据输入的图像格式和帧率来决定编码器的上下文
@@ -375,12 +386,12 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket::SharedPacket &pa
 	//		if(format == dst_format && format.frame_rate == dst_format.frame_rate)
 	//为了减少重启次数，先暂时不判断帧率，只判断格式
 	if(format == packet->format)
-		return;
+		return true;
 	if(packet->format.frame_rate <= 0){
 		core::Logger::Print_APP_Info(core::Result::Codec_frame_rate_must_more_than_zero,
 									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
-		return;
+		return false;
 	}
 	
 	_close_ctx();
@@ -402,10 +413,10 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket::SharedPacket &pa
 		core::Logger::Print_APP_Info(core::Result::Codec_encoder_not_found,
 									 __PRETTY_FUNCTION__,
 									 LogLevel::WARNING_LEVEL);
-		return;
+		return false;
 	}
 	if(encoder_ctx == nullptr || encoder == nullptr){
-		return;
+		return false;
 	}
 	
 	set_encoder_param(packet->format);
@@ -425,6 +436,7 @@ void VideoEncoder::_set_sw_encoder_ctx(const core::FramePacket::SharedPacket &pa
 	
 	format = packet->format;
 	scale_ctx->set_default_output_format(format.width,format.height,AV_PIX_FMT_YUV420P);
+	return true;
 }
 
 void VideoEncoder::_close_ctx() noexcept
@@ -437,7 +449,7 @@ void VideoEncoder::_close_ctx() noexcept
 	}
 	//重置硬件加速方案
 	hwd_type_cur = HardwareDevice::None;
-	enc_type_cur = EncoderType::Auto;
+	enc_type_cur = EncoderType::None;
 	//重置格式，以便关闭上下文后，用同样的格式也会重新开启上下文
 	format = core::Format();
 	_free_frame();
