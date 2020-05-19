@@ -12,13 +12,13 @@ AudioProcessingFactory::AudioProcessingFactory(
 	mc_ptr(mc),
 	sc_ptr(sc)
 {
-	start_thread();
 }
 
 AudioProcessingFactory::~AudioProcessingFactory()
 {
 	set_capture(false,false);
 	exit_thread();
+	exit_wait_resource();
 	
 	if(player != nullptr)
 		delete player;
@@ -76,9 +76,8 @@ void AudioProcessingFactory::set_capture(bool microphone,bool soundcard) noexcep
 		}
 	}
 	
-	/*唤醒线程*/
-	/*这里不需要检查条件，因为在唤醒的时候会自己检查条件*/
-	notify_thread();
+	if(!get_thread_pause_condition())
+		start_thread();
 }
 
 void AudioProcessingFactory::play_microphone_audio(bool flag) noexcept

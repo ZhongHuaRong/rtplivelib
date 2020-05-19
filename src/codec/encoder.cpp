@@ -36,6 +36,7 @@ Encoder::~Encoder()
 {
 	set_input_queue(nullptr);
 	exit_thread();
+	exit_wait_resource();
 }
 
 bool Encoder::set_encoder_name(const char *codec_name) noexcept

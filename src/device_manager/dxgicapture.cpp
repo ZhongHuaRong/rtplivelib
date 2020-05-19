@@ -295,6 +295,7 @@ DXGICapture::DXGICapture():
 DXGICapture::~DXGICapture()
 {
 	exit_thread();
+	exit_wait_resource();
 	delete d_ptr;
 }
 
@@ -392,14 +393,7 @@ bool DXGICapture::start(int time_space) noexcept
 	d_ptr->time_space = time_space;
 	
 	_is_running_flag = true;
-	if(get_exit_flag()){
-		return start_thread();
-	} else {
-		notify_thread();
-		//防止外部调用正在使用read_packet接口
-		exit_wait_resource();
-	}
-	return true;
+	return start_thread();
 }
 
 bool DXGICapture::stop() noexcept

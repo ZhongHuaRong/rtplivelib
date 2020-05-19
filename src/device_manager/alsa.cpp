@@ -25,15 +25,13 @@ public:
 ALSA::ALSA():
 	d_ptr(new ALSAPrivateData())
 {
-	/*在子类初始化里开启线程*/
-	start_thread();
 }
 
 ALSA::~ALSA()
 {
 	stop();
-	exit_wait_resource();
 	exit_thread();
+	exit_wait_resource();
 	if(d_ptr->params != nullptr)
 		snd_pcm_hw_params_free(d_ptr->params);
 	delete d_ptr;
@@ -93,7 +91,7 @@ bool ALSA::set_current_device(uint64_t num, ALSA::FlowType ft) noexcept
 bool ALSA::set_current_device(const std::string &name, ALSA::FlowType ft) noexcept
 {
 	UNUSED(ft)
-			stop();
+	stop();
 	std::lock_guard<decltype(d_ptr->mutex)> lk(d_ptr->mutex);
 	d_ptr->current_name = name;
 	return true;
@@ -231,9 +229,7 @@ bool ALSA::start() noexcept
 	//设置缓冲区大小
 	d_ptr->buffer_size = d_ptr->frames * d_ptr->format.bits / 8 * d_ptr->format.channels;
 	_is_running_flag = true;
-	notify_thread();
-	//防止外部调用正在使用read_packet接口
-	exit_wait_resource();
+	start_thread();
 	return true;
 }
 

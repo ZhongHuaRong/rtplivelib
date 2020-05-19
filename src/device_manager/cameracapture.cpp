@@ -54,6 +54,7 @@ CameraCapture::~CameraCapture()
 {
 	stop_capture();
 	exit_thread();
+	exit_wait_resource();
 	av_packet_free(&d_ptr->packet);
 	delete d_ptr;
 }

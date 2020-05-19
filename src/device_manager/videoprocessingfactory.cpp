@@ -138,13 +138,13 @@ VideoProcessingFactory::VideoProcessingFactory(
 	d_ptr->scale_format_current.bits = 12;
 	d_ptr->scale_format_current.width = 1920;
 	d_ptr->scale_format_current.height = 1080;
-	start_thread();
 }
 
 VideoProcessingFactory::~VideoProcessingFactory()
 {
 	set_capture(false,false);
 	exit_thread();
+	exit_wait_resource();
 	if(crop != nullptr)
 		delete crop;
 	delete d_ptr;
@@ -221,9 +221,8 @@ void VideoProcessingFactory::set_capture(bool camera, bool desktop) noexcept
 		}
 	}
 	
-	/*唤醒线程*/
-	/*这里不需要检查条件，因为在唤醒的时候会自己检查条件*/
-	notify_thread();
+	if(!get_thread_pause_condition())
+		start_thread();
 }
 
 void VideoProcessingFactory::set_fps(int value) noexcept
