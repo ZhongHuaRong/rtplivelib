@@ -28,7 +28,8 @@ Encoder::Encoder(Encoder::Queue *queue,
 {
 	set_hardware_acceleration(use_hw_acceleration,hwa_type);
 	set_encoder_type(enc_type);
-	start_thread();
+	if(!get_thread_pause_condition())
+		start_thread();
 }
 
 Encoder::~Encoder()
@@ -55,6 +56,8 @@ void Encoder::set_encoder_type(const Encoder::EncoderType type) noexcept
 	}
 	
 	enc_type_user = type;
+	if(!get_thread_pause_condition())
+		start_thread();
 }
 
 std::string Encoder::get_encoder_name() const noexcept

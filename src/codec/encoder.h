@@ -240,7 +240,7 @@ inline void Encoder::set_input_queue(Encoder::Queue * input_queue) noexcept	{
 	_queue = input_queue;
 	if(_q != nullptr)
 		_q->exit_wait_resource();
-	if(_queue != nullptr)
+	if(!get_thread_pause_condition())
 		start_thread();
 	
 }
