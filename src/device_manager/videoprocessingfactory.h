@@ -170,7 +170,7 @@ private:
 
 inline device_manager::CameraCapture *VideoProcessingFactory::get_camera_capture_object() noexcept			{		return cc_ptr;}
 inline device_manager::DesktopCapture *VideoProcessingFactory::get_desktop_capture_object() noexcept		{		return dc_ptr;}
-inline void VideoProcessingFactory::notify_capture() noexcept												{		this->notify_thread();}
+inline void VideoProcessingFactory::notify_capture() noexcept												{		this->start_thread();}
 
 } // namespace device_manager
 
