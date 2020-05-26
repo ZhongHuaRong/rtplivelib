@@ -10,17 +10,14 @@ namespace core {
 
 /**
  * @brief The AbstractQueue class
- * 该类实现了队列的基本操作，继承于AbstractThread
- * 虽然这个类没有实现AbstractThread的接口，
- * 但是理论上来说队列的等待资源和获取资源是异步操作的
- * 所以继承thread类，只要不调用start_thread就不是异步操作了
+ * 该类实现了队列的基本操作,所有接口都是线程安全
  * 
  * 模板第一个参数是对象类型
  * 该模板使用智能指针作为基本对象，智能指针的类型为Type
  * 拒绝使用裸指针作为参数
  */
 template<typename Type>
-class AbstractQueue : public AbstractThread
+class AbstractQueue
 {
 public:
 	using value_type			= std::shared_ptr<Type>;
@@ -31,10 +28,10 @@ public:
 	using queue					= std::queue<value_type>;
 public:
 	AbstractQueue():
-		_max_size(10u)
+		_max_size(30u)
 	{	}
 	
-	virtual ~AbstractQueue() override{
+	virtual ~AbstractQueue() {
 		clear();
 	}
 	
