@@ -93,9 +93,8 @@ HEADERS += \
     src/core/abstractqueue.h \
     src/core/abstractthread.h \
     src/core/config.h \
-    src/core/multioutputqueue.h \
+    src/core/nodequeue.h \
     src/core/releasefunction.h \
-    src/core/singleioqueue.h \
     src/player/abstractplayer.h \
     src/core/format.h \
     src/device_manager/abstractcapture.h \
