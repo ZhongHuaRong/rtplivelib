@@ -41,7 +41,7 @@ public:
 	
 	/**
 	 * @brief get_thread_id
-	 * 获取线程ｉｄ
+	 * 获取线程id
 	 * @return 
 	 */
 	std::thread::id get_thread_id() noexcept;
@@ -124,6 +124,12 @@ protected:
 	void sleep(int milliseconds) noexcept;
 	
 	/**
+	 * @brief yield
+	 * 当前线程让出时间片
+	 */
+	void yield() noexcept;
+	
+	/**
 	 * @brief notify_thread
 	 * 唤醒线程，在线程暂停时调用
 	 */
@@ -156,6 +162,10 @@ inline std::thread::id AbstractThread::get_thread_id() noexcept				{
 inline void AbstractThread::sleep(int milliseconds) noexcept				{
 	std::chrono::milliseconds dura(milliseconds);
 	std::this_thread::sleep_for(dura);
+}
+
+inline void AbstractThread::yield() noexcept								{
+	std::this_thread::yield();
 }
 inline void AbstractThread::on_thread_run()noexcept							{		}
 inline void AbstractThread::on_thread_pause()noexcept						{		}
