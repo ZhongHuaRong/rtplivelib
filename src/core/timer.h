@@ -3,7 +3,6 @@
 
 #include "abstractthread.h"
 #include "logger.h"
-#include "except.h"
 
 namespace rtplivelib {
 
@@ -38,20 +37,13 @@ public:
 		_loop_flag = flag;
 	}
 	
-	inline void set_wait_time(int millisecond) noexcept(false) {
-		if(millisecond <= 0){
-			throw std::invalid_argument(MessageString[int(core::Result::Timer_time_less_than_zero)]);
-		}
+	inline void set_wait_time(uint32_t millisecond) noexcept {
 		_wait_time = millisecond;
 	}
 	
-	inline void start(int millisecond) noexcept(false) {
-		try {
-			set_wait_time(millisecond);
-			start();
-		} catch (const std::invalid_argument& except) {
-			throw except;
-		}
+	inline void start(uint32_t millisecond) noexcept {
+		set_wait_time(millisecond);
+		start();
 	}
 	
 	inline void start() noexcept {
@@ -87,13 +79,13 @@ protected:
 	}
 	
 	virtual bool get_thread_pause_condition() noexcept override{
-		return _wait_time <= 0 || _start_flag == false;
+		return _start_flag == false;
 	}
 private:
 	std::function<void ()>			_cb;
 	std::condition_variable			_wait_cond_var;
 	std::mutex						_mutex;
-	volatile int					_wait_time{0};
+	volatile uint32_t				_wait_time{0};
 	volatile bool					_loop_flag{false};
 	volatile bool					_start_flag{false};
 };

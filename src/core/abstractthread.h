@@ -47,18 +47,6 @@ public:
 	std::thread::id get_thread_id() noexcept;
 	
 	/**
-	 * @brief sleep
-	 * 线程睡眠，单位毫秒
-	 * 备注:这里出现了点问题，之前好像理解错了
-	 * 现在的效果是哪个线程调用该函数哪个线程睡眠
-	 * @warning 
-	 * 线程未启动的话，该函数不起作用
-	 * @param milliseconds
-	 * 睡眠多少毫秒
-	 */
-	void sleep(int milliseconds) noexcept;
-	
-	/**
 	 * @brief ThreadCallBackFunction
 	 * 启动线程时的初始化步骤,外部不要调用这个接口，其实调用也没有问题，只是读取步骤是阻塞的
 	 * (请不要主线程调用该接口)
@@ -126,6 +114,16 @@ protected:
 	virtual bool get_thread_pause_condition() noexcept;
 	
 	/**
+	 * @brief sleep
+	 * 当前线程睡眠，单位毫秒
+	 * @warning 
+	 * 线程未启动的话，该函数不起作用
+	 * @param milliseconds
+	 * 睡眠多少毫秒
+	 */
+	void sleep(int milliseconds) noexcept;
+	
+	/**
 	 * @brief notify_thread
 	 * 唤醒线程，在线程暂停时调用
 	 */
@@ -156,8 +154,6 @@ inline std::thread::id AbstractThread::get_thread_id() noexcept				{
 	return _thread->get_id();
 }
 inline void AbstractThread::sleep(int milliseconds) noexcept				{
-	if(get_exit_flag())
-		return;
 	std::chrono::milliseconds dura(milliseconds);
 	std::this_thread::sleep_for(dura);
 }
