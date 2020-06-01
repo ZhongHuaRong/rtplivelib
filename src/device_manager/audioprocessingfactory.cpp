@@ -18,7 +18,6 @@ AudioProcessingFactory::~AudioProcessingFactory()
 {
 	set_capture(false,false);
 	exit_thread();
-	exit_wait_resource();
 	
 	if(player != nullptr)
 		delete player;
@@ -96,43 +95,43 @@ void AudioProcessingFactory::on_thread_run() noexcept
 	else if( mc_ptr != nullptr&& mc_ptr->is_running() ){
 		//只开麦克风
 		//添加等待，防止循环消耗资源
-		if(mc_ptr->wait_for_resource_push(100) == false){
-			return;
-		}
-		auto packet = mc_ptr->get_next();
-		if(packet == nullptr)
-			return;
-		//第一时间回调
-		if(GlobalCallBack::Get_CallBack() != nullptr){
-			GlobalCallBack::Get_CallBack()->on_microphone_packet(packet);
-		}
+//		if(mc_ptr->wait_for_resource_push(100) == false){
+//			return;
+//		}
+//		auto packet = mc_ptr->get_next();
+//		if(packet == nullptr)
+//			return;
+//		//第一时间回调
+//		if(GlobalCallBack::Get_CallBack() != nullptr){
+//			GlobalCallBack::Get_CallBack()->on_microphone_packet(packet);
+//		}
 		
-		if(play_flag == true){
-			if(player == nullptr){
-				player = new (std::nothrow)player::AudioPlayer;
-			}
-			if(player!= nullptr){
-				player->play(packet);
-			}
-		}
-		push_one(packet);
-		return;
-	}
-	else if(sc_ptr != nullptr && sc_ptr->is_running()){
-		//只开声卡
-		//添加等待，防止循环消耗资源
-		if(sc_ptr->wait_for_resource_push(100) == false){
-			return;
-		}
-		auto packet =sc_ptr->get_next();
-		if(packet == nullptr)
-			return;
+//		if(play_flag == true){
+//			if(player == nullptr){
+//				player = new (std::nothrow)player::AudioPlayer;
+//			}
+//			if(player!= nullptr){
+//				player->play(packet);
+//			}
+//		}
+//		push_one(packet);
+//		return;
+//	}
+//	else if(sc_ptr != nullptr && sc_ptr->is_running()){
+//		//只开声卡
+//		//添加等待，防止循环消耗资源
+//		if(sc_ptr->wait_for_resource_push(100) == false){
+//			return;
+//		}
+//		auto packet =sc_ptr->get_next();
+//		if(packet == nullptr)
+//			return;
 		
-		//裁剪后回调
-		if(GlobalCallBack::Get_CallBack() != nullptr){
-			GlobalCallBack::Get_CallBack()->on_soundcard_packet(packet);
-		}
-		push_one(packet);
+//		//裁剪后回调
+//		if(GlobalCallBack::Get_CallBack() != nullptr){
+//			GlobalCallBack::Get_CallBack()->on_soundcard_packet(packet);
+//		}
+//		push_one(packet);
 		return;
 	}
 	else{

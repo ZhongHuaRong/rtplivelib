@@ -144,7 +144,6 @@ VideoProcessingFactory::~VideoProcessingFactory()
 {
 	set_capture(false,false);
 	exit_thread();
-	exit_wait_resource();
 	if(crop != nullptr)
 		delete crop;
 	delete d_ptr;

@@ -2,7 +2,7 @@
 #pragma once
 
 #include "../core/config.h"
-#include "../core/abstractqueue.h"
+#include "../core/taskthread.h"
 #include "../core/format.h"
 #define WIN32_LEAN_AND_MEAN
 #include <mmdeviceapi.h>
@@ -21,7 +21,7 @@ namespace device_manager {
  * 该类操作都是线程安全
  */
 class WASAPI :
-		public core::AbstractQueue<core::FramePacket>
+		public core::TaskThread
 {
 public:
 	enum FlowType{

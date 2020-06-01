@@ -19,7 +19,7 @@ class VideoProcessingFactoryPrivateData;
  * 这个类会提供原始数据回调，让外部调用可以做数据前处理
  */
 class  RTPLIVELIBSHARED_EXPORT VideoProcessingFactory :
-		public core::AbstractQueue<core::FramePacket>
+		public core::TaskThread
 {
 public:
 	/**

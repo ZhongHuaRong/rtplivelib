@@ -31,7 +31,6 @@ ALSA::~ALSA()
 {
 	stop();
 	exit_thread();
-	exit_wait_resource();
 	if(d_ptr->params != nullptr)
 		snd_pcm_hw_params_free(d_ptr->params);
 	delete d_ptr;
@@ -285,7 +284,11 @@ void ALSA::on_thread_run() noexcept
 	//获取时间戳
 	packet->dts = core::Time::Now().to_timestamp();
 	packet->pts = packet->dts;
-	push_one(packet);
+	
+	std::lock_guard<decltype (list_mutex)> lk2(list_mutex);
+	for(auto ptr: output_list){
+		ptr->push_one(packet);
+	}
 }
 
 } // namespace device_manager

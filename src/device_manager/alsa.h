@@ -2,7 +2,7 @@
 #pragma once
 
 #include "../core/config.h"
-#include "../core/abstractqueue.h"
+#include "../core/taskthread.h"
 #include "../core/format.h"
 
 namespace rtplivelib {
@@ -18,7 +18,7 @@ class ALSAPrivateData;
  * 目前在Deepin系统采集到的声音是静音，有待完善
  */
 class ALSA :
-		public core::AbstractQueue<core::FramePacket>
+		public core::TaskThread
 {
 public:
 	enum FlowType{

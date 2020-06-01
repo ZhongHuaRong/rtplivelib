@@ -42,6 +42,7 @@ WASAPI::WASAPI()
 	event = CreateEvent(nullptr, false, false, nullptr);
 #endif
 	
+	TaskThread::set_IO_type(TaskThread::OnlyOutput);
 	start_thread();
 }
 
@@ -50,7 +51,6 @@ WASAPI::~WASAPI()
 	if(is_start()){
 		stop();
 	}
-	exit_wait_resource();
 	exit_thread();
 	SafeRelease()(&pEnumerator);
 	SafeRelease()(&pDevice);
@@ -266,9 +266,7 @@ bool WASAPI::start() noexcept
 	}
 	
 	_is_running_flag = true;
-	notify_thread();
-	//防止外部调用正在使用read_packet接口
-	exit_wait_resource();
+	start_thread();
 	return true;
 }
 
@@ -391,7 +389,10 @@ void WASAPI::on_thread_run() noexcept
 			//获取时间戳
 			packet->dts = core::Time::Now().to_timestamp();
 			packet->pts = packet->dts;
-			push_one(packet);
+			std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+			for(auto ptr: output_list){
+				ptr->push_one(packet);
+			}
 		}
 	}
 }

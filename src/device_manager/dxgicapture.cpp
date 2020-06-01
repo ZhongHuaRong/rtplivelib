@@ -290,12 +290,12 @@ public:
 DXGICapture::DXGICapture():
 	d_ptr(new DXGIPrivate())
 {
+	TaskThread::set_IO_type(TaskThread::OnlyOutput);
 }
 
 DXGICapture::~DXGICapture()
 {
 	exit_thread();
-	exit_wait_resource();
 	delete d_ptr;
 }
 
@@ -407,7 +407,11 @@ void DXGICapture::on_thread_run() noexcept
 	sleep(d_ptr->time_space);
 	if(!_is_running_flag || get_exit_flag())
 		return;
-	this->push_one(d_ptr->get_packet());
+	auto packet = d_ptr->get_packet();
+	std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+	for(auto ptr: output_list){
+		ptr->push_one(packet);
+	}
 }
 
 

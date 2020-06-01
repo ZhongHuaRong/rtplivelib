@@ -23,6 +23,7 @@ public:
 	
 #ifdef WIN64
 	DXGICapture capture;
+	core::TaskQueue input_queue;
 #endif
 };
 
@@ -75,6 +76,10 @@ DesktopCapture::DesktopCapture() :
 		current_device_info.second = current_device_info.first;
 	#endif
 	} else {
+		
+		//关联dxgi和desktop capture
+		d_ptr->capture.add_output_queue(&d_ptr->input_queue);
+		
 		auto info = d_ptr->capture.get_current_device_info();
 		current_device_info.first = "0";
 		if(info.screen_list.size() == 0)
@@ -87,8 +92,12 @@ DesktopCapture::DesktopCapture() :
 DesktopCapture::~DesktopCapture()
 {
 	stop_capture();
+	d_ptr->capture.clear_output_queue();
 	exit_thread();
 	av_packet_free(&d_ptr->packet);
+	if(d_ptr->fmtContxt != nullptr){
+		avformat_close_input(&d_ptr->fmtContxt);
+	}
 	delete d_ptr;
 }
 
@@ -260,8 +269,8 @@ AbstractCapture::SharedPacket DesktopCapture::on_start() noexcept
 			}
 		}
 		
-		d_ptr->capture.wait_resource_push();
-		auto packet = d_ptr->capture.get_next();
+		d_ptr->input_queue.wait_resource_push();
+		auto packet = d_ptr->input_queue.get_next();
 		if(packet != nullptr){
 			packet->format.frame_rate = _fps;
 		}

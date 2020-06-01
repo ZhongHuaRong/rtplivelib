@@ -17,7 +17,7 @@ class DXGIPrivate;
  * Win10的话有可能是其他格式
  */
 class DXGICapture:
-        public core::AbstractQueue<core::FramePacket>
+		public core::TaskThread
 {
 public:
 	using device_list = std::vector<GPUInfo>;

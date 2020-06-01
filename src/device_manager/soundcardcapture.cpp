@@ -21,6 +21,7 @@ public:
 	ALSA audio_api;
 	static constexpr ALSA::FlowType FT{ALSA::RENDER};
 #endif
+	core::TaskQueue input_queue;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,11 +40,15 @@ SoundCardCapture::SoundCardCapture() :
 	current_device_info.first = pair.first;
 	current_device_info.second = pair.second;
 #endif
+	
+	d_ptr->audio_api.add_output_queue(&d_ptr->input_queue);
 }
 
 SoundCardCapture::~SoundCardCapture() 
 {
 	d_ptr->audio_api.stop();
+	stop_capture();
+	d_ptr->audio_api.clear_output_queue();
 	exit_thread();
 	delete d_ptr;
 }
@@ -115,7 +120,8 @@ AbstractCapture::SharedPacket SoundCardCapture::on_start()  noexcept
 		}
 	}
 	
-	return d_ptr->audio_api.get_next();
+	d_ptr->input_queue.wait_resource_push();
+	return d_ptr->input_queue.get_next();
 }
 
 /**
