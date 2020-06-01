@@ -33,6 +33,8 @@ public:
 	TaskThread() {}
 	
 	virtual ~TaskThread(){
+		clear_input_queue();
+		clear_output_queue();
 	}
 	
 	inline void add_input_queue(TaskQueue * queue) noexcept{
@@ -68,6 +70,9 @@ public:
 		
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
 		input_list.erase(i);
+		
+		//需要离开等待资源，否则可能存在线程阻塞的情况
+		queue->exit_wait_resource();
 	}
 	
 	inline void remove_output_queue(TaskQueue * queue) noexcept{
@@ -77,9 +82,20 @@ public:
 		
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
 		output_list.erase(i);
+	}
+	
+	inline void clear_input_queue() noexcept{
+		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+		for(auto i = input_list.begin();i != input_list.end();++i){
+			(*i)->exit_wait_resource();
+		}
+		input_list.clear();
+	}
+	
+	inline void clear_output_queue() noexcept{
+		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+		output_list.clear();
 		
-		//需要离开等待资源，否则可能存在线程阻塞的情况
-		queue->exit_wait_resource();
 	}
 	
 	inline IOType get_IO_type() const noexcept{
