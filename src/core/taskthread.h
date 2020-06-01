@@ -44,6 +44,7 @@ public:
 			return;
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
 		input_list.push_back(queue);
+		queue->set_output_thread(this);
 	}
 	
 	inline void add_output_queue(TaskQueue * queue) noexcept{
@@ -53,6 +54,7 @@ public:
 			return;
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
 		output_list.push_back(queue);
+		queue->set_input_thread(this);
 	}
 	
 	inline bool contain_input_queue(TaskQueue * queue) noexcept{
@@ -71,6 +73,7 @@ public:
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
 		input_list.erase(i);
 		
+		queue->set_output_thread(nullptr);
 		//需要离开等待资源，否则可能存在线程阻塞的情况
 		queue->exit_wait_resource();
 	}
@@ -81,12 +84,14 @@ public:
 			return;
 		
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+		queue->set_input_thread(nullptr);
 		output_list.erase(i);
 	}
 	
 	inline void clear_input_queue() noexcept{
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
 		for(auto i = input_list.begin();i != input_list.end();++i){
+			(*i)->set_output_thread(nullptr);
 			(*i)->exit_wait_resource();
 		}
 		input_list.clear();
@@ -94,6 +99,9 @@ public:
 	
 	inline void clear_output_queue() noexcept{
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+		for(auto i = input_list.begin();i != input_list.end();++i){
+			(*i)->set_input_thread(nullptr);
+		}
 		output_list.clear();
 		
 	}
