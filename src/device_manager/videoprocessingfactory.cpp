@@ -1,7 +1,6 @@
 #include "videoprocessingfactory.h"
 
 #include <algorithm>
-#include "../player/videoplayer.h"
 #include "../core/time.h"
 #include "../core/logger.h"
 extern "C" {
@@ -28,41 +27,18 @@ namespace device_manager {
  */
 class VideoProcessingFactoryPrivateData{
 public:
-	//因为该类处理视频时，只有注册回调才能获取到数据
-	//所以内部设置播放器用于播放
-	player::VideoPlayer *player{nullptr};
-	core::AbstractQueue<core::FramePacket> *player_queue{nullptr};
-	std::mutex player_mutex;
 	//转换格式用的结构体
 	core::Format scale_format_current;
 	core::Format scale_format_privious;
 	//重叠用的结构体
 	//FRect overlay_rect;
-	//	std::mutex overlay_mutex;
+	//std::mutex overlay_mutex;
 	//保存上一帧
 	core::FramePacket::SharedPacket privious_camera_frame;
 	core::FramePacket::SharedPacket privious_desktop_frame;
 	//上一秒的时间戳，采用1秒多少张图片来判断每秒帧数
 	int64_t privious_ts{0};
 	uint8_t count{0};
-	
-	///////////////////////
-	//转换格式用的上下文
-	
-	~VideoProcessingFactoryPrivateData(){
-		release_player();
-	}
-	
-	inline void release_player() noexcept{
-		if(player != nullptr) {
-			delete player;
-			player = nullptr;
-		}
-		if(player_queue != nullptr){
-			delete player_queue;
-			player_queue = nullptr;
-		}
-	}
 	
 	/**
 	 * @brief get_latest_frame
@@ -123,11 +99,7 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-VideoProcessingFactory::VideoProcessingFactory(
-		device_manager::CameraCapture *cc,
-		device_manager::DesktopCapture *dc):
-	cc_ptr(cc),
-	dc_ptr(dc),
+VideoProcessingFactory::VideoProcessingFactory():
 	d_ptr(new VideoProcessingFactoryPrivateData)
 {
 	//	d_ptr->overlay_rect.x = 0.6f;
@@ -142,33 +114,12 @@ VideoProcessingFactory::VideoProcessingFactory(
 
 VideoProcessingFactory::~VideoProcessingFactory()
 {
-	set_capture(false,false);
+	this->clear_input_queue();
+	this->clear_output_queue();
 	exit_thread();
 	if(crop != nullptr)
 		delete crop;
 	delete d_ptr;
-}
-
-bool VideoProcessingFactory::set_camera_capture_object(
-		device_manager::CameraCapture *cc) noexcept
-{
-	if(get_thread_pause_condition()){
-		cc_ptr = cc;
-		return true;
-	}
-	else
-		return false;
-}
-
-bool VideoProcessingFactory::set_desktop_capture_object(
-		device_manager::DesktopCapture *dc) noexcept
-{
-	if(get_thread_pause_condition()){
-		dc_ptr = dc;
-		return true;
-	}
-	else
-		return false;
 }
 
 void VideoProcessingFactory::set_crop_rect(const image_processing::Rect &rect) noexcept
@@ -190,108 +141,8 @@ void VideoProcessingFactory::set_overlay_rect(const image_processing::FRect &rec
 	//	d_ptr->overlay_rect = rect;
 }
 
-void VideoProcessingFactory::set_capture(bool camera, bool desktop) noexcept
-{
-	if(cc_ptr !=nullptr){
-		/*如果标志位和原来不一致才会执行下一步*/
-		if(camera != cc_ptr->is_running()){
-			/*开启捕捉*/
-			if(camera){
-				cc_ptr->start_capture();
-			}
-			/*关闭*/
-			else{
-				cc_ptr->stop_capture();
-			}
-		}
-	}
-	
-	if(dc_ptr != nullptr){
-		/*如果标志位和原来不一致才会执行下一步*/
-		if(desktop != dc_ptr->is_running()){
-			/*开启捕捉*/
-			if(desktop){
-				dc_ptr->start_capture();
-			}
-			/*关闭*/
-			else{
-				dc_ptr->stop_capture();
-			}
-		}
-	}
-	
-	if(!get_thread_pause_condition())
-		start_thread();
-}
-
-void VideoProcessingFactory::set_fps(int value) noexcept
-{
-	if(cc_ptr)
-		cc_ptr->set_fps(value);
-	if(dc_ptr)
-		dc_ptr->set_fps(value);
-}
-
-void VideoProcessingFactory::set_display_win_id(void *id) noexcept
-{
-	std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
-	if(id == nullptr) {
-		if(d_ptr->player != nullptr) {
-			delete d_ptr->player;
-			d_ptr->player = nullptr;
-		}
-		else
-			return;
-	}
-	else {
-		if(d_ptr->player == nullptr) {
-			d_ptr->player = new (std::nothrow)player::VideoPlayer;
-		}
-		if(d_ptr->player_queue == nullptr){
-			d_ptr->player_queue = new (std::nothrow)core::AbstractQueue<core::FramePacket>;
-		}
-		if(d_ptr->player != nullptr)
-			d_ptr->player->set_player_object(d_ptr->player_queue,id);
-	}
-}
-
-void VideoProcessingFactory::set_display_screen_size(const int &win_w,const int &win_h,
-													 const int &frame_w,const int& frame_h) noexcept
-{
-	std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
-	if(d_ptr->player == nullptr){
-		return;
-	}
-	d_ptr->player->show_screen_size_changed(win_w,win_h,frame_w,frame_h);
-}
-
 void VideoProcessingFactory::on_thread_run() noexcept
 {
-	/**
-	 * 在这里说明一下该线程的流程
-	 * 对象实例生成后，处于等待状态，调用set_camera_capture_object
-	 * 和set_desktop_capture_object设置捕捉类(需要线程暂停才可以设置)，
-	 * 然后set_capture传入true开始捕捉，如果是外部调用捕捉类的start_capture接口
-	 * 要使用notify_thread唤醒线程
-	 * 
-	 * 可以通过外部捕捉类的stop_capture来停止捕捉，该线程就会自动停止(参考
-	 * get_thread_pause_condition接口),也可以通过set_capture传入false来
-	 * 暂停线程
-	 * 
-	 * 当然，只要有一个捕捉类正在运行，则编码就会继续
-	 * 
-	 * 在这里分成三种情况来处理
-	 * 只开摄像头，只开桌面，双开
-	 * 
-	 * 一开始则是先获取桌面帧，并设置等待时间，等待时间为一帧大概时间，然后获取
-	 * 摄像头帧，等待时间为一帧大概时间-桌面帧等待时间(等待时间通过最大帧率决定)
-	 * 帧率可以通过外部调用捕捉类的set_fps接口，也可以用该类的set_fps统一设置
-	 * 
-	 * 最近测试得知，桌面捕捉启动后，首帧获取需要大约83ms(Linux测试的)
-	 * 摄像头则需要300ms(也是Linux系统测试的),硬件参数也会有所干扰，
-	 * 刚开始捕捉时大约前5帧是空帧，没有任何数据,空循环来的,
-	 * 这里需要注意一下
-	 */
 	using namespace core;
 	
 	if(cc_ptr != nullptr&& cc_ptr->is_running() &&
@@ -400,25 +251,9 @@ void VideoProcessingFactory::on_thread_run() noexcept
 	}
 }
 
-void VideoProcessingFactory::on_thread_pause() noexcept
-{
-	//继续处理队列剩余的数据
-	if( dc_ptr != nullptr ){
-		dc_ptr->get_latest();
-	}
-	
-	if( cc_ptr != nullptr){
-		cc_ptr->get_latest();
-	}
-}
-
 bool VideoProcessingFactory::get_thread_pause_condition() noexcept
 {
-	if(cc_ptr == nullptr && dc_ptr == nullptr){
-		return true;
-	}
-	return !( ( cc_ptr != nullptr && cc_ptr->is_running() ) ||
-			  ( dc_ptr != nullptr && dc_ptr->is_running() ) );
+	return input_list.empty();
 }
 
 core::FramePacket::SharedPacket VideoProcessingFactory::_merge_frame(

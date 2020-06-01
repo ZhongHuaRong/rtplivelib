@@ -38,7 +38,7 @@ public:
 	}
 	
 	inline void add_input_queue(TaskQueue * queue) noexcept{
-		if(io_type == OnlyOutput)
+		if(io_type == OnlyOutput || queue == nullptr)
 			return;
 		if(contain_input_queue(queue))
 			return;
@@ -48,7 +48,7 @@ public:
 	}
 	
 	inline void add_output_queue(TaskQueue * queue) noexcept{
-		if(io_type == OnlyInput)
+		if(io_type == OnlyInput || queue == nullptr)
 			return;
 		if(contain_output_queue(queue))
 			return;
@@ -90,11 +90,13 @@ public:
 	
 	inline void clear_input_queue() noexcept{
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
-		for(auto i = input_list.begin();i != input_list.end();++i){
-			(*i)->set_output_thread(nullptr);
-			(*i)->exit_wait_resource();
+		TaskQueue *ptr;
+		for(auto i = input_list.begin();i != input_list.end();i = input_list.begin()){
+			ptr = (*i);
+			input_list.pop_front();
+			ptr->set_output_thread(nullptr);
+			ptr->exit_wait_resource();
 		}
-		input_list.clear();
 	}
 	
 	inline void clear_output_queue() noexcept{

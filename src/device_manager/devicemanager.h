@@ -3,6 +3,7 @@
 
 #include "videoprocessingfactory.h"
 #include "audioprocessingfactory.h"
+#include "../player/videoplayer.h"
 
 namespace rtplivelib {
 
@@ -13,6 +14,8 @@ namespace device_manager{
  * 该类负责统一所有捕捉类，并且封装一层很简单的接口
  * 具体详细的操作可以通过获取具体对象来处理
  * 也就是很多接口并没有再封装一层，只能通过获取设备对象来处理
+ * 
+ * 该类实现的接口推荐使用该接口，封装了一层额外做了一些工作，不建议使用对象的接口
  */
 class RTPLIVELIBSHARED_EXPORT DeviceManager 
 {
@@ -213,6 +216,11 @@ private:
 	bool						sc_open_flag;
 	bool						video_open_flag;
 	bool						audio_open_flag;
+	
+	player::VideoPlayer			video_player;
+	player::AudioPlayer			audio_player;
+	core::TaskQueue				video_player_queue;
+	core::TaskQueue				audio_player_queue;
 };
 
 inline bool DeviceManager::desktop_capture_is_open() noexcept					{	return desktop_open_flag;		}
