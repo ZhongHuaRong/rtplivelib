@@ -21,7 +21,7 @@ namespace device_manager {
  * 该类也会提供原始音频数据获取接口，让外部调用可以做数据前处理
  */
 class RTPLIVELIBSHARED_EXPORT AudioProcessingFactory:
-		public core::AbstractQueue<core::FramePacket>
+		public core::TaskThread
 {
 public:
 	/**

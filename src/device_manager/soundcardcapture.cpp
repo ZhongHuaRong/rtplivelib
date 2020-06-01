@@ -45,7 +45,6 @@ SoundCardCapture::~SoundCardCapture()
 {
 	d_ptr->audio_api.stop();
 	exit_thread();
-	exit_wait_resource();
 	delete d_ptr;
 }
 

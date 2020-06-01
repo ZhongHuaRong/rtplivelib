@@ -29,7 +29,7 @@ AbstractCapture::AbstractCapture(CaptureType type) noexcept:
 	_type(type),
 	_is_running_flag(false)
 {
-	
+	TaskThread::set_IO_type(TaskThread::OnlyOutput);
 }
 
 /**
@@ -88,7 +88,10 @@ void AbstractCapture::on_thread_run() noexcept
 	/*如果有子类重写on_frame_data函数并返回false，则不加入队列*/
 	/*这里不判断包是否为空*/
 	if(this->on_frame_data(packet)){
-		this->push_one(packet);
+		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+		for(auto ptr: output_list){
+			ptr->push_one(packet);
+		}
 	}
 }
 
