@@ -14,9 +14,9 @@ namespace core {
  * 对于局部变量的释放会变得很方便
  * 符合RAII思想
  */
-template <typename Function>
 struct ReleaseFunction{
 public:
+	template <typename Function>
 	ReleaseFunction(Function func):
 		function(func)
 	{

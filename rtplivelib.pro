@@ -95,6 +95,7 @@ HEADERS += \
     src/core/config.h \
     src/core/taskqueue.h \
     src/core/releasefunction.h \
+    src/core/taskthread.h \
     src/player/abstractplayer.h \
     src/core/format.h \
     src/device_manager/abstractcapture.h \

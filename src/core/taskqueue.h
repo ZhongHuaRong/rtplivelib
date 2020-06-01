@@ -33,6 +33,15 @@ public:
 		return output;
 	}
 private:
+	//提供接口给Thread设置
+	inline void set_input_thread(TaskThread* task) noexcept{
+		input = task;
+	}
+	
+	inline void set_output_thread(TaskThread* task) noexcept{
+		output = task;
+	}
+private:
 	TaskThread				*input{nullptr};
 	TaskThread				*output{nullptr};
 	
