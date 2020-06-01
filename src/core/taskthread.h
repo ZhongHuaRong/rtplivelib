@@ -20,12 +20,24 @@ namespace core {
 class TaskThread : public AbstractThread
 {
 public:
+	//该线程的输入输出类型
+	//默认InputAndOutput具备输入输出
+	//OnlyInput只有输入队列，没有输出队列
+	//OnlyOutput只有输出队列，没有输入队列
+	enum IOType{
+		OnlyInput = 1,
+		OnlyOutput,
+		InputAndOutput
+	};
+public:
 	TaskThread() {}
 	
 	virtual ~TaskThread(){
 	}
 	
 	inline void add_input_queue(TaskQueue * queue) noexcept{
+		if(io_type == OnlyOutput)
+			return;
 		if(contain_input_queue(queue))
 			return;
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
@@ -33,6 +45,8 @@ public:
 	}
 	
 	inline void add_output_queue(TaskQueue * queue) noexcept{
+		if(io_type == OnlyInput)
+			return;
 		if(contain_output_queue(queue))
 			return;
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
@@ -67,6 +81,10 @@ public:
 		//需要离开等待资源，否则可能存在线程阻塞的情况
 		queue->exit_wait_resource();
 	}
+	
+	inline IOType get_IO_type() const noexcept{
+		return io_type;
+	}
 protected:
 	inline bool _contain_queue(TaskQueue * queue,const std::list<TaskQueue*> &list) noexcept{
 		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
@@ -87,10 +105,17 @@ protected:
 		
 		return list.end();
 	}
-private:
+	
+	inline void set_IO_type(IOType type) noexcept{
+		io_type = type;
+	}
+	
+protected:
 	std::list<TaskQueue*>			input_list;
 	std::list<TaskQueue*>			output_list;
 	std::mutex						list_mutex;
+private:
+	IOType							io_type{InputAndOutput};
 };
 
 
