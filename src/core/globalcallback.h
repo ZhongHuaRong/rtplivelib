@@ -22,39 +22,18 @@ public:
 	virtual ~GlobalCallBack(){}
 	
 	/**
-	 * @brief on_camera_frame
-	 * 摄像头画面帧的回调,该帧是没有经过任何处理的
-	 * @param frame
-	 */
-	virtual void on_camera_frame(core::FramePacket::SharedPacket frame);
-	
-	/**
-	 * @brief on_desktop_frame
-	 * 桌面画面帧的回调,该帧是没有经过任何处理的
-	 * @param frame
-	 */
-	virtual void on_desktop_frame(core::FramePacket::SharedPacket frame);
-	
-	/**
 	 * @brief on_video_frame_merge
-	 * 桌面以及摄像头画面合成后的图像帧回调
+	 * 图像帧回调
 	 * @param frame
 	 */
-	virtual void on_video_frame_merge(core::FramePacket::SharedPacket frame);
+	virtual void on_video_frame(core::FramePacket::SharedPacket frame);
 	
 	/**
-	 * @brief on_microphone_packet
-	 * 麦克风的音频包回调
+	 * @brief on_audio_packet
+	 * 音频包回调
 	 * @param packet
 	 */
-	virtual void on_microphone_packet(core::FramePacket::SharedPacket packet);
-	
-	/**
-	 * @brief on_soundcard_packet
-	 * 声卡采集的音频包回调
-	 * @param packet
-	 */
-	virtual void on_soundcard_packet(core::FramePacket::SharedPacket packet);
+	virtual void on_audio_packet(core::FramePacket::SharedPacket packet);
 	
 	/**
 	 * @brief on_video_real_time_fps
@@ -126,11 +105,8 @@ private:
 	static GlobalCallBack * cb_ptr;
 };
 
-inline void GlobalCallBack::on_camera_frame(core::FramePacket::SharedPacket )						{}
-inline void GlobalCallBack::on_desktop_frame(core::FramePacket::SharedPacket )						{}
-inline void GlobalCallBack::on_video_frame_merge(core::FramePacket::SharedPacket )					{}
-inline void GlobalCallBack::on_microphone_packet(core::FramePacket::SharedPacket )					{}
-inline void GlobalCallBack::on_soundcard_packet(core::FramePacket::SharedPacket )					{}
+inline void GlobalCallBack::on_video_frame(core::FramePacket::SharedPacket )						{}
+inline void GlobalCallBack::on_audio_packet(core::FramePacket::SharedPacket )						{}
 inline void GlobalCallBack::on_video_real_time_fps(uint8_t)											{}
 inline void GlobalCallBack::on_new_user_join(const std::string& )									{}
 inline void GlobalCallBack::on_user_exit(const std::string& ,
