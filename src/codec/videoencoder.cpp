@@ -204,7 +204,11 @@ void VideoEncoder::receive_packet() noexcept
 		
 		//让退出循环时不要释放掉该packet
 		src_packet = nullptr;
-		this->push_one(dst_packet);
+		
+		std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+		for(auto ptr: output_list){
+			ptr->push_one(dst_packet);
+		}
 	}
 	
 	if(src_packet != nullptr)

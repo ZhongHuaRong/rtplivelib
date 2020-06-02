@@ -47,11 +47,11 @@ void RTPUser::deal_with_packet(RTPPacket::SharedRTPPacket rtp_packet) noexcept
 	case RTPSession::PayloadType::RTP_PT_H264:
 	case RTPSession::PayloadType::RTP_PT_VP9:
 		fec_ptr = &_vfecdecoder;
-		decoder_ptr = &_vdecoder;
+//		decoder_ptr = &_vdecoder;
 		break;
 	case RTPSession::PayloadType::RTP_PT_AAC:
 		fec_ptr = &_afecdecoder;
-		decoder_ptr = &_adecoder;
+//		decoder_ptr = &_adecoder;
 		break;
 	default:
 		return;

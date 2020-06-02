@@ -277,7 +277,7 @@ void AudioEncoder::receive_packet() noexcept
 		
 		//让退出循环时不要释放掉该packet
 		src_packet = nullptr;
-		this->push_one(dst_packet);
+//		this->push_one(dst_packet);
 	}
 	
 	if(src_packet != nullptr)

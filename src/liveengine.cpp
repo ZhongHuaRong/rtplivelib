@@ -26,6 +26,8 @@ public:
 	rtp_network::RTPRecvThread * const rtp_recv;
 	rtp_network::RTPUserManager * const rtp_user;
 	
+	core::TaskQueue						video_encoder_output_queue;
+	
 	/**
 	 * @brief LiveEnginePrivateData
 	 * 初始化
@@ -75,23 +77,24 @@ LiveEngine::LiveEngine():
 	
 	/*在初始化的时候，关联所有类,让其可以正常工作*/
 	//设置视频输入队列，输入队列为device的video_factory
-	d_ptr->video_encoder->set_input_queue(device->get_video_factory());
-	d_ptr->video_encoder->set_max_size(60);
-	device->get_video_factory()->set_max_size(60);
+	d_ptr->video_encoder->set_input_queue(&device->video_factory_output_queue);
+	d_ptr->video_encoder->add_output_queue(&d_ptr->video_encoder_output_queue);
+	device->video_factory_output_queue.set_max_size(60);
+	d_ptr->video_encoder_output_queue.set_max_size(60);
 	
 	//设置音频输入队列，输入队列为device的audio_factory
-	d_ptr->audio_encoder->set_input_queue(device->get_audio_factory());
-	d_ptr->audio_encoder->set_max_size(30);
+//	d_ptr->audio_encoder->set_input_queue(device->get_audio_factory());
+//	d_ptr->audio_encoder->set_max_size(30);
 	
 	//设置接口,只需要一个发送线程即可
 	//因为RTPSession不是线程安全的，所以设置到发送线程RTPSendThread后
 	//需要调用RTPSendThread的接口设置参数，而不能直接使用RTPSession类
 	//视频设置
 	d_ptr->rtp_send->set_video_session(d_ptr->video_session);
-	d_ptr->rtp_send->set_video_send_queue(d_ptr->video_encoder);
+//	d_ptr->rtp_send->set_video_send_queue(d_ptr->video_encoder_output_queue);
 	//音频设置
 	d_ptr->rtp_send->set_audio_session(d_ptr->audio_session);
-	d_ptr->rtp_send->set_audio_send_queue(d_ptr->audio_encoder);
+//	d_ptr->rtp_send->set_audio_send_queue(d_ptr->audio_encoder);
 	
 	//AbstractQueue是线程安全的，所以只需要一个接收线程处理即可
 	d_ptr->video_session->set_rtp_recv_object(d_ptr->rtp_recv);

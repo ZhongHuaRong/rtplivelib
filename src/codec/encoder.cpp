@@ -13,8 +13,7 @@ namespace codec {
 
 Encoder::Encoder(bool use_hw_acceleration,
 				 HardwareDevice::HWDType hwa_type,
-				 EncoderType enc_type):
-	_queue(nullptr)
+				 EncoderType enc_type)
 {
 	set_hardware_acceleration(use_hw_acceleration,hwa_type);
 	set_encoder_type(enc_type);
@@ -23,9 +22,9 @@ Encoder::Encoder(bool use_hw_acceleration,
 Encoder::Encoder(Encoder::Queue *queue,
 				 bool use_hw_acceleration,
 				 HardwareDevice::HWDType hwa_type,
-				 EncoderType enc_type):
-	_queue(queue)
+				 EncoderType enc_type)
 {
+	set_input_queue(queue);
 	set_hardware_acceleration(use_hw_acceleration,hwa_type);
 	set_encoder_type(enc_type);
 	if(!get_thread_pause_condition())
@@ -36,7 +35,6 @@ Encoder::~Encoder()
 {
 	set_input_queue(nullptr);
 	exit_thread();
-	exit_wait_resource();
 }
 
 bool Encoder::set_encoder_name(const char *codec_name) noexcept
@@ -86,6 +84,11 @@ void Encoder::set_hardware_acceleration(bool flag,HardwareDevice::HWDType hwa_ty
 {
 	use_hw_flag = flag;
 	hwd_type_user = hwa_type;
+}
+
+inline void Encoder::add_input_queue(core::TaskQueue *queue) noexcept
+{
+	core::TaskThread::add_input_queue(queue);
 }
 
 bool Encoder::create_encoder(const char *name) noexcept
@@ -156,15 +159,8 @@ void Encoder::close_encoder() noexcept
 
 void Encoder::on_thread_run() noexcept
 {
-	if(_queue == nullptr){
-		return;
-	}
-	
+	auto _queue = input_list.front();
 	_queue->wait_for_resource_push(16);
-	std::lock_guard<std::mutex> lk(_queue_mutex);
-	if(_queue == nullptr){
-		return;
-	}
 	//循环这里只判断指针
 	while(_queue->has_data()){
 		auto pack = _queue->get_next();
@@ -186,7 +182,7 @@ void Encoder::on_thread_pause() noexcept
 
 bool Encoder::get_thread_pause_condition() noexcept
 {
-	return _queue == nullptr || enc_type_user == EncoderType::None;
+	return !has_input_queue() || enc_type_user == EncoderType::None;
 }
 
 

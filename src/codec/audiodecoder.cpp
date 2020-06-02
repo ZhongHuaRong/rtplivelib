@@ -334,20 +334,20 @@ void AudioDecoder::on_thread_run() noexcept
 {
 	//等待资源到来
 	//100ms检查一次
-	this->wait_for_resource_push(100);
+//	this->wait_for_resource_push(100);
 	
-	while(has_data()){
-		auto pack = get_next();
-		if(pack == nullptr)
-			continue;
-		if(pack->second != nullptr && pack->second->data != nullptr){
-			pack->second->data->mutex.lock();
-			d_ptr->deal_with_pack(*pack);
-			pack->second->data->mutex.unlock();
-		} else
-			//空的数据包也是有用处的
-			d_ptr->deal_with_pack(*pack);
-	}
+//	while(has_data()){
+//		auto pack = get_next();
+//		if(pack == nullptr)
+//			continue;
+//		if(pack->second != nullptr && pack->second->data != nullptr){
+//			pack->second->data->mutex.lock();
+//			d_ptr->deal_with_pack(*pack);
+//			pack->second->data->mutex.unlock();
+//		} else
+//			//空的数据包也是有用处的
+//			d_ptr->deal_with_pack(*pack);
+//	}
 }
 
 } // namespace codec

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../core/abstractqueue.h"
+#include "../core/taskthread.h"
 #include "../core/format.h"
 #include "../rtp_network/rtpsession.h"
 #include "../player/abstractplayer.h"
@@ -18,7 +18,8 @@ class AudioDecoderPrivateData;
  * 音频解码类
  */
 class RTPLIVELIBSHARED_EXPORT AudioDecoder :
-		public core::AbstractQueue<std::pair<rtp_network::RTPSession::PayloadType,std::shared_ptr<core::FramePacket>>>
+//		public core::AbstractQueue<std::pair<rtp_network::RTPSession::PayloadType,std::shared_ptr<core::FramePacket>>>
+		public core::TaskThread
 {
 public:
 	using Packet = std::pair<rtp_network::RTPSession::PayloadType,std::shared_ptr<core::FramePacket>>;

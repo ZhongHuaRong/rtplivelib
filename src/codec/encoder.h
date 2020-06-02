@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../core/abstractqueue.h"
+#include "../core/taskthread.h"
 #include "../core/format.h"
 #include "../rtp_network/rtpsession.h"
 #include "hardwaredevice.h"
@@ -22,10 +22,10 @@ namespace codec {
  * 因为所有编码设置都是自动设置好的，不需要提供外部接口，上锁会影响效率，暂时不考虑线程安全
  */
 class RTPLIVELIBSHARED_EXPORT Encoder : 
-		public core::AbstractQueue<core::FramePacket>
+		public core::TaskThread
 {
 public:
-	using Queue = core::AbstractQueue<core::FramePacket>;
+	using Queue = core::TaskQueue;
 	
 	/**
 	 * @brief The CodecType enum
@@ -151,6 +151,8 @@ public:
 	 */
 	const Queue * get_input_queue() const noexcept;
 protected:
+	void add_input_queue(core::TaskQueue * queue) noexcept;
+	
 	/**
 	 * @brief encode
 	 * 子类需要实现这个接口
@@ -228,24 +230,17 @@ protected:
 	rtp_network::RTPSession::PayloadType	payload_type{rtp_network::RTPSession::PayloadType::RTP_PT_NONE};
 	//编码器同步锁
 	std::recursive_mutex					encoder_mutex;
-private:
-	Queue									*_queue;
-	std::mutex								_queue_mutex;
 };
 
 
 inline void Encoder::set_input_queue(Encoder::Queue * input_queue) noexcept	{
-	std::lock_guard<std::mutex> lk(_queue_mutex);
-	auto _q = _queue;
-	_queue = input_queue;
-	if(_q != nullptr)
-		_q->exit_wait_resource();
+	add_input_queue(input_queue);
 	if(!get_thread_pause_condition())
 		start_thread();
 	
 }
-inline bool Encoder::has_input_queue() const noexcept						{		return _queue != nullptr;}
-inline const Encoder::Queue * Encoder::get_input_queue() const noexcept		{		return _queue;}
+inline bool Encoder::has_input_queue() const noexcept						{		return !input_list.empty();}
+inline const Encoder::Queue * Encoder::get_input_queue() const noexcept		{		return input_list.front();}
 inline HardwareDevice::HWDType Encoder::get_hwa_type() const noexcept		{		return hwd_type_cur;}
 
 } // namespace codec

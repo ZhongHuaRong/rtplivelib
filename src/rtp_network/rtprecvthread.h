@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../core/abstractqueue.h"
+#include "../core/taskthread.h"
 #include "rtppacket.h"
 
 namespace rtplivelib {
@@ -11,7 +11,8 @@ namespace rtp_network {
 class RTPRecvThreadPrivateData;
 
 class RTPLIVELIBSHARED_EXPORT RTPRecvThread:
-		public core::AbstractQueue<RTPPacket>
+//		public core::AbstractQueue<RTPPacket>
+		public core::TaskThread
 {
 public:
 	RTPRecvThread();

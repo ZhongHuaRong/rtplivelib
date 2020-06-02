@@ -51,7 +51,7 @@ protected:
 			return;
 		}
 		//rtp包就交给接收线程处理
-		recv_obj->push_one(RTPPacket::Make_Shared(rtppack,srcdat));
+//		recv_obj->push_one(RTPPacket::Make_Shared(rtppack,srcdat));
 	}
 	
 	virtual void OnRTCPCompoundPacket(jrtplib::RTCPCompoundPacket *pack,

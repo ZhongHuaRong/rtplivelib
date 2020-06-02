@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../core/abstractqueue.h"
+#include "../core/taskthread.h"
 #include "../core/format.h"
 #include "../rtp_network/rtpsession.h"
 #include "../player/videoplayer.h"
@@ -22,7 +22,8 @@ class VideoDecoderPrivateData;
  * 当所有方案都不行的时候，将会软解，软解的话，速度性能都跟不上
  */
 class RTPLIVELIBSHARED_EXPORT VideoDecoder :
-		public core::AbstractQueue<std::pair<rtp_network::RTPSession::PayloadType,std::shared_ptr<core::FramePacket>>>
+//		public core::AbstractQueue<std::pair<rtp_network::RTPSession::PayloadType,std::shared_ptr<core::FramePacket>>>
+		public core::TaskThread
 {
 public:
 	using Packet = std::pair<rtp_network::RTPSession::PayloadType,std::shared_ptr<core::FramePacket>>;
