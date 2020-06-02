@@ -27,9 +27,6 @@ namespace device_manager {
  */
 class VideoProcessingFactoryPrivateData{
 public:
-	//转换格式用的结构体
-	core::Format scale_format_current;
-	core::Format scale_format_privious;
 	//重叠用的结构体
 	//FRect overlay_rect;
 	//std::mutex overlay_mutex;
@@ -59,31 +56,32 @@ public:
 															const int &wait_time) {
 		
 		//等待一个帧的时间
-		if(caputre->wait_for_resource_push(wait_time)){
-			//超时前获取到帧(也可能是队列本来就有帧，没有等待即返回)
-			//这里不采取特别措施，只获取最后一帧
-			privious_frame = caputre->get_latest();
-			return privious_frame;
-		}
-		else {
-			if(privious_frame == nullptr){
-				//如果连上一帧都没有，则返回空
-				//一般在设备刚启动的时候，会比较慢，获取到的是空
-				return core::FramePacket::SharedPacket(nullptr);
-			}
-			auto new_packet{core::FramePacket::Make_Shared()};
-			if(new_packet == nullptr)
-				return new_packet;
-			*new_packet = *privious_frame;
-			//然后修改pts和dts,为了保险起见，减6ms
-			auto time = static_cast<int64_t>(wait_time - 6);
-			//不能让time小于等于0
-			new_packet->pts +=  (time <= 0 ? 1:time)* 1000;
-			new_packet->dts = privious_frame->pts;
+//		if(caputre->wait_for_resource_push(wait_time)){
+//			//超时前获取到帧(也可能是队列本来就有帧，没有等待即返回)
+//			//这里不采取特别措施，只获取最后一帧
+//			privious_frame = caputre->get_latest();
+//			return privious_frame;
+//		}
+//		else {
+//			if(privious_frame == nullptr){
+//				//如果连上一帧都没有，则返回空
+//				//一般在设备刚启动的时候，会比较慢，获取到的是空
+//				return core::FramePacket::SharedPacket(nullptr);
+//			}
+//			auto new_packet{core::FramePacket::Make_Shared()};
+//			if(new_packet == nullptr)
+//				return new_packet;
+//			*new_packet = *privious_frame;
+//			//然后修改pts和dts,为了保险起见，减6ms
+//			auto time = static_cast<int64_t>(wait_time - 6);
+//			//不能让time小于等于0
+//			new_packet->pts +=  (time <= 0 ? 1:time)* 1000;
+//			new_packet->dts = privious_frame->pts;
 			
-			privious_frame = new_packet;
-			return new_packet;
-		}
+//			privious_frame = new_packet;
+//			return new_packet;
+//		}
+		return privious_frame;
 	}
 	
 	inline void on_real_time_fps(int64_t ts) noexcept{
@@ -105,11 +103,6 @@ VideoProcessingFactory::VideoProcessingFactory():
 	//	d_ptr->overlay_rect.x = 0.6f;
 	//	d_ptr->overlay_rect.y = 0.7f;
 	//	d_ptr->overlay_rect.width = 0.3f;
-	
-	d_ptr->scale_format_current.pixel_format = AV_PIX_FMT_YUV420P;
-	d_ptr->scale_format_current.bits = 12;
-	d_ptr->scale_format_current.width = 1920;
-	d_ptr->scale_format_current.height = 1080;
 }
 
 VideoProcessingFactory::~VideoProcessingFactory()
@@ -145,78 +138,31 @@ void VideoProcessingFactory::on_thread_run() noexcept
 {
 	using namespace core;
 	
-	if(cc_ptr != nullptr&& cc_ptr->is_running() &&
-			dc_ptr != nullptr && dc_ptr->is_running()){
-		//双开,使用的较少，因为桌面1080P需要优化，所以这里
-		//优化会推迟一点
-		int32_t wait_time;
-		wait_time = cc_ptr->get_fps() > dc_ptr->get_fps() ?
-					cc_ptr->get_fps():dc_ptr->get_fps();
-		wait_time = 1000 / wait_time;
-		
-		auto before_time = Time::Now();
-		auto camera_frame = d_ptr->get_latest_frame(cc_ptr,d_ptr->privious_camera_frame,wait_time);
-		auto desktop_frame =d_ptr->get_latest_frame(dc_ptr,d_ptr->privious_desktop_frame,
-													wait_time - 
-													static_cast<int32_t>( (Time::Now() - before_time).to_timestamp() ));
-		
-		//裁剪的判断
-		bool is_crop;
-		if( crop == nullptr){
-			is_crop = false;
-		}
-		else {
-			auto rect = crop->get_crop_rect();
-			is_crop = rect.width != 0 && rect.height != 0;
-		}
-		
-		if( is_crop ) {
-			auto new_frame = core::FramePacket::Make_Shared();
-			if (crop->crop(new_frame,desktop_frame) != core::Result::Success)
-				return;
-			desktop_frame = new_frame;
-		}
-		
-		//判断合成
-		if(camera_frame != nullptr && desktop_frame != nullptr){
-			//合成图像,接口暂时置空不处理
-			auto merge_packet = _merge_frame(camera_frame,desktop_frame);
-			if(merge_packet == nullptr)
-				return;
-			//回调合成图像
-			if(GlobalCallBack::Get_CallBack() != nullptr){
-				GlobalCallBack::Get_CallBack()->on_video_frame_merge(merge_packet);
-				d_ptr->on_real_time_fps(merge_packet->pts);
-			}
-			std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
-			if(d_ptr->player != nullptr)
-				d_ptr->player_queue->push_one(merge_packet);
-			push_one(merge_packet);
-		}
-	}
-	else if( cc_ptr != nullptr&& cc_ptr->is_running() ){
-		//只开摄像头
-		auto packet = d_ptr->get_latest_frame(cc_ptr,d_ptr->privious_camera_frame,
-											  1000 / cc_ptr->get_fps());
-		if(packet == nullptr)
-			return;
-		//第一时间回调
-		if(GlobalCallBack::Get_CallBack() != nullptr){
-			GlobalCallBack::Get_CallBack()->on_camera_frame(packet);
-			d_ptr->on_real_time_fps(packet->pts);
-		}
-		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
-		if(d_ptr->player != nullptr)
-			d_ptr->player_queue->push_one(packet);
-		push_one(packet);
+	auto size = this->input_list.size();
+	FramePacket::SharedPacket packet{nullptr};
+	switch(size){
+	case 0:
 		return;
-	}
-	else if(dc_ptr != nullptr && dc_ptr->is_running()){
-		//只开桌面
-		auto packet =d_ptr->get_latest_frame(dc_ptr,d_ptr->privious_desktop_frame,
-											 1000 / dc_ptr->get_fps());
-		if(packet == nullptr)
-			return;
+	case 1:
+	{
+		{
+			std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+			auto input = this->input_list.begin();
+			//判断一下是否为空
+			if(input == this->input_list.end())
+				return;
+			
+			//超时未获取到帧
+			if(!(*input)->wait_for_resource_push(1000))
+				return;
+			
+			packet = (*input)->get_next();
+			auto packet = (*input)->get_next();
+			
+			if(packet == nullptr){
+				return;
+			}
+		}
 		
 		bool is_crop;
 		if( crop == nullptr){
@@ -233,21 +179,53 @@ void VideoProcessingFactory::on_thread_run() noexcept
 				return;
 			packet = new_frame;
 		}
-		//裁剪后回调
-		if(GlobalCallBack::Get_CallBack() != nullptr){
-			GlobalCallBack::Get_CallBack()->on_desktop_frame(packet);
-			d_ptr->on_real_time_fps(packet->pts);
-		}
-		
-		std::lock_guard<std::mutex> lk(d_ptr->player_mutex);
-		if(d_ptr->player != nullptr)
-			d_ptr->player_queue->push_one(packet);
-		push_one(packet);
-		return;
 	}
-	else{
-		//都不开，直接返回暂停
-		return;
+		break;
+	default:
+	{
+		//多开
+//		auto before_time = Time::Now();
+//		auto camera_frame = d_ptr->get_latest_frame(cc_ptr,d_ptr->privious_camera_frame,wait_time);
+//		auto desktop_frame =d_ptr->get_latest_frame(dc_ptr,d_ptr->privious_desktop_frame,
+//													wait_time - 
+//													static_cast<int32_t>( (Time::Now() - before_time).to_timestamp() ));
+		
+//		//裁剪的判断
+//		bool is_crop;
+//		if( crop == nullptr){
+//			is_crop = false;
+//		}
+//		else {
+//			auto rect = crop->get_crop_rect();
+//			is_crop = rect.width != 0 && rect.height != 0;
+//		}
+		
+//		if( is_crop ) {
+//			auto new_frame = core::FramePacket::Make_Shared();
+//			if (crop->crop(new_frame,desktop_frame) != core::Result::Success)
+//				return;
+//			desktop_frame = new_frame;
+//		}
+		
+//		//判断合成
+//		if(camera_frame != nullptr && desktop_frame != nullptr){
+//			//合成图像,接口暂时置空不处理
+//			packet = _merge_frame(camera_frame,desktop_frame);
+//		}
+		break;
+	}
+	}
+	
+	//回调和统计帧数
+	if(GlobalCallBack::Get_CallBack() != nullptr){
+		GlobalCallBack::Get_CallBack()->on_video_frame(packet);
+		d_ptr->on_real_time_fps(packet->pts);
+	}
+	
+	//输出
+	std::lock_guard<decltype (list_mutex)> lk(list_mutex);
+	for(auto ptr: output_list){
+		ptr->push_one(packet);
 	}
 }
 

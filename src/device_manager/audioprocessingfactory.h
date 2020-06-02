@@ -122,6 +122,8 @@ private:
 	//用时初始化
 	player::AudioPlayer							*player{nullptr};
 	volatile bool								play_flag{false};
+	
+	friend class DeviceManager;
 };
 
 inline device_manager::MicrophoneCapture *AudioProcessingFactory::get_microphone_capture_object() noexcept		{		return mc_ptr;}

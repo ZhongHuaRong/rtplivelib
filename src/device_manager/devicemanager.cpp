@@ -13,14 +13,31 @@ DeviceManager::DeviceManager() :
 	sc_open_flag(false),
 	audio_open_flag(false)
 {
-	video_factory.set_camera_capture_object(&camera_capture);
-	video_factory.set_desktop_capture_object(&desktop_capture);
-	audio_factory.set_microphone_capture_object(&mic_capture);
-	audio_factory.set_soundcard_capture_object(&soundcard_capture);
+	desktop_capture.add_output_queue(&desktop_output_queue);
+	camera_capture.add_output_queue(&camera_output_queue);
+	mic_capture.add_output_queue(&mic_output_queue);
+	soundcard_capture.add_output_queue(&soundcard_output_queue);
+	
+	video_factory.add_output_queue(&video_factory_output_queue);
+	video_factory.add_output_queue(&video_player_queue);
+	
+	audio_factory.add_output_queue(&audio_factory_output_queue);
+	audio_factory.add_output_queue(&audio_player_queue);
+	
+//	video_factory.add_input_queue(&camera_output_queue);
+//	video_factory.add_input_queue(&desktop_output_queue);
+//	audio_factory.add_input_queue(&mic_output_queue);
+//	audio_factory.add_input_queue(&soundcard_output_queue);
 	set_fps(15);
 }
 
 DeviceManager::~DeviceManager() {
+//	video_factory.clear_input_queue();
+//	video_factory.clear_output_queue();
+//	video_factory.notify_thread();
+//	audio_factory.clear_input_queue();
+//	audio_factory.clear_output_queue();
+//	audio_factory.notify_thread();
 }
 
 /**
@@ -34,11 +51,16 @@ DeviceManager::~DeviceManager() {
  */
 void DeviceManager::set_desktop_capture_enable(bool enable) {
 	desktop_open_flag = enable;
-	if (enable)
+	if (enable){
 		desktop_capture.start_capture(is_capture_video());
-	else
+		video_factory.add_input_queue(&desktop_output_queue);
+		
+	}
+	else {
 		desktop_capture.stop_capture();
-	video_factory.notify_capture();
+		video_factory.remove_input_queue(&desktop_output_queue);
+	}
+	video_factory.start_thread();
 }
 
 /**
@@ -52,11 +74,15 @@ void DeviceManager::set_desktop_capture_enable(bool enable) {
  */
 void DeviceManager::set_camera_capture_enable(bool enable) {
 	camera_open_flag = enable;
-	if (enable)
+	if (enable) {
 		camera_capture.start_capture(is_capture_video());
-	else
+		video_factory.add_input_queue(&camera_output_queue);
+	}
+	else {
 		camera_capture.stop_capture();
-	video_factory.notify_capture();
+		video_factory.remove_input_queue(&camera_output_queue);
+	}
+	video_factory.start_thread();
 }
 
 /**
@@ -74,7 +100,7 @@ void DeviceManager::set_microphone_enable(bool enable) {
 		mic_capture.start_capture(is_capture_audio());
 	else
 		mic_capture.stop_capture();
-	audio_factory.notify_capture();
+	audio_factory.notify_thread();
 }
 
 /**
@@ -92,7 +118,7 @@ void DeviceManager::set_sound_card_enable(bool enable) {
 		soundcard_capture.start_capture(is_capture_audio());
 	else
 		soundcard_capture.stop_capture();
-	audio_factory.notify_capture();
+	audio_factory.notify_thread();
 }
 
 /**
@@ -102,8 +128,9 @@ void DeviceManager::set_sound_card_enable(bool enable) {
  * 相当于全局视频设置
  */
 void DeviceManager::start_video_capture() {
-    video_open_flag = true;
-	video_factory.set_capture(camera_open_flag,desktop_open_flag);
+	video_open_flag = true;
+	set_camera_capture_enable(camera_open_flag);
+	set_desktop_capture_enable(desktop_open_flag);
 }
 
 /**
@@ -113,17 +140,24 @@ void DeviceManager::start_video_capture() {
  * 直到重新调用startVideoCapture打开视频捕捉为止
  */
 void DeviceManager::stop_video_capture() {
-    video_open_flag = false;
-	video_factory.set_capture(false,false);
+	video_open_flag = false;
+	//因为set接口重置了flag，所以先记录下来
+	auto camera_flag = camera_open_flag;
+	auto desktop_flag = desktop_open_flag;
+	set_camera_capture_enable(false);
+	set_desktop_capture_enable(false);
+	desktop_open_flag = camera_flag;
+	desktop_open_flag = desktop_flag;
 }
 
 /**
  * @brief set_fps
- * 设置帧数，默认是１５帧
+ * 设置帧数，默认是15帧
  */
 void DeviceManager::set_fps(int fps)
 {
-	video_factory.set_fps(fps);
+	camera_capture.set_fps(fps);
+	desktop_capture.set_fps(fps);
 }
 
 /**

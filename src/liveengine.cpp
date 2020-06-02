@@ -117,7 +117,7 @@ void LiveEngine::set_local_microphone_audio(bool flag) noexcept
 
 void LiveEngine::set_local_display_win_id(void *win_id)
 {
-	device->get_video_factory()->set_display_win_id(win_id);
+	device->video_player.set_win_id(win_id);
 }
 
 void LiveEngine::set_remote_display_win_id(void *win_id, const std::string &name)
@@ -128,8 +128,7 @@ void LiveEngine::set_remote_display_win_id(void *win_id, const std::string &name
 void LiveEngine::set_display_screen_size(const int &win_w, const int &win_h, 
 										 const int &frame_w, const int &frame_h) noexcept
 {
-	device->get_video_factory()->set_display_screen_size(win_w,win_h,
-														 frame_w,frame_h);
+	device->video_player.show_screen_size_changed(win_w,win_h,frame_w,frame_h);
 }
 
 void LiveEngine::set_remote_display_screen_size(const std::string& name,

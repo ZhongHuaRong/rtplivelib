@@ -22,7 +22,7 @@ public:
 	virtual ~GlobalCallBack(){}
 	
 	/**
-	 * @brief on_video_frame_merge
+	 * @brief on_video_frame
 	 * 图像帧回调
 	 * @param frame
 	 */

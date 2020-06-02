@@ -20,6 +20,8 @@ class VideoProcessingFactoryPrivateData;
  * 该类有两个输入，可以同时输入两个，也可以只输入一个
  * 如果输入两个则会进行画面重叠(默认的两个一个是摄像头一个是桌面)
  * 当然也可以自定义成两个摄像头,两个桌面
+ * 
+ * 在线程运行的时候修改输入队列可能会造成不可预期的错误
  */
 class  RTPLIVELIBSHARED_EXPORT VideoProcessingFactory :
 		public core::TaskThread
@@ -66,6 +68,8 @@ private:
 	//裁剪
 	image_processing::Crop					*crop{nullptr};
 	VideoProcessingFactoryPrivateData * const d_ptr;
+	
+	friend class DeviceManager;
 };
 } // namespace device_manager
 

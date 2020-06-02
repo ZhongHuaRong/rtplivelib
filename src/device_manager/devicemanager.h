@@ -7,6 +7,8 @@
 
 namespace rtplivelib {
 
+class LiveEngine;
+
 namespace device_manager{
 
 /**
@@ -217,10 +219,19 @@ private:
 	bool						video_open_flag;
 	bool						audio_open_flag;
 	
+	core::TaskQueue				camera_output_queue;
+	core::TaskQueue				desktop_output_queue;
+	core::TaskQueue				mic_output_queue;
+	core::TaskQueue				soundcard_output_queue;
 	player::VideoPlayer			video_player;
 	player::AudioPlayer			audio_player;
 	core::TaskQueue				video_player_queue;
 	core::TaskQueue				audio_player_queue;
+	
+	core::TaskQueue				video_factory_output_queue;
+	core::TaskQueue				audio_factory_output_queue;
+	
+	friend class rtplivelib::LiveEngine;
 };
 
 inline bool DeviceManager::desktop_capture_is_open() noexcept					{	return desktop_open_flag;		}
